@@ -10,6 +10,7 @@ from datetime import datetime
 import time
 import os
 from ..database import get_db
+from ..utils import rate_limiter
 
 class CoinGeckoClient:
     def __init__(self, api_key: Optional[str] = None):
@@ -23,19 +24,11 @@ class CoinGeckoClient:
         if self.api_key:
             self.base_url = self.pro_base_url
             self.session.headers['x-cg-pro-api-key'] = self.api_key
-            self.rate_limit = 0.12  # 500 calls/min for pro
-        else:
-            self.rate_limit = 6.0  # 10-30 calls/min for free tier
-        
-        self.last_request_time = 0
         
     def _rate_limit(self):
-        """Enforce rate limiting"""
-        current_time = time.time()
-        time_since_last = current_time - self.last_request_time
-        if time_since_last < self.rate_limit:
-            time.sleep(self.rate_limit - time_since_last)
-        self.last_request_time = time.time()
+        """Enforce rate limiting using global rate limiter"""
+        rate_limiter.wait_if_needed("coingecko")
+        rate_limiter.record_call("coingecko")
     
     def _request(self, endpoint: str, params: Optional[Dict] = None) -> Dict[str, Any]:
         """Make rate-limited API request"""

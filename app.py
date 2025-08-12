@@ -83,14 +83,21 @@ class TradingStatus(Resource):
 class MarketData(Resource):
     def get(self):
         """Get aggregated market data from multiple sources"""
-        from src.рекс.market_data import MarketDataAggregator
-        
-        symbol = request.args.get('symbol', 'bitcoin')
-        network = request.args.get('network', None)
-        
-        aggregator = MarketDataAggregator()
-        data = aggregator.get_aggregated_price(symbol, network)
-        return data
+        try:
+            from src.рекс.market_data import MarketDataAggregator
+            
+            symbol = request.args.get('symbol', 'bitcoin')
+            network = request.args.get('network', None)
+            
+            aggregator = MarketDataAggregator()
+            data = aggregator.get_aggregated_price(symbol, network)
+            
+            if "error" in data:
+                return {"error": data["error"]}, 503
+                
+            return data
+        except Exception as e:
+            return {"error": f"Failed to fetch market data: {str(e)}"}, 500
 
 @api.route('/api/ai/analyze')
 class AIAnalysis(Resource):

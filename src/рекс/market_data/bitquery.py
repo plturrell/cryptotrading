@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 import time
 import os
 from ..database import get_db
+from ..utils import rate_limiter
 
 class BitqueryClient:
     def __init__(self, api_key: Optional[str] = None):
@@ -25,16 +26,10 @@ class BitqueryClient:
             'Content-Type': 'application/json'
         })
         
-        self.last_request_time = 0
-        self.rate_limit = 1.0  # 1 request per second
-        
     def _rate_limit(self):
-        """Enforce rate limiting"""
-        current_time = time.time()
-        time_since_last = current_time - self.last_request_time
-        if time_since_last < self.rate_limit:
-            time.sleep(self.rate_limit - time_since_last)
-        self.last_request_time = time.time()
+        """Enforce rate limiting using global rate limiter"""
+        rate_limiter.wait_if_needed("bitquery")
+        rate_limiter.record_call("bitquery")
     
     def _query(self, query: str, variables: Optional[Dict] = None) -> Dict[str, Any]:
         """Execute GraphQL query"""

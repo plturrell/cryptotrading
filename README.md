@@ -75,11 +75,25 @@ The platform is deployed on Vercel and accessible at:
 
 ### Market Data Sources
 
-The platform aggregates data from multiple sources:
-- **GeckoTerminal**: DEX data from 1,600+ exchanges across 240+ networks
-- **CoinGecko**: Comprehensive crypto market data (CEX + DEX)
-- **CoinMarketCap**: Market data and trending analysis (requires API key)
-- **Bitquery**: GraphQL API for DEX trades and mempool data (requires API key)
+The platform aggregates data from multiple sources with rate limiting:
+
+#### Free Tier APIs:
+- **GeckoTerminal**: DEX data from 1,600+ exchanges (30 calls/min limit)
+- **CoinGecko**: Comprehensive crypto market data (10 calls/min on free tier)
+- **Yahoo Finance**: Historical data via yfinance (unofficial limits)
+
+#### API Key Required:
+- **CoinMarketCap**: Market data and trending analysis (30 calls/min)
+- **Bitquery**: GraphQL API for DEX trades (60 calls/min)
+
+### Historical Data Sources:
+- **CryptoDataDownload**: Free CSV downloads from 20+ exchanges
+- **Yahoo Finance**: Major crypto pairs with technical indicators
+- **Bitget**: Limited to 1 download per coin per day
+
+### Rate Limiting
+
+All API calls are managed through a centralized rate limiter to ensure compliance with free tier limits. Check current usage with `/api/limits`.
 
 ## Disclaimer
 

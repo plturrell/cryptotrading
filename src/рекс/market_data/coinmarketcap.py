@@ -10,6 +10,7 @@ from datetime import datetime
 import time
 import os
 from ..database import get_db
+from ..utils import rate_limiter
 
 class CoinMarketCapClient:
     def __init__(self, api_key: Optional[str] = None):
@@ -26,16 +27,10 @@ class CoinMarketCapClient:
             'Accept-Encoding': 'deflate, gzip'
         })
         
-        self.last_request_time = 0
-        self.rate_limit = 2.0  # Conservative rate limit
-        
     def _rate_limit(self):
-        """Enforce rate limiting"""
-        current_time = time.time()
-        time_since_last = current_time - self.last_request_time
-        if time_since_last < self.rate_limit:
-            time.sleep(self.rate_limit - time_since_last)
-        self.last_request_time = time.time()
+        """Enforce rate limiting using global rate limiter"""
+        rate_limiter.wait_if_needed("coinmarketcap")
+        rate_limiter.record_call("coinmarketcap")
     
     def _request(self, endpoint: str, params: Optional[Dict] = None, version: str = "v2") -> Dict[str, Any]:
         """Make rate-limited API request"""

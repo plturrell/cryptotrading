@@ -80,6 +80,9 @@ class MarketDataAggregator:
                     results[source] = result
             except Exception as e:
                 print(f"Error getting price from {source}: {e}")
+                # Check if it's a rate limit error
+                if "rate limit" in str(e).lower():
+                    results[source] = {"error": "rate_limit_exceeded", "message": str(e)}
         
         # Calculate aggregated data
         if results:
