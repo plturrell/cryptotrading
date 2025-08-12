@@ -74,6 +74,22 @@ class MarketData(api.Resource):
         """Get market data"""
         return {'data': 'market_feed', 'timestamp': 'current'}
 
+@api.route('/api/ai/analyze')
+class AIAnalysis(api.Resource):
+    def post(self):
+        """AI market analysis using DeepSeek R1"""
+        from src.рекс.ml.deepseek import DeepSeekR1
+        
+        data = api.payload
+        ai = DeepSeekR1()
+        analysis = ai.analyze_market(data)
+        
+        return {
+            'analysis': analysis,
+            'model': 'deepseek-r1',
+            'symbol': data.get('symbol', 'BTC')
+        }
+
 # Error handlers
 @app.errorhandler(404)
 def not_found(error):
