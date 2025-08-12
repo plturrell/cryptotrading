@@ -7,9 +7,12 @@ import sys
 from pathlib import Path
 
 # Add the project root to Python path
-project_root = Path(__file__).parent
+project_root = Path(__file__).parent.absolute()
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(project_root / 'src'))
+
+# Create data directory if it doesn't exist
+os.makedirs(project_root / 'data', exist_ok=True)
 
 from flask import Flask, render_template, send_from_directory
 from flask_cors import CORS
@@ -20,8 +23,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Initialize database
-from src.рекс.database import get_db
-db = get_db()
+try:
+    from src.рекс.database import get_db
+    db = get_db()
+except Exception as e:
+    print(f"Database initialization warning: {e}")
+    db = None
 
 app = Flask(__name__, 
            static_folder='webapp',
@@ -88,13 +95,17 @@ class AIAnalysis(Resource):
         ai = DeepSeekR1()
         analysis = ai.analyze_market(data)
         
-        # Save to database
-        db.save_ai_analysis(
-            symbol=data.get('symbol', 'BTC'),
-            model='deepseek-r1',
-            analysis_type='market',
-            analysis=analysis
-        )
+        # Save to database if available
+        if db:
+            try:
+                db.save_ai_analysis(
+                    symbol=data.get('symbol', 'BTC'),
+                    model='deepseek-r1',
+                    analysis_type='market',
+                    analysis=analysis
+                )
+            except Exception as e:
+                print(f"Database save error: {e}")
         
         return {
             'analysis': analysis,

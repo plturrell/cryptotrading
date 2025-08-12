@@ -15,10 +15,16 @@ class DatabaseClient:
     def __init__(self, db_path: str = None):
         """Initialize SQLite database client"""
         if db_path is None:
-            db_path = os.getenv('DATABASE_PATH', 'data/рекс.db')
+            # Use /tmp for Vercel serverless functions
+            if os.getenv('VERCEL'):
+                db_path = '/tmp/рекс.db'
+            else:
+                db_path = os.getenv('DATABASE_PATH', 'data/рекс.db')
         
         # Ensure directory exists
-        os.makedirs(os.path.dirname(db_path), exist_ok=True)
+        db_dir = os.path.dirname(db_path)
+        if db_dir:
+            os.makedirs(db_dir, exist_ok=True)
         
         self.db_url = f'sqlite:///{db_path}'
         self.engine = create_engine(
