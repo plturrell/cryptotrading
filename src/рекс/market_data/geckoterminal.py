@@ -10,6 +10,7 @@ from datetime import datetime
 import time
 import os
 from ..database import get_db
+from ..utils import rate_limiter
 
 class GeckoTerminalClient:
     def __init__(self, api_key: Optional[str] = None):
@@ -23,12 +24,9 @@ class GeckoTerminalClient:
         self.rate_limit = 2.0  # 30 calls/min = 1 call per 2 seconds
         
     def _rate_limit(self):
-        """Enforce rate limiting"""
-        current_time = time.time()
-        time_since_last = current_time - self.last_request_time
-        if time_since_last < self.rate_limit:
-            time.sleep(self.rate_limit - time_since_last)
-        self.last_request_time = time.time()
+        """Enforce rate limiting using global rate limiter"""
+        rate_limiter.wait_if_needed("geckoterminal")
+        rate_limiter.record_call("geckoterminal")
     
     def _request(self, endpoint: str, params: Optional[Dict] = None) -> Dict[str, Any]:
         """Make rate-limited API request"""

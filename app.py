@@ -252,6 +252,83 @@ class HistoricalData(Resource):
         historical = aggregator.get_historical_data(symbol, days)
         return historical
 
+@api.route('/api/data/download/<string:symbol>')
+class DownloadHistoricalData(Resource):
+    def get(self, symbol):
+        """Download historical data for model training"""
+        from src.рекс.historical_data import HistoricalDataAggregator
+        
+        source = request.args.get('source', 'all')
+        
+        aggregator = HistoricalDataAggregator()
+        
+        if source == 'all':
+            data = aggregator.download_all_sources(symbol)
+            return {
+                "symbol": symbol,
+                "sources": list(data.keys()),
+                "total_rows": sum(len(df) for df in data.values()),
+                "status": "downloaded"
+            }
+        else:
+            return {"error": f"Source {source} not supported"}
+
+@api.route('/api/data/training/<string:symbol>')
+class TrainingDataset(Resource):
+    def get(self, symbol):
+        """Get or create training dataset with indicators"""
+        from src.рекс.historical_data import HistoricalDataAggregator
+        
+        lookback_days = int(request.args.get('days', 365))
+        
+        aggregator = HistoricalDataAggregator()
+        
+        # Try to load existing dataset first
+        df = aggregator.load_training_dataset(symbol)
+        
+        if df is None:
+            # Create new dataset
+            df = aggregator.create_training_dataset(symbol, lookback_days=lookback_days)
+        
+        if df.empty:
+            return {"error": "No data available"}
+        
+        return {
+            "symbol": symbol,
+            "rows": len(df),
+            "columns": list(df.columns),
+            "date_range": {
+                "start": str(df.index.min()),
+                "end": str(df.index.max())
+            },
+            "indicators": [col for col in df.columns if any(ind in col for ind in ['sma', 'ema', 'rsi', 'macd', 'bb'])]
+        }
+
+@api.route('/api/data/available')
+class AvailableDatasets(Resource):
+    def get(self):
+        """List available training datasets"""
+        from src.рекс.historical_data import HistoricalDataAggregator
+        
+        aggregator = HistoricalDataAggregator()
+        datasets = aggregator.get_available_datasets()
+        
+        return {
+            "datasets": datasets,
+            "count": len(datasets)
+        }
+
+@api.route('/api/limits')
+class APILimits(Resource):
+    def get(self):
+        """Get current API rate limit status"""
+        from src.рекс.utils import rate_limiter
+        
+        return {
+            "limits": rate_limiter.get_all_limits(),
+            "timestamp": datetime.now().isoformat()
+        }
+
 # Error handlers
 @app.errorhandler(404)
 def not_found(error):
