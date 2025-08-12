@@ -1,0 +1,188 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:f="sap.f">
+
+    <!-- Market Overview Tile - Official SAP Standard 12x14 rem -->
+    <GenericTile 
+        header="Market Overview"
+        subheader="Real-time cryptocurrency prices"
+        press="onTilePress"
+        state="Loaded"
+        size="Medium">
+        <layoutData>
+            <f:GridContainerItemLayoutData columns="12" rows="14"/>
+        </layoutData>
+        <tileContent>
+            <TileContent>
+                <content>
+                    <NumericContent
+                        value="{app>/marketData/btcPrice}"
+                        scale="USD"
+                        indicator="Up"
+                        valueColor="Good"
+                        withMargin="false"/>
+                </content>
+            </TileContent>
+        </tileContent>
+    </GenericTile>
+    
+    <!-- Portfolio Management Tile -->
+    <GenericTile 
+        header="Portfolio Management" 
+        subheader="Total holdings and performance"
+        press="onTilePress"
+        state="Loaded"
+        size="Medium">
+        <layoutData>
+            <f:GridContainerItemLayoutData columns="12" rows="14"/>
+        </layoutData>
+        <tileContent>
+            <TileContent>
+                <content>
+                    <NumericContent
+                        value="125,650"
+                        scale="USD"
+                        indicator="Up"
+                        valueColor="Good"
+                        withMargin="false"/>
+                </content>
+            </TileContent>
+        </tileContent>
+    </GenericTile>
+    
+    <!-- Trading Console Tile -->
+    <GenericTile 
+        header="Trading Console"
+        subheader="Execute buy and sell orders"
+        press="onTilePress"
+        state="Loaded"
+        size="Medium">
+        <layoutData>
+            <f:GridContainerItemLayoutData columns="12" rows="14"/>
+        </layoutData>
+        <tileContent>
+            <TileContent>
+                <content>
+                    <NumericContent
+                        value="24"
+                        scale="Active"
+                        valueColor="Neutral"
+                        withMargin="false"/>
+                </content>
+            </TileContent>
+        </tileContent>
+    </GenericTile>
+    
+    <!-- AI Market Intelligence Tile - Large 2x1 format -->
+    <GenericTile 
+        header="AI Market Intelligence"
+        subheader="Claude-4-Sonnet analysis engine"
+        press="onTilePress"
+        state="Loaded"
+        frameType="TwoByOne">
+        <layoutData>
+            <f:GridContainerItemLayoutData columns="25" rows="14"/>
+        </layoutData>
+        <tileContent>
+            <TileContent>
+                <content>
+                    <NewsContent
+                        contentText="BTC showing strong bullish momentum. RSI at 65 indicates healthy correction. MACD positive divergence detected. Recommend accumulation positions at current levels with stop-loss at $62,000."
+                        subheader="Latest Signal: BUY (85% confidence)"/>
+                </content>
+            </TileContent>
+        </tileContent>
+    </GenericTile>
+    
+    <!-- DEX Analytics Tile -->
+    <GenericTile 
+        header="DEX Analytics"
+        subheader="Decentralized exchange monitor"
+        press="onTilePress"
+        state="Loaded"
+        size="Medium">
+        <layoutData>
+            <f:GridContainerItemLayoutData columns="12" rows="14"/>
+        </layoutData>
+        <tileContent>
+            <TileContent>
+                <content>
+                    <NumericContent
+                        value="1,247"
+                        scale="Pools"
+                        valueColor="Neutral"
+                        withMargin="false"/>
+                </content>
+            </TileContent>
+        </tileContent>
+    </GenericTile>
+    
+    <!-- Risk Management Tile -->
+    <GenericTile 
+        header="Risk Management"
+        subheader="Portfolio risk metrics"
+        press="onTilePress"
+        state="Loaded"
+        size="Medium">
+        <layoutData>
+            <f:GridContainerItemLayoutData columns="12" rows="14"/>
+        </layoutData>
+        <tileContent>
+            <TileContent>
+                <content>
+                    <NumericContent
+                        value="12.3"
+                        scale="% VaR"
+                        indicator="Up"
+                        valueColor="Critical"
+                        withMargin="false"/>
+                </content>
+            </TileContent>
+        </tileContent>
+    </GenericTile>
+    
+    <!-- Historical Data Tile -->
+    <GenericTile 
+        header="Historical Data"
+        subheader="Download market datasets"
+        press="onTilePress"
+        state="Loaded"
+        size="Medium">
+        <layoutData>
+            <f:GridContainerItemLayoutData columns="12" rows="14"/>
+        </layoutData>
+        <tileContent>
+            <TileContent>
+                <content>
+                    <NumericContent
+                        value="2.3"
+                        scale="TB"
+                        valueColor="Neutral"
+                        withMargin="false"/>
+                </content>
+            </TileContent>
+        </tileContent>
+    </GenericTile>
+    
+    <!-- System Settings Tile -->
+    <GenericTile 
+        header="System Settings"
+        subheader="Configure platform parameters"
+        press="onTilePress"
+        state="Loaded"
+        size="Medium">
+        <layoutData>
+            <f:GridContainerItemLayoutData columns="12" rows="14"/>
+        </layoutData>
+        <tileContent>
+            <TileContent>
+                <content>
+                    <ImageContent 
+                        src="sap-icon://action-settings"/>
+                </content>
+            </TileContent>
+        </tileContent>
+    </GenericTile>
+
+</core:FragmentDefinition>

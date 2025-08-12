@@ -23,127 +23,69 @@ sap.ui.define([
             oDeviceModel.setDefaultBindingMode("OneWay");
             this.setModel(oDeviceModel, "device");
 
-            // Set initial app data model with professional SAP tiles
+            // Official SAP Data Model Structure
             var oAppModel = new JSONModel({
-                wallet: {
-                    address: "0x88bE2a6408934e32a0Ad63c368Be5b257ca63cC1",
-                    balance: 0,
-                    connected: false
-                },
+                // User Profile
                 user: {
                     name: "Professional Trader",
-                    role: "Senior Analyst"
+                    role: "Senior Analyst",
+                    greeting: "Good Morning"
                 },
-                tiles: [
-                    {
-                        title: "Market Overview",
-                        subtitle: "Real-time cryptocurrency prices",
-                        number: "65,432",
-                        numberUnit: "USD",
-                        info: "Bitcoin",
-                        infoState: "Success",
-                        icon: "sap-icon://line-chart-dual-axis",
-                        type: "Monitor",
-                        frameType: "TwoByOne",
-                        state: "Loaded",
-                        stateArrow: "Up",
-                        targetParams: "display",
-                        press: "marketOverview"
+                
+                // Wallet Integration
+                wallet: {
+                    address: "0x88bE2a6408934e32a0Ad63c368Be5b257ca63cC1",
+                    balance: {
+                        ETH: 0,
+                        BTC: 0,
+                        total: 0
                     },
-                    {
-                        title: "Portfolio Management",
-                        subtitle: "Total holdings and performance",
-                        number: "125,650",
-                        numberUnit: "USD",
-                        info: "+12.5%",
-                        infoState: "Success",
-                        icon: "sap-icon://wallet",
-                        type: "Monitor",
-                        frameType: "OneByOne",
-                        state: "Loaded",
-                        stateArrow: "Up",
-                        press: "portfolio"
-                    },
-                    {
-                        title: "Trading Console",
-                        subtitle: "Execute buy and sell orders",
-                        number: "24",
-                        numberUnit: "Active",
-                        info: "Orders",
-                        infoState: "None",
-                        icon: "sap-icon://sales-order",
-                        type: "Create",
-                        frameType: "OneByOne",
-                        state: "Loaded",
-                        press: "trading"
-                    },
-                    {
-                        title: "AI Market Intelligence",
-                        subtitle: "Claude-4-Sonnet analysis engine",
-                        number: "85",
-                        numberUnit: "%",
-                        info: "Confidence",
-                        infoState: "Success",
-                        icon: "sap-icon://business-objects-experience",
-                        type: "Monitor",
-                        frameType: "TwoByOne",
-                        state: "Loading",
-                        newsContent: [{
-                            title: "BTC Analysis",
-                            text: "Strong bullish momentum detected. RSI oversold conditions resolved."
-                        }],
-                        press: "aiAnalysis"
-                    },
-                    {
-                        title: "DEX Analytics",
-                        subtitle: "Decentralized exchange monitor",
-                        number: "1,247",
-                        numberUnit: "Pools",
-                        info: "Active",
-                        infoState: "None",
-                        icon: "sap-icon://chain-link",
-                        type: "Monitor",
-                        frameType: "OneByOne",
-                        state: "Loaded",
-                        press: "dexMonitor"
-                    },
-                    {
-                        title: "Risk Management",
-                        subtitle: "Portfolio risk metrics",
-                        number: "12.3",
-                        numberUnit: "% VaR",
-                        info: "95% CI",
-                        infoState: "Error",
-                        icon: "sap-icon://alert",
-                        type: "Monitor",
-                        frameType: "OneByOne",
-                        state: "Loaded",
-                        stateArrow: "Up",
-                        press: "riskAnalytics"
-                    },
-                    {
-                        title: "Historical Data",
-                        subtitle: "Download market datasets",
-                        number: "2.3",
-                        numberUnit: "TB",
-                        info: "Available",
-                        infoState: "None",
-                        icon: "sap-icon://download",
-                        type: "Create",
-                        frameType: "OneByOne",
-                        state: "Loaded",
-                        press: "historicalData"
-                    },
-                    {
-                        title: "System Settings",
-                        subtitle: "Configure platform parameters",
-                        icon: "sap-icon://action-settings",
-                        type: "Create",
-                        frameType: "OneByOne",
-                        state: "Loaded",
-                        press: "settings"
-                    }
-                ]
+                    connected: false
+                },
+                
+                // Real-time Market Data
+                marketData: {
+                    btcPrice: "65,432",
+                    btcChange: "+2.5",
+                    btcIndicator: "Up",
+                    ethPrice: "3,524",
+                    ethChange: "+1.8",
+                    ethIndicator: "Up",
+                    totalMarketCap: "2.8T",
+                    lastUpdated: new Date().toISOString()
+                },
+                
+                // Portfolio Metrics
+                portfolio: {
+                    totalValue: "125,650",
+                    change24h: "+12.5",
+                    changePercent: "12.5",
+                    positions: 8,
+                    profitLoss: "+15,432"
+                },
+                
+                // AI Analysis Results
+                aiAnalysis: {
+                    signal: "BUY",
+                    confidence: "85",
+                    recommendation: "Strong bullish momentum detected. RSI at 65 indicates healthy correction. MACD positive divergence.",
+                    lastUpdate: new Date().toISOString()
+                },
+                
+                // DEX Data
+                dexData: {
+                    activePools: "1,247",
+                    topPairs: ["ETH/USDC", "BTC/ETH", "MATIC/USDC"],
+                    totalLiquidity: "45.2B"
+                },
+                
+                // Risk Metrics
+                riskMetrics: {
+                    valueAtRisk: "12.3",
+                    confidence: "95",
+                    maxDrawdown: "8.7",
+                    sharpeRatio: "1.85"
+                }
             });
             this.setModel(oAppModel, "app");
 

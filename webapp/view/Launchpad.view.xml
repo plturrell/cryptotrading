@@ -61,80 +61,64 @@
                             </HBox>
                             
                             <!-- KPI Tiles -->
-                            <f:GridContainer
-                                id="kpiContainer"
-                                snapToRow="true"
-                                allowDenseFill="true"
-                                inlineBlockLayout="true">
+                            <!-- SAP Standard KPI Bar - Official Design -->
+                            <HBox class="sapUiSmallMarginBottom" justifyContent="SpaceBetween">
+                                <GenericTile 
+                                    header="Total Portfolio Value"
+                                    subheader="All assets combined"
+                                    frameType="OneByHalf"
+                                    press="onPortfolioPress"
+                                    class="sapUiTinyMarginEnd">
+                                    <tileContent>
+                                        <TileContent>
+                                            <content>
+                                                <NumericContent
+                                                    value="125,650"
+                                                    scale="USD"
+                                                    indicator="Up"
+                                                    valueColor="Good"/>
+                                            </content>
+                                        </TileContent>
+                                    </tileContent>
+                                </GenericTile>
                                 
-                                <f:layout>
-                                    <f:GridContainerSettings
-                                        rowSize="5rem"
-                                        columnSize="5rem"
-                                        gap="1rem"/>
-                                </f:layout>
+                                <GenericTile 
+                                    header="24h Performance"
+                                    subheader="Portfolio change"
+                                    frameType="OneByHalf"
+                                    class="sapUiTinyMarginEnd">
+                                    <tileContent>
+                                        <TileContent>
+                                            <content>
+                                                <NumericContent
+                                                    value="+12.5"
+                                                    scale="%"
+                                                    indicator="Up"
+                                                    valueColor="Good"/>
+                                            </content>
+                                        </TileContent>
+                                    </tileContent>
+                                </GenericTile>
                                 
-                                <f:items>
-                                    <GenericTile
-                                        header="Total Portfolio Value"
-                                        subheader="All assets combined"
-                                        press="onPortfolioPress">
-                                        <layoutData>
-                                            <f:GridContainerItemLayoutData columns="4" rows="2"/>
-                                        </layoutData>
-                                        <tileContent>
-                                            <TileContent>
-                                                <content>
-                                                    <NumericContent
-                                                        value="125,650"
-                                                        scale="USD"
-                                                        indicator="Up"
-                                                        valueColor="Good"/>
-                                                </content>
-                                            </TileContent>
-                                        </tileContent>
-                                    </GenericTile>
-                                    
-                                    <GenericTile
-                                        header="24h Change"
-                                        subheader="Portfolio performance">
-                                        <layoutData>
-                                            <f:GridContainerItemLayoutData columns="2" rows="2"/>
-                                        </layoutData>
-                                        <tileContent>
-                                            <TileContent>
-                                                <content>
-                                                    <NumericContent
-                                                        value="+12.5"
-                                                        scale="%"
-                                                        indicator="Up"
-                                                        valueColor="Good"/>
-                                                </content>
-                                            </TileContent>
-                                        </tileContent>
-                                    </GenericTile>
-                                    
-                                    <GenericTile
-                                        header="Active Positions"
-                                        subheader="Open trades">
-                                        <layoutData>
-                                            <f:GridContainerItemLayoutData columns="2" rows="2"/>
-                                        </layoutData>
-                                        <tileContent>
-                                            <TileContent>
-                                                <content>
-                                                    <NumericContent
-                                                        value="8"
-                                                        scale="Trades"/>
-                                                </content>
-                                            </TileContent>
-                                        </tileContent>
-                                    </GenericTile>
-                                </f:items>
-                            </f:GridContainer>
+                                <GenericTile 
+                                    header="Active Positions"
+                                    subheader="Open trades"
+                                    frameType="OneByHalf">
+                                    <tileContent>
+                                        <TileContent>
+                                            <content>
+                                                <NumericContent
+                                                    value="8"
+                                                    scale="Trades"
+                                                    valueColor="Neutral"/>
+                                            </content>
+                                        </TileContent>
+                                    </tileContent>
+                                </GenericTile>
+                            </HBox>
                         </VBox>
                         
-                        <!-- Main Tile Container -->
+                        <!-- SAP Standard Tile Container - Official 12rem × 14rem Grid -->
                         <f:GridContainer
                             id="tileContainer"
                             snapToRow="true"
@@ -142,56 +126,17 @@
                             inlineBlockLayout="true"
                             class="sapUiSmallMargin">
                             
+                            <!-- Official SAP Grid Layout - 12rem tiles with 1rem spacing -->
                             <f:layout>
                                 <f:GridContainerSettings
-                                    rowSize="5rem"
-                                    columnSize="5rem"
+                                    rowSize="1rem"
+                                    columnSize="1rem"
                                     gap="1rem"/>
                             </f:layout>
                             
-                            <f:layoutS>
-                                <f:GridContainerSettings
-                                    rowSize="5rem"
-                                    columnSize="5rem"
-                                    gap="0.5rem"/>
-                            </f:layoutS>
-                            
                             <f:items>
-                                <!-- Dynamic tiles bound to model -->
-                                <GenericTile
-                                    header="{app>title}"
-                                    subheader="{app>subtitle}"
-                                    frameType="{app>frameType}"
-                                    press="onTilePress"
-                                    class="sapUiTinyMarginBegin sapUiTinyMarginTop"
-                                    items="{app>/tiles}">
-                                    
-                                    <layoutData>
-                                        <f:GridContainerItemLayoutData 
-                                            columns="{= ${app>frameType} === 'TwoByOne' ? 8 : 4}"
-                                            rows="4"/>
-                                    </layoutData>
-                                    
-                                    <tileContent>
-                                        <TileContent 
-                                            unit="{app>numberUnit}"
-                                            footer="{app>info}">
-                                            <content>
-                                                <NumericContent
-                                                    value="{app>number}"
-                                                    scale="{app>numberUnit}"
-                                                    indicator="{app>stateArrow}"
-                                                    valueColor="{app>infoState}"
-                                                    icon="{app>icon}"
-                                                    visible="{= !${app>newsContent}}"/>
-                                                <NewsContent
-                                                    contentText="{app>newsContent/0/text}"
-                                                    subheader="{app>newsContent/0/title}"
-                                                    visible="{= !!${app>newsContent}}"/>
-                                            </content>
-                                        </TileContent>
-                                    </tileContent>
-                                </GenericTile>
+                                <!-- SAP Standard Tiles - Bound to Component Model -->
+                                <core:Fragment fragmentName="com.рекс.cryptotrading.fragment.TileGrid" type="XML"/>
                             </f:items>
                         </f:GridContainer>
                     </content>
