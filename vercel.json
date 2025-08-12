@@ -18,41 +18,30 @@
       "use": "@vercel/static"
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/webapp/(.*)",
-      "dest": "/webapp/$1",
-      "headers": {
-        "cache-control": "public, max-age=3600"
-      }
+      "source": "/webapp/(.*)",
+      "destination": "/webapp/$1"
     },
     {
-      "src": "/css/(.*)", 
-      "dest": "/webapp/css/$1",
-      "headers": {
-        "cache-control": "public, max-age=86400"
-      }
+      "source": "/css/(.*)", 
+      "destination": "/webapp/css/$1"
     },
     {
-      "src": "/manifest.json",
-      "dest": "/manifest.json"
+      "source": "/manifest.json",
+      "destination": "/manifest.json"
     },
     {
-      "src": "/api/(.*)",
-      "dest": "/app_vercel.py"
+      "source": "/api/(.*)",
+      "destination": "/app_vercel.py"
     },
     {
-      "src": "/health",
-      "dest": "/app_vercel.py"
+      "source": "/health",
+      "destination": "/app_vercel.py"
     },
     {
-      "src": "/",
-      "dest": "/webapp/index-simple.html",
-      "headers": {
-        "X-Frame-Options": "SAMEORIGIN",
-        "X-Content-Type-Options": "nosniff",
-        "Referrer-Policy": "origin-when-cross-origin"
-      }
+      "source": "/",
+      "destination": "/webapp/index-simple.html"
     }
   ],
   "headers": [
