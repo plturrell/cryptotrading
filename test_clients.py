@@ -150,6 +150,33 @@ def test_api_endpoints():
         print(f"❌ API endpoint test failed: {e}")
         return False
 
+def test_metamask():
+    """Test MetaMask wallet integration"""
+    print("\n🔍 Testing MetaMask Integration...")
+    try:
+        from рекс.blockchain import MetaMaskClient, EthereumClient
+        
+        # Test MetaMask client
+        wallet = MetaMaskClient()
+        print(f"✅ MetaMask client initialized for wallet: {wallet.wallet_address}")
+        print(f"  - Connected: {wallet.connected}")
+        
+        # Test Ethereum client
+        eth_client = EthereumClient()
+        
+        # Test DeFi opportunities
+        opportunities = eth_client.analyze_defi_opportunities(wallet.wallet_address)
+        print(f"✅ Found {len(opportunities)} DeFi opportunities")
+        
+        # Test gas optimization
+        gas_opt = eth_client.get_gas_optimization()
+        print(f"✅ Gas optimization: {gas_opt.get('recommendation', 'standard')}")
+        
+        return True
+    except Exception as e:
+        print(f"❌ MetaMask test failed: {e}")
+        return False
+
 def test_server_connection():
     """Test connection to DigitalOcean server"""
     print("\n🔍 Testing Server Connection...")
@@ -193,6 +220,7 @@ def main():
         'Perplexity AI': test_perplexity(),
         'A2A Registry': test_a2a_registry(),
         'API Endpoints': test_api_endpoints(),
+        'MetaMask/Web3': test_metamask(),
         'Server Connection': test_server_connection()
     }
     

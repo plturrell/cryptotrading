@@ -123,6 +123,54 @@ class TradingSignals(Resource):
         signals = perplexity.get_trading_signals(symbol.upper(), timeframe)
         return signals
 
+@api.route('/api/wallet/balance')
+class WalletBalance(Resource):
+    def get(self):
+        """Get MetaMask wallet balance"""
+        from src.рекс.blockchain import MetaMaskClient
+        
+        client = MetaMaskClient()
+        balance = client.get_balance()
+        return balance
+
+@api.route('/api/wallet/monitor')
+class WalletMonitor(Resource):
+    def get(self):
+        """Monitor wallet and DeFi opportunities"""
+        from src.рекс.blockchain import MetaMaskClient
+        
+        client = MetaMaskClient()
+        status = client.monitor_wallet()
+        return status
+
+@api.route('/api/defi/opportunities')
+class DeFiOpportunities(Resource):
+    def get(self):
+        """Get DeFi opportunities for the wallet"""
+        from src.рекс.blockchain import EthereumClient
+        
+        wallet = "0x88bE2a6408934e32a0Ad63c368Be5b257ca63cC1"
+        client = EthereumClient()
+        opportunities = client.analyze_defi_opportunities(wallet)
+        return {"opportunities": opportunities, "wallet": wallet}
+
+@api.route('/api/wallet/gas')
+class GasPrice(Resource):
+    def get(self):
+        """Get current gas prices and optimization"""
+        from src.рекс.blockchain import MetaMaskClient, EthereumClient
+        
+        metamask = MetaMaskClient()
+        eth_client = EthereumClient()
+        
+        gas_price = metamask.get_gas_price()
+        optimization = eth_client.get_gas_optimization()
+        
+        return {
+            "current": gas_price,
+            "optimization": optimization
+        }
+
 # Error handlers
 @app.errorhandler(404)
 def not_found(error):
