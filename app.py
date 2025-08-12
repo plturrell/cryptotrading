@@ -19,6 +19,10 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
+# Initialize database
+from src.рекс.database import get_db
+db = get_db()
+
 app = Flask(__name__, 
            static_folder='webapp',
            template_folder='webapp')
@@ -83,6 +87,14 @@ class AIAnalysis(api.Resource):
         data = api.payload
         ai = DeepSeekR1()
         analysis = ai.analyze_market(data)
+        
+        # Save to database
+        db.save_ai_analysis(
+            symbol=data.get('symbol', 'BTC'),
+            model='deepseek-r1',
+            analysis_type='market',
+            analysis=analysis
+        )
         
         return {
             'analysis': analysis,
