@@ -1,6 +1,6 @@
-# Cryptocurrency AI Trading Systems Documentation
+# рекс.com - Cryptocurrency AI Trading Platform
 
-This repository contains comprehensive documentation and strategic analysis for AI-powered cryptocurrency trading systems.
+This repository contains the source code and documentation for рекс.com, a professional AI-powered cryptocurrency trading platform.
 
 ## Contents
 
