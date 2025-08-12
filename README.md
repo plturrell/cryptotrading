@@ -27,6 +27,40 @@ This documentation collection covers:
 
 These documents serve as reference materials for developing and implementing AI-powered cryptocurrency trading systems with proper risk management and strategic planning.
 
+## Deployment
+
+The platform is deployed on Vercel and accessible at:
+- Production: https://рекс.com (requires authentication)
+- Vercel URL: https://cryptotrading-4gqyiuua0-plturrells-projects.vercel.app
+
+### Local Development
+
+1. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. Run the development server:
+   ```bash
+   python app.py
+   ```
+
+3. Access at http://localhost:5000
+
+### API Endpoints
+
+- `/health` - Health check
+- `/api/` - API documentation (Swagger UI)
+- `/api/trading/status` - Trading system status
+- `/api/market/data` - Market data feed
+- `/api/ai/analyze` - AI market analysis
+- `/api/ai/news/{symbol}` - Crypto news via Perplexity
+- `/api/ai/signals/{symbol}` - AI trading signals
+- `/api/wallet/balance` - MetaMask wallet balance
+- `/api/wallet/monitor` - Wallet monitoring
+- `/api/defi/opportunities` - DeFi opportunities
+- `/api/wallet/gas` - Gas price optimization
+
 ## Disclaimer
 
 This repository contains educational and research materials. Any trading strategies discussed should be thoroughly tested and validated before implementation. Cryptocurrency trading involves significant risks, and past performance does not guarantee future results.
