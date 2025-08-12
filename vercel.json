@@ -32,6 +32,10 @@
       "destination": "/manifest.json"
     },
     {
+      "source": "/test-pad",
+      "destination": "/webapp/test-pad.html"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/app_vercel.py"
     },
