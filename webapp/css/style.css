@@ -1,0 +1,80 @@
+/* Custom styles for рекс.com Crypto Trading Platform */
+
+/* Fiori Launchpad customization */
+.sapMShell {
+    background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
+}
+
+/* Custom tile styling */
+.sapMGT {
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.sapMGT:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Numeric content styling */
+.sapMNCValue {
+    color: #00d4ff !important;
+}
+
+/* Success state - green */
+.sapMNCStateSuccess .sapMNCValue {
+    color: #00ff88 !important;
+}
+
+/* Warning state - yellow */
+.sapMNCStateWarning .sapMNCValue {
+    color: #ffaa00 !important;
+}
+
+/* Error state - red */
+.sapMNCStateError .sapMNCValue {
+    color: #ff4444 !important;
+}
+
+/* ShellBar customization */
+.sapFShellBar {
+    background: rgba(0, 0, 0, 0.8) !important;
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Grid container spacing */
+.sapFGridContainer {
+    padding: 1rem;
+}
+
+/* Wallet button styling */
+.sapMBtnAccept {
+    background-color: #00ff88 !important;
+    color: #000 !important;
+}
+
+/* Loading animation */
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+.loading {
+    animation: pulse 2s infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .sapFGridContainer {
+        padding: 0.5rem;
+    }
+    
+    .sapMGT {
+        margin: 0.25rem !important;
+    }
+}

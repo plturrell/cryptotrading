@@ -1,0 +1,83 @@
+<mvc:View
+    controllerName="com.рекс.cryptotrading.controller.App"
+    xmlns:mvc="sap.ui.core.mvc"
+    displayBlock="true"
+    xmlns="sap.m"
+    xmlns:f="sap.f">
+    <Shell id="shell">
+        <App id="app">
+            <pages>
+                <f:ShellBar
+                    title="рекс.com - Crypto Trading Platform"
+                    secondTitle="Professional AI-Powered Trading"
+                    showNavButton="false"
+                    showCopilot="true"
+                    showSearch="true"
+                    showNotifications="true"
+                    notificationsNumber="2">
+                    <f:profile>
+                        <f:Avatar
+                            src="sap-icon://person-placeholder"
+                            displaySize="XS"
+                            press="onAvatarPress"/>
+                    </f:profile>
+                    <f:additionalContent>
+                        <OverflowToolbarButton
+                            icon="sap-icon://wallet"
+                            text="{= ${app>/wallet/connected} ? 'Wallet Connected' : 'Connect Wallet' }"
+                            type="{= ${app>/wallet/connected} ? 'Accept' : 'Default' }"
+                            press="onWalletPress"/>
+                    </f:additionalContent>
+                </f:ShellBar>
+                <Page
+                    showHeader="false"
+                    enableScrolling="true"
+                    class="sapUiContentPadding">
+                    <content>
+                        <f:GridContainer
+                            id="gridContainer"
+                            snapToRow="true">
+                            <f:layout>
+                                <f:GridContainerSettings
+                                    rowSize="5rem"
+                                    columnSize="5rem"
+                                    gap="1rem"/>
+                            </f:layout>
+                            <f:layoutXS>
+                                <f:GridContainerSettings
+                                    rowSize="5rem"
+                                    columnSize="5rem"
+                                    gap="0.5rem"/>
+                            </f:layoutXS>
+                            <f:items>
+                                <GenericTile
+                                    class="sapUiTinyMarginBegin sapUiTinyMarginTop"
+                                    header="{app>title}"
+                                    subheader="{app>subtitle}"
+                                    press="onTilePress"
+                                    frameType="TwoByOne">
+                                    <layoutData>
+                                        <f:GridContainerItemLayoutData
+                                            columns="4"
+                                            rows="2"/>
+                                    </layoutData>
+                                    <tileContent>
+                                        <TileContent>
+                                            <content>
+                                                <NumericContent
+                                                    value="{app>number}"
+                                                    scale="{app>unit}"
+                                                    state="{app>state}"
+                                                    icon="{app>icon}"/>
+                                            </content>
+                                        </TileContent>
+                                    </tileContent>
+                                </GenericTile>
+                            </f:items>
+                        </f:GridContainer>
+                    </content>
+                </Page>
+            </pages>
+        </App>
+    </Shell>
+</mvc:View>
