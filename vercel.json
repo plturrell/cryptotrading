@@ -2,21 +2,56 @@
   "version": 2,
   "builds": [
     {
-      "src": "app.py",
+      "src": "app_vercel.py",
       "use": "@vercel/python",
       "config": {
-        "maxLambdaSize": "50mb"
+        "maxLambdaSize": "50mb",
+        "runtime": "python3.9"
       }
+    },
+    {
+      "src": "webapp/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "manifest.json",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
-      "src": "/(.*)",
-      "dest": "app.py"
+      "src": "/webapp/(.*)",
+      "dest": "/webapp/$1"
+    },
+    {
+      "src": "/css/(.*)", 
+      "dest": "/webapp/css/$1"
+    },
+    {
+      "src": "/manifest.json",
+      "dest": "/manifest.json"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "/app_vercel.py"
+    },
+    {
+      "src": "/health",
+      "dest": "/app_vercel.py"
+    },
+    {
+      "src": "/",
+      "dest": "/webapp/index.html"
     }
   ],
   "env": {
     "VERCEL": "1",
     "FLASK_ENV": "production"
+  },
+  "functions": {
+    "app_vercel.py": {
+      "includeFiles": "webapp/**,manifest.json",
+      "excludeFiles": "src/**,test_*,data/**,*.pyc,__pycache__/**,*.csv,*.db"
+    }
   }
 }

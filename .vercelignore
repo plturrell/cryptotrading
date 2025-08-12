@@ -1,0 +1,23 @@
+# Exclude source code and heavy dependencies
+src/
+data/
+tests/
+test_*.py
+*.db
+*.csv
+*.log
+__pycache__/
+*.pyc
+.git/
+.gitignore
+README.md
+requirements.txt
+app.py
+.env
+.env.*
+
+# Include only what's needed
+!app_vercel.py
+!requirements-vercel.txt
+!webapp/
+!manifest.json

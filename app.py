@@ -18,6 +18,10 @@ from flask import Flask, render_template, send_from_directory, request
 from flask_cors import CORS
 from flask_restx import Api, Resource
 from dotenv import load_dotenv
+import os
+
+# Check if running on Vercel
+IS_VERCEL = os.getenv('VERCEL') == '1'
 
 # Load environment variables
 load_dotenv()
