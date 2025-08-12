@@ -21,6 +21,7 @@ class RateLimiter:
             "cryptodatadownload": {"calls": 60, "period": 3600},  # 60 downloads/hour
             "bitget": {"calls": 1, "period": 86400},       # 1 per coin per day
             "yahoo": {"calls": 2000, "period": 3600},      # 2000/hour (unofficial)
+            "ai_gateway": {"calls": 100, "period": 60},     # Claude-4 rate limit
         }
         
         self.calls = defaultdict(list)

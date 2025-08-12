@@ -63,15 +63,21 @@ The platform is deployed on Vercel and accessible at:
 - `/api/market/dex/pool/{network}/{address}` - Specific DEX pool data
 
 #### AI Analysis Endpoints
-- `/api/ai/analyze` - AI market analysis using DeepSeek R1
+- `/api/ai/analyze` - AI market analysis using Claude-4-Sonnet
 - `/api/ai/news/{symbol}` - Real-time crypto news via Perplexity
-- `/api/ai/signals/{symbol}` - AI trading signals
+- `/api/ai/signals/{symbol}` - AI trading signals via Perplexity
+- `/api/ai/strategy` - Generate personalized trading strategy with Claude-4
+- `/api/ai/sentiment` - Analyze news sentiment using Claude-4
 
 #### Wallet & DeFi Endpoints
 - `/api/wallet/balance` - MetaMask wallet balance
 - `/api/wallet/monitor` - Wallet monitoring
 - `/api/defi/opportunities` - DeFi opportunities
 - `/api/wallet/gas` - Gas price optimization
+
+#### Storage Endpoints
+- `/api/storage/signals/{symbol}` - Get/Store trading signals in Vercel Blob
+- Trading signals, analysis results, and strategies are automatically stored
 
 ### Market Data Sources
 
@@ -94,6 +100,24 @@ The platform aggregates data from multiple sources with rate limiting:
 ### Rate Limiting
 
 All API calls are managed through a centralized rate limiter to ensure compliance with free tier limits. Check current usage with `/api/limits`.
+
+### AI Integration
+
+The platform uses **Claude-4-Sonnet** via AI Gateway for advanced analysis:
+- Market analysis with trading signals
+- Sentiment analysis of crypto news
+- Personalized strategy generation
+- Arbitrage opportunity detection
+
+### Storage
+
+**Vercel Blob Storage** is integrated for:
+- Storing trading signals and analysis results
+- Model checkpoints and backtest results
+- Portfolio snapshots
+- Historical analysis data
+
+Set `BLOB_READ_WRITE_TOKEN` environment variable to enable storage features.
 
 ## Disclaimer
 

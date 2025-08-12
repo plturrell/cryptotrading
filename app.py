@@ -106,30 +106,21 @@ class MarketData(Resource):
 @api.route('/api/ai/analyze')
 class AIAnalysis(Resource):
     def post(self):
-        """AI market analysis using DeepSeek R1"""
-        from src.рекс.ml.deepseek import DeepSeekR1
-        
-        data = api.payload
-        ai = DeepSeekR1()
-        analysis = ai.analyze_market(data)
-        
-        # Save to database if available
-        if db:
-            try:
-                db.save_ai_analysis(
-                    symbol=data.get('symbol', 'BTC'),
-                    model='deepseek-r1',
-                    analysis_type='market',
-                    analysis=analysis
-                )
-            except Exception as e:
-                print(f"Database save error: {e}")
-        
-        return {
-            'analysis': analysis,
-            'model': 'deepseek-r1',
-            'symbol': data.get('symbol', 'BTC')
-        }
+        """AI market analysis using Claude-4-Sonnet"""
+        try:
+            from src.рекс.ai import AIGatewayClient
+            
+            data = api.payload
+            ai = AIGatewayClient()
+            analysis = ai.analyze_market(data)
+            
+            return {
+                'analysis': analysis,
+                'model': 'claude-4-sonnet',
+                'symbol': data.get('symbol', 'BTC')
+            }
+        except Exception as e:
+            return {"error": str(e)}, 500
 
 @api.route('/api/ai/news/<string:symbol>')
 class CryptoNews(Resource):
@@ -339,6 +330,78 @@ class APILimits(Resource):
             "limits": rate_limiter.get_all_limits(),
             "timestamp": datetime.now().isoformat()
         }
+
+@api.route('/api/ai/strategy')
+class AIStrategy(Resource):
+    def post(self):
+        """Generate personalized trading strategy using Claude-4"""
+        try:
+            from src.рекс.ai import AIGatewayClient
+            
+            user_profile = api.payload
+            ai = AIGatewayClient()
+            strategy = ai.generate_trading_strategy(user_profile)
+            
+            # Store in blob storage
+            try:
+                from src.рекс.storage import put_json_blob
+                blob_result = put_json_blob(
+                    f"strategies/user_{user_profile.get('user_id', 'anonymous')}.json",
+                    strategy
+                )
+                strategy['storage_url'] = blob_result.get('url')
+            except:
+                pass
+            
+            return strategy
+        except Exception as e:
+            return {"error": str(e)}, 500
+
+@api.route('/api/ai/sentiment')
+class AISentiment(Resource):
+    def post(self):
+        """Analyze news sentiment using Claude-4"""
+        try:
+            from src.рекс.ai import AIGatewayClient
+            
+            news_items = api.payload.get('news', [])
+            ai = AIGatewayClient()
+            sentiment = ai.analyze_news_sentiment(news_items)
+            
+            return sentiment
+        except Exception as e:
+            return {"error": str(e)}, 500
+
+@api.route('/api/storage/signals/<string:symbol>')
+class StoredSignals(Resource):
+    def get(self, symbol):
+        """Get stored trading signals from Vercel Blob"""
+        try:
+            from src.рекс.storage import VercelBlobClient
+            
+            client = VercelBlobClient()
+            signals = client.get_latest_signals(symbol)
+            
+            return {
+                "symbol": symbol,
+                "signals": signals,
+                "count": len(signals)
+            }
+        except Exception as e:
+            return {"error": str(e)}, 500
+    
+    def post(self, symbol):
+        """Store new trading signal in Vercel Blob"""
+        try:
+            from src.рекс.storage import VercelBlobClient
+            
+            signal_data = api.payload
+            client = VercelBlobClient()
+            result = client.store_trading_signal(symbol, signal_data)
+            
+            return result
+        except Exception as e:
+            return {"error": str(e)}, 500
 
 # Error handlers
 @app.errorhandler(404)
