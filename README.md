@@ -49,17 +49,37 @@ The platform is deployed on Vercel and accessible at:
 
 ### API Endpoints
 
+#### Core Endpoints
 - `/health` - Health check
 - `/api/` - API documentation (Swagger UI)
 - `/api/trading/status` - Trading system status
-- `/api/market/data` - Market data feed
-- `/api/ai/analyze` - AI market analysis
-- `/api/ai/news/{symbol}` - Crypto news via Perplexity
+
+#### Market Data Endpoints
+- `/api/market/data?symbol={symbol}&network={network}` - Aggregated market data from multiple sources
+- `/api/market/overview?symbols={symbol1,symbol2}` - Market overview for multiple symbols
+- `/api/market/historical/{symbol}?days={days}` - Historical market data
+- `/api/market/dex/trending?network={network}` - Trending DEX pools
+- `/api/market/dex/opportunities?min_liquidity={amount}` - DEX trading opportunities
+- `/api/market/dex/pool/{network}/{address}` - Specific DEX pool data
+
+#### AI Analysis Endpoints
+- `/api/ai/analyze` - AI market analysis using DeepSeek R1
+- `/api/ai/news/{symbol}` - Real-time crypto news via Perplexity
 - `/api/ai/signals/{symbol}` - AI trading signals
+
+#### Wallet & DeFi Endpoints
 - `/api/wallet/balance` - MetaMask wallet balance
 - `/api/wallet/monitor` - Wallet monitoring
 - `/api/defi/opportunities` - DeFi opportunities
 - `/api/wallet/gas` - Gas price optimization
+
+### Market Data Sources
+
+The platform aggregates data from multiple sources:
+- **GeckoTerminal**: DEX data from 1,600+ exchanges across 240+ networks
+- **CoinGecko**: Comprehensive crypto market data (CEX + DEX)
+- **CoinMarketCap**: Market data and trending analysis (requires API key)
+- **Bitquery**: GraphQL API for DEX trades and mempool data (requires API key)
 
 ## Disclaimer
 

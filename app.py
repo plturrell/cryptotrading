@@ -14,7 +14,7 @@ sys.path.insert(0, str(project_root / 'src'))
 # Create data directory if it doesn't exist
 os.makedirs(project_root / 'data', exist_ok=True)
 
-from flask import Flask, render_template, send_from_directory
+from flask import Flask, render_template, send_from_directory, request
 from flask_cors import CORS
 from flask_restx import Api, Resource
 from dotenv import load_dotenv
@@ -82,8 +82,15 @@ class TradingStatus(Resource):
 @api.route('/api/market/data')
 class MarketData(Resource):
     def get(self):
-        """Get market data"""
-        return {'data': 'market_feed', 'timestamp': 'current'}
+        """Get aggregated market data from multiple sources"""
+        from src.рекс.market_data import MarketDataAggregator
+        
+        symbol = request.args.get('symbol', 'bitcoin')
+        network = request.args.get('network', None)
+        
+        aggregator = MarketDataAggregator()
+        data = aggregator.get_aggregated_price(symbol, network)
+        return data
 
 @api.route('/api/ai/analyze')
 class AIAnalysis(Resource):
@@ -181,6 +188,69 @@ class GasPrice(Resource):
             "current": gas_price,
             "optimization": optimization
         }
+
+@api.route('/api/market/overview')
+class MarketOverview(Resource):
+    def get(self):
+        """Get market overview for multiple symbols"""
+        from src.рекс.market_data import MarketDataAggregator
+        
+        symbols = request.args.get('symbols', 'bitcoin,ethereum,binancecoin').split(',')
+        
+        aggregator = MarketDataAggregator()
+        overview = aggregator.get_market_overview(symbols)
+        return overview
+
+@api.route('/api/market/dex/opportunities')
+class DexOpportunities(Resource):
+    def get(self):
+        """Get DEX trading opportunities"""
+        from src.рекс.market_data import MarketDataAggregator
+        
+        min_liquidity = float(request.args.get('min_liquidity', 10000))
+        
+        aggregator = MarketDataAggregator()
+        opportunities = aggregator.get_dex_opportunities(min_liquidity)
+        return {"opportunities": opportunities, "count": len(opportunities)}
+
+@api.route('/api/market/dex/trending')
+class DexTrending(Resource):
+    def get(self):
+        """Get trending DEX pools"""
+        from src.рекс.market_data import GeckoTerminalClient
+        
+        network = request.args.get('network', None)
+        
+        client = GeckoTerminalClient()
+        trending = client.get_trending_pools(network)
+        return trending
+
+@api.route('/api/market/dex/pool/<string:network>/<string:address>')
+class DexPool(Resource):
+    def get(self, network, address):
+        """Get specific DEX pool data"""
+        from src.рекс.market_data import GeckoTerminalClient
+        
+        client = GeckoTerminalClient()
+        pool_data = client.get_pool_by_address(network, address)
+        volume_data = client.get_pool_volume(network, address)
+        
+        return {
+            "pool": pool_data,
+            "volume": volume_data
+        }
+
+@api.route('/api/market/historical/<string:symbol>')
+class HistoricalData(Resource):
+    def get(self, symbol):
+        """Get historical market data"""
+        from src.рекс.market_data import MarketDataAggregator
+        
+        days = int(request.args.get('days', 7))
+        
+        aggregator = MarketDataAggregator()
+        historical = aggregator.get_historical_data(symbol, days)
+        return historical
 
 # Error handlers
 @app.errorhandler(404)

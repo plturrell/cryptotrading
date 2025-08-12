@@ -100,3 +100,50 @@ class TradingSignal(Base):
     ma_200 = Column(Float)
     volume_signal = Column(String(20))
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class DexTrade(Base):
+    __tablename__ = 'dex_trades'
+    
+    id = Column(Integer, primary_key=True)
+    source = Column(String(50), nullable=False)  # geckoterminal, bitquery
+    network = Column(String(50), nullable=False)  # ethereum, bsc, polygon
+    token = Column(String(100), nullable=False)
+    exchange = Column(String(100))  # Uniswap, Sushiswap, etc
+    base_amount = Column(Float)
+    quote_amount = Column(Float)
+    price = Column(Float, nullable=False)
+    side = Column(String(10))  # buy/sell
+    tx_hash = Column(String(100))
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
+class AggregatedMarketData(Base):
+    __tablename__ = 'aggregated_market_data'
+    
+    id = Column(Integer, primary_key=True)
+    symbol = Column(String(50), nullable=False)
+    network = Column(String(50))
+    avg_price = Column(Float, nullable=False)
+    median_price = Column(Float)
+    min_price = Column(Float)
+    max_price = Column(Float)
+    std_dev = Column(Float)
+    volume_24h = Column(Float)
+    sources_count = Column(Integer)
+    raw_data = Column(Text)  # JSON string of all source data
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
+class MarketDataSource(Base):
+    __tablename__ = 'market_data_sources'
+    
+    id = Column(Integer, primary_key=True)
+    source = Column(String(50), nullable=False)  # geckoterminal, coingecko, etc
+    symbol = Column(String(100), nullable=False)
+    price = Column(Float)
+    volume_24h = Column(Float)
+    market_cap = Column(Float)
+    liquidity = Column(Float)
+    change_1h = Column(Float)
+    change_24h = Column(Float)
+    change_7d = Column(Float)
+    data_type = Column(String(20))  # dex, cex, aggregated
+    timestamp = Column(DateTime, default=datetime.utcnow)
