@@ -90,6 +90,27 @@ class AIAnalysis(api.Resource):
             'symbol': data.get('symbol', 'BTC')
         }
 
+@api.route('/api/ai/news/<string:symbol>')
+class CryptoNews(api.Resource):
+    def get(self, symbol):
+        """Get real-time crypto news via Perplexity"""
+        from src.рекс.ml.perplexity import PerplexityClient
+        
+        perplexity = PerplexityClient()
+        news = perplexity.search_crypto_news(symbol.upper())
+        return news
+
+@api.route('/api/ai/signals/<string:symbol>')
+class TradingSignals(api.Resource):
+    def get(self, symbol):
+        """Get AI trading signals via Perplexity"""
+        from src.рекс.ml.perplexity import PerplexityClient
+        
+        timeframe = api.parser.parse_args().get('timeframe', '4h')
+        perplexity = PerplexityClient()
+        signals = perplexity.get_trading_signals(symbol.upper(), timeframe)
+        return signals
+
 # Error handlers
 @app.errorhandler(404)
 def not_found(error):
