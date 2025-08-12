@@ -47,11 +47,5 @@
   "env": {
     "VERCEL": "1",
     "FLASK_ENV": "production"
-  },
-  "functions": {
-    "app_vercel.py": {
-      "includeFiles": "webapp/**,manifest.json",
-      "excludeFiles": "src/**,test_*,data/**,*.pyc,__pycache__/**,*.csv,*.db"
-    }
   }
 }
