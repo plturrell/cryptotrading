@@ -1,0 +1,202 @@
+<mvc:View
+    controllerName="com.рекс.cryptotrading.controller.Launchpad"
+    displayBlock="true"
+    xmlns="sap.m"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:core="sap.ui.core"
+    xmlns:f="sap.f"
+    xmlns:tnt="sap.tnt">
+    
+    <Shell id="shell" appWidthLimited="false">
+        <App id="app">
+            <pages>
+                <Page id="launchpadPage" 
+                      showHeader="false"
+                      enableScrolling="true"
+                      backgroundDesign="Solid">
+                    
+                    <!-- Professional SAP Header Bar -->
+                    <customHeader>
+                        <tnt:ToolHeader>
+                            <Button icon="sap-icon://menu2" type="Transparent" press="onMenuPress">
+                                <layoutData>
+                                    <OverflowToolbarLayoutData priority="NeverOverflow"/>
+                                </layoutData>
+                            </Button>
+                            <Image src="/webapp/img/logo.png" width="40px" height="40px"/>
+                            <Title text="рекс.com Trading Platform" level="H2"/>
+                            <ToolbarSpacer/>
+                            <Button icon="sap-icon://search" type="Transparent"/>
+                            <Button icon="sap-icon://bell" type="Transparent" press="onNotificationPress">
+                                <customData>
+                                    <core:CustomData key="badge" value="3" writeToDom="true"/>
+                                </customData>
+                            </Button>
+                            <Button icon="sap-icon://sys-help" type="Transparent"/>
+                            <Avatar 
+                                src="sap-icon://person-placeholder"
+                                displaySize="XS"
+                                press="onAvatarPress"/>
+                        </tnt:ToolHeader>
+                    </customHeader>
+                    
+                    <content>
+                        <!-- KPI Bar -->
+                        <VBox class="sapUiSmallMargin">
+                            <HBox justifyContent="SpaceBetween" class="sapUiSmallMarginBottom">
+                                <VBox>
+                                    <Title text="Good Morning, {app>/user/name}" level="H3"/>
+                                    <Text text="Your portfolio is up 12.5% today"/>
+                                </VBox>
+                                <HBox>
+                                    <Button text="Connect Wallet" 
+                                            type="Emphasized" 
+                                            icon="sap-icon://wallet"
+                                            press="onConnectWallet"
+                                            visible="{= !${app>/wallet/connected}}"/>
+                                    <Text text="Wallet: {app>/wallet/address}" 
+                                          visible="{app>/wallet/connected}"
+                                          class="sapUiSmallMarginTop"/>
+                                </HBox>
+                            </HBox>
+                            
+                            <!-- KPI Tiles -->
+                            <f:GridContainer
+                                id="kpiContainer"
+                                snapToRow="true"
+                                allowDenseFill="true"
+                                inlineBlockLayout="true">
+                                
+                                <f:layout>
+                                    <f:GridContainerSettings
+                                        rowSize="5rem"
+                                        columnSize="5rem"
+                                        gap="1rem"/>
+                                </f:layout>
+                                
+                                <f:items>
+                                    <GenericTile
+                                        header="Total Portfolio Value"
+                                        subheader="All assets combined"
+                                        press="onPortfolioPress">
+                                        <layoutData>
+                                            <f:GridContainerItemLayoutData columns="4" rows="2"/>
+                                        </layoutData>
+                                        <tileContent>
+                                            <TileContent>
+                                                <content>
+                                                    <NumericContent
+                                                        value="125,650"
+                                                        scale="USD"
+                                                        indicator="Up"
+                                                        valueColor="Good"/>
+                                                </content>
+                                            </TileContent>
+                                        </tileContent>
+                                    </GenericTile>
+                                    
+                                    <GenericTile
+                                        header="24h Change"
+                                        subheader="Portfolio performance">
+                                        <layoutData>
+                                            <f:GridContainerItemLayoutData columns="2" rows="2"/>
+                                        </layoutData>
+                                        <tileContent>
+                                            <TileContent>
+                                                <content>
+                                                    <NumericContent
+                                                        value="+12.5"
+                                                        scale="%"
+                                                        indicator="Up"
+                                                        valueColor="Good"/>
+                                                </content>
+                                            </TileContent>
+                                        </tileContent>
+                                    </GenericTile>
+                                    
+                                    <GenericTile
+                                        header="Active Positions"
+                                        subheader="Open trades">
+                                        <layoutData>
+                                            <f:GridContainerItemLayoutData columns="2" rows="2"/>
+                                        </layoutData>
+                                        <tileContent>
+                                            <TileContent>
+                                                <content>
+                                                    <NumericContent
+                                                        value="8"
+                                                        scale="Trades"/>
+                                                </content>
+                                            </TileContent>
+                                        </tileContent>
+                                    </GenericTile>
+                                </f:items>
+                            </f:GridContainer>
+                        </VBox>
+                        
+                        <!-- Main Tile Container -->
+                        <f:GridContainer
+                            id="tileContainer"
+                            snapToRow="true"
+                            allowDenseFill="true"
+                            inlineBlockLayout="true"
+                            class="sapUiSmallMargin">
+                            
+                            <f:layout>
+                                <f:GridContainerSettings
+                                    rowSize="5rem"
+                                    columnSize="5rem"
+                                    gap="1rem"/>
+                            </f:layout>
+                            
+                            <f:layoutS>
+                                <f:GridContainerSettings
+                                    rowSize="5rem"
+                                    columnSize="5rem"
+                                    gap="0.5rem"/>
+                            </f:layoutS>
+                            
+                            <f:items>
+                                <!-- Dynamic tiles bound to model -->
+                                <GenericTile
+                                    header="{app>title}"
+                                    subheader="{app>subtitle}"
+                                    frameType="{app>frameType}"
+                                    press="onTilePress"
+                                    class="sapUiTinyMarginBegin sapUiTinyMarginTop"
+                                    items="{app>/tiles}">
+                                    
+                                    <layoutData>
+                                        <f:GridContainerItemLayoutData 
+                                            columns="{= ${app>frameType} === 'TwoByOne' ? 8 : 4}"
+                                            rows="4"/>
+                                    </layoutData>
+                                    
+                                    <tileContent>
+                                        <TileContent 
+                                            unit="{app>numberUnit}"
+                                            footer="{app>info}">
+                                            <content>
+                                                <NumericContent
+                                                    value="{app>number}"
+                                                    scale="{app>numberUnit}"
+                                                    indicator="{app>stateArrow}"
+                                                    valueColor="{app>infoState}"
+                                                    icon="{app>icon}"
+                                                    visible="{= !${app>newsContent}}"/>
+                                                <NewsContent
+                                                    contentText="{app>newsContent/0/text}"
+                                                    subheader="{app>newsContent/0/title}"
+                                                    visible="{= !!${app>newsContent}}"/>
+                                            </content>
+                                        </TileContent>
+                                    </tileContent>
+                                </GenericTile>
+                            </f:items>
+                        </f:GridContainer>
+                    </content>
+                </Page>
+            </pages>
+        </App>
+    </Shell>
+</mvc:View>

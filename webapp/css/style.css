@@ -1,80 +1,273 @@
-/* Custom styles for рекс.com Crypto Trading Platform */
+/* SAP Fiori Professional Enterprise Styling for рекс.com */
 
-/* Fiori Launchpad customization */
-.sapMShell {
-    background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
+/* Global Theme Variables */
+:root {
+    --sap-brand-color: #0a6ed1;
+    --sap-shell-color: #354a5f;
+    --sap-tile-background: #ffffff;
+    --sap-content-background: #f5f5f5;
+    --sap-hover-background: #e5f1fb;
+    --sap-positive-color: #107e3e;
+    --sap-critical-color: #b00;
+    --sap-neutral-color: #6a6d70;
 }
 
-/* Custom tile styling */
+/* Shell Professional Styling */
+.sapMShell {
+    background-color: var(--sap-content-background);
+}
+
+.sapMShellCentralBox {
+    background-color: var(--sap-content-background);
+}
+
+/* Tool Header Enterprise Style */
+.sapTntToolHeader {
+    background-color: var(--sap-shell-color);
+    height: 48px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
+
+.sapTntToolHeader .sapMTitle {
+    color: #ffffff;
+    font-size: 1.125rem;
+    font-weight: 400;
+}
+
+.sapTntToolHeader .sapMBtn {
+    color: #ffffff;
+}
+
+.sapTntToolHeader .sapMBtnInner {
+    color: #ffffff;
+}
+
+/* Professional Page Styling */
+.sapMPage {
+    background-color: var(--sap-content-background);
+}
+
+.sapMPageEnableScrolling > .sapMPageScroll {
+    background-color: var(--sap-content-background);
+}
+
+/* SAP Standard Tile Styling */
 .sapMGT {
-    background: rgba(255, 255, 255, 0.05) !important;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: all 0.3s ease;
+    background-color: var(--sap-tile-background) !important;
+    border: 1px solid #e5e5e5;
+    border-radius: 0.25rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: all 0.2s ease;
 }
 
 .sapMGT:hover {
-    background: rgba(255, 255, 255, 0.08) !important;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    border-color: var(--sap-brand-color);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
 }
 
-/* Numeric content styling */
+.sapMGT:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* Tile Header Text */
+.sapMGT .sapMGTHdrTxt {
+    color: #32363a;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+}
+
+.sapMGT .sapMGTSubHdrTxt {
+    color: #6a6d70;
+    font-size: 0.875rem;
+    line-height: 1.125rem;
+}
+
+/* Numeric Content Professional Style */
 .sapMNCValue {
-    color: #00d4ff !important;
+    color: var(--sap-brand-color) !important;
+    font-weight: 300;
+    font-size: 2.25rem;
 }
 
-/* Success state - green */
-.sapMNCStateSuccess .sapMNCValue {
-    color: #00ff88 !important;
+.sapMNCValueScr {
+    color: #32363a !important;
+    font-size: 0.875rem;
+    font-weight: 400;
 }
 
-/* Warning state - yellow */
-.sapMNCStateWarning .sapMNCValue {
-    color: #ffaa00 !important;
+/* State Colors Following SAP Standards */
+.sapMNCValueGood,
+.sapMGTStateGood .sapMNCValue {
+    color: var(--sap-positive-color) !important;
 }
 
-/* Error state - red */
-.sapMNCStateError .sapMNCValue {
-    color: #ff4444 !important;
+.sapMNCValueCritical,
+.sapMGTStateCritical .sapMNCValue {
+    color: var(--sap-critical-color) !important;
 }
 
-/* ShellBar customization */
-.sapFShellBar {
-    background: rgba(0, 0, 0, 0.8) !important;
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+.sapMNCValueNeutral,
+.sapMGTStateNeutral .sapMNCValue {
+    color: var(--sap-neutral-color) !important;
 }
 
-/* Grid container spacing */
+/* KPI Container Professional Style */
+.kpiContainer {
+    background-color: #ffffff;
+    border-radius: 0.25rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Grid Container SAP Standard */
 .sapFGridContainer {
     padding: 1rem;
+    background-color: transparent;
 }
 
-/* Wallet button styling */
-.sapMBtnAccept {
-    background-color: #00ff88 !important;
-    color: #000 !important;
+/* Button Professional Styling */
+.sapMBtn.sapMBtnEmphasized {
+    background-color: var(--sap-brand-color);
+    border-color: var(--sap-brand-color);
+    color: #ffffff;
 }
 
-/* Loading animation */
-@keyframes pulse {
-    0% { opacity: 0.6; }
-    50% { opacity: 1; }
-    100% { opacity: 0.6; }
+.sapMBtn.sapMBtnEmphasized:hover {
+    background-color: #085caf;
+    border-color: #085caf;
 }
 
-.loading {
-    animation: pulse 2s infinite;
+.sapMBtn.sapMBtnTransparent {
+    color: var(--sap-brand-color);
 }
 
-/* Responsive adjustments */
+/* Avatar Professional Style */
+.sapMAvatar {
+    border: 2px solid #ffffff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* News Content Professional */
+.sapMNwC {
+    background-color: #fafafa;
+    border-left: 3px solid var(--sap-brand-color);
+    padding: 0.75rem;
+}
+
+.sapMNwCCTxt {
+    color: #32363a;
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.sapMNwCSbh {
+    color: var(--sap-brand-color);
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+/* Loading State Professional */
+.sapMGTLoading .sapMGTContent {
+    opacity: 0.6;
+}
+
+.sapMGTLoading::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Notification Badge */
+.sapMBtn[data-badge]:after {
+    content: attr(data-badge);
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background-color: #bb0000;
+    color: #ffffff;
+    border-radius: 0.75rem;
+    min-width: 1.125rem;
+    height: 1.125rem;
+    font-size: 0.625rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    padding: 0 0.25rem;
+}
+
+/* Professional Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f0f0f0;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c0c0c0;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a0a0a0;
+}
+
+/* Responsive Professional Design */
+@media (max-width: 1024px) {
+    .sapFGridContainer {
+        padding: 0.75rem;
+    }
+}
+
 @media (max-width: 768px) {
     .sapFGridContainer {
         padding: 0.5rem;
     }
     
     .sapMGT {
-        margin: 0.25rem !important;
+        margin: 0.25rem;
     }
+    
+    .sapTntToolHeader .sapMTitle {
+        font-size: 1rem;
+    }
+}
+
+/* SAP Horizon Theme Adjustments */
+.sapUiTheme-sap_horizon .sapMGT {
+    border-radius: 0.5rem;
+}
+
+.sapUiTheme-sap_horizon_dark .sapMShell {
+    background-color: #0f1419;
+}
+
+.sapUiTheme-sap_horizon_dark .sapMGT {
+    background-color: #1c2228 !important;
+    border-color: #2d3540;
+}
+
+.sapUiTheme-sap_horizon_dark .sapMGT .sapMGTHdrTxt {
+    color: #ffffff;
+}
+
+.sapUiTheme-sap_horizon_dark .sapMGT .sapMGTSubHdrTxt {
+    color: #a9b4be;
 }

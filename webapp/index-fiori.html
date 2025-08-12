@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>рекс.com - SAP Fiori Launchpad</title>
+    
+    <!-- SAP UI5 Bootstrap -->
+    <script id="sap-ui-bootstrap"
+            src="https://sapui5.hana.ondemand.com/resources/sap-ui-core.js"
+            data-sap-ui-theme="sap_horizon_dark"
+            data-sap-ui-libs="sap.m,sap.ushell,sap.ui.layout,sap.f"
+            data-sap-ui-compatVersion="edge"
+            data-sap-ui-frameOptions="allow"
+            data-sap-ui-preload="async">
+    </script>
+    
+    <script>
+        sap.ui.getCore().attachInit(function() {
+            // Initialize the Fiori Launchpad
+            sap.ui.require([
+                "sap/m/Shell",
+                "sap/m/App",
+                "sap/m/Page",
+                "sap/m/TileContainer",
+                "sap/m/StandardTile",
+                "sap/m/GenericTile",
+                "sap/m/TileContent",
+                "sap/m/NumericContent",
+                "sap/m/ImageContent",
+                "sap/m/NewsContent",
+                "sap/ui/core/IconPool",
+                "sap/m/Bar",
+                "sap/m/Button",
+                "sap/m/Title",
+                "sap/m/Avatar",
+                "sap/m/Popover",
+                "sap/m/List",
+                "sap/m/StandardListItem",
+                "sap/m/MessageToast"
+            ], function(Shell, App, Page, TileContainer, StandardTile, GenericTile, 
+                       TileContent, NumericContent, ImageContent, NewsContent, IconPool,
+                       Bar, Button, Title, Avatar, Popover, List, StandardListItem, MessageToast) {
+                
+                // Create the Shell
+                var oShell = new Shell({
+                    app: new App("app", {
+                        pages: [
+                            new Page("page", {
+                                title: "рекс.com Trading Platform",
+                                enableScrolling: true,
+                                customHeader: new Bar({
+                                    contentLeft: [
+                                        new Button({
+                                            icon: "sap-icon://menu2",
+                                            press: function() {
+                                                MessageToast.show("Menu");
+                                            }
+                                        })
+                                    ],
+                                    contentMiddle: [
+                                        new Title({
+                                            text: "рекс.com Trading Platform",
+                                            level: "H2"
+                                        })
+                                    ],
+                                    contentRight: [
+                                        new Button({
+                                            icon: "sap-icon://bell",
+                                            press: function() {
+                                                MessageToast.show("No new notifications");
+                                            }
+                                        }),
+                                        new Avatar({
+                                            src: "sap-icon://person-placeholder",
+                                            displaySize: "XS",
+                                            press: function(oEvent) {
+                                                if (!this.oPopover) {
+                                                    this.oPopover = new Popover({
+                                                        title: "User Menu",
+                                                        placement: "Bottom",
+                                                        content: new List({
+                                                            items: [
+                                                                new StandardListItem({
+                                                                    title: "Settings",
+                                                                    icon: "sap-icon://action-settings"
+                                                                }),
+                                                                new StandardListItem({
+                                                                    title: "Connect Wallet",
+                                                                    icon: "sap-icon://wallet"
+                                                                }),
+                                                                new StandardListItem({
+                                                                    title: "Sign Out",
+                                                                    icon: "sap-icon://log"
+                                                                })
+                                                            ]
+                                                        })
+                                                    });
+                                                }
+                                                this.oPopover.openBy(oEvent.getSource());
+                                            }
+                                        })
+                                    ]
+                                }),
+                                content: [
+                                    new TileContainer("tileContainer", {
+                                        tiles: [
+                                            // Market Overview Tile
+                                            new GenericTile({
+                                                header: "Market Overview",
+                                                subheader: "Real-time cryptocurrency prices",
+                                                press: function() {
+                                                    MessageToast.show("Opening Market Overview...");
+                                                },
+                                                tileContent: [
+                                                    new TileContent({
+                                                        unit: "USD",
+                                                        content: new NumericContent({
+                                                            value: "65,432",
+                                                            scale: "BTC",
+                                                            indicator: "Up",
+                                                            valueColor: "Good",
+                                                            icon: "sap-icon://BusinessSuiteInAppSymbols/icon-line-chart-dual-axis"
+                                                        })
+                                                    })
+                                                ]
+                                            }),
+                                            
+                                            // Portfolio Tile
+                                            new GenericTile({
+                                                header: "Portfolio Value",
+                                                subheader: "Your total holdings",
+                                                press: function() {
+                                                    MessageToast.show("Opening Portfolio...");
+                                                },
+                                                tileContent: [
+                                                    new TileContent({
+                                                        unit: "USD",
+                                                        content: new NumericContent({
+                                                            value: "125,650",
+                                                            scale: "Total",
+                                                            indicator: "Up",
+                                                            valueColor: "Good",
+                                                            icon: "sap-icon://wallet"
+                                                        })
+                                                    })
+                                                ]
+                                            }),
+                                            
+                                            // Trading Tile
+                                            new GenericTile({
+                                                header: "Trading",
+                                                subheader: "Execute buy/sell orders",
+                                                press: function() {
+                                                    MessageToast.show("Opening Trading Interface...");
+                                                },
+                                                tileContent: [
+                                                    new TileContent({
+                                                        content: new ImageContent({
+                                                            src: "sap-icon://sales-order"
+                                                        })
+                                                    })
+                                                ]
+                                            }),
+                                            
+                                            // AI Analysis Tile
+                                            new GenericTile({
+                                                header: "AI Market Analysis",
+                                                subheader: "Claude-4-Sonnet insights",
+                                                press: function() {
+                                                    MessageToast.show("Loading AI Analysis...");
+                                                },
+                                                frameType: "TwoByOne",
+                                                tileContent: [
+                                                    new TileContent({
+                                                        content: new NewsContent({
+                                                            contentText: "BTC showing strong bullish momentum. RSI at 65, MACD positive divergence detected. Consider accumulation positions.",
+                                                            subheader: "Latest AI Signal"
+                                                        })
+                                                    })
+                                                ]
+                                            }),
+                                            
+                                            // DEX Monitor Tile
+                                            new GenericTile({
+                                                header: "DEX Monitor",
+                                                subheader: "DeFi opportunities",
+                                                press: function() {
+                                                    MessageToast.show("Opening DEX Monitor...");
+                                                },
+                                                tileContent: [
+                                                    new TileContent({
+                                                        unit: "Active",
+                                                        content: new NumericContent({
+                                                            value: "237",
+                                                            scale: "Pools",
+                                                            icon: "sap-icon://chain-link"
+                                                        })
+                                                    })
+                                                ]
+                                            }),
+                                            
+                                            // Historical Data Tile
+                                            new GenericTile({
+                                                header: "Historical Data",
+                                                subheader: "Download datasets",
+                                                press: function() {
+                                                    MessageToast.show("Opening Historical Data...");
+                                                },
+                                                tileContent: [
+                                                    new TileContent({
+                                                        content: new ImageContent({
+                                                            src: "sap-icon://download"
+                                                        })
+                                                    })
+                                                ]
+                                            }),
+                                            
+                                            // Risk Analytics Tile
+                                            new GenericTile({
+                                                header: "Risk Analytics",
+                                                subheader: "Portfolio risk assessment",
+                                                press: function() {
+                                                    MessageToast.show("Opening Risk Analytics...");
+                                                },
+                                                tileContent: [
+                                                    new TileContent({
+                                                        unit: "%",
+                                                        content: new NumericContent({
+                                                            value: "12.3",
+                                                            scale: "VaR",
+                                                            valueColor: "Critical",
+                                                            icon: "sap-icon://alert"
+                                                        })
+                                                    })
+                                                ]
+                                            }),
+                                            
+                                            // Settings Tile
+                                            new GenericTile({
+                                                header: "Settings",
+                                                subheader: "Configure platform",
+                                                press: function() {
+                                                    MessageToast.show("Opening Settings...");
+                                                },
+                                                tileContent: [
+                                                    new TileContent({
+                                                        content: new ImageContent({
+                                                            src: "sap-icon://action-settings"
+                                                        })
+                                                    })
+                                                ]
+                                            })
+                                        ]
+                                    })
+                                ]
+                            })
+                        ]
+                    })
+                });
+                
+                // Place the Shell in the DOM
+                oShell.placeAt("content");
+                
+                // Load initial data
+                loadMarketData();
+                
+                // Set up refresh interval
+                setInterval(loadMarketData, 30000);
+            });
+        });
+        
+        // Load market data function
+        function loadMarketData() {
+            // Fetch real market data
+            fetch('/api/market/overview?symbols=bitcoin,ethereum')
+                .then(response => response.json())
+                .then(data => {
+                    // Update tiles with real data
+                    var oTileContainer = sap.ui.getCore().byId("tileContainer");
+                    if (oTileContainer && data.symbols && data.symbols.bitcoin) {
+                        var oMarketTile = oTileContainer.getTiles()[0];
+                        if (oMarketTile) {
+                            var oNumericContent = oMarketTile.getTileContent()[0].getContent();
+                            oNumericContent.setValue(Math.round(data.symbols.bitcoin.prices.average).toLocaleString());
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading market data:', error);
+                });
+        }
+    </script>
+    
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        
+        #content {
+            height: 100%;
+        }
+        
+        /* SAP Fiori Launchpad specific styles */
+        .sapMShell {
+            height: 100%;
+        }
+        
+        .sapMTileContainer {
+            padding: 1rem;
+        }
+        
+        .sapMGT {
+            margin: 0.5rem;
+        }
+    </style>
+</head>
+<body class="sapUiBody">
+    <div id="content"></div>
+</body>
+</html>

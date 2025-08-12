@@ -36,6 +36,10 @@
       "destination": "/webapp/test-pad.html"
     },
     {
+      "source": "/fiori",
+      "destination": "/webapp/index-fiori.html"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/app_vercel.py"
     },

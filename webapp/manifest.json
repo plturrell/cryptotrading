@@ -1,0 +1,115 @@
+{
+    "_version": "1.12.0",
+    "sap.app": {
+        "id": "com.рекс.cryptotrading",
+        "type": "application",
+        "i18n": "i18n/i18n.properties",
+        "applicationVersion": {
+            "version": "1.0.0"
+        },
+        "title": "{{appTitle}}",
+        "description": "{{appDescription}}",
+        "resources": "resources.json",
+        "ach": "CA-UI5-DOC"
+    },
+    "sap.ui": {
+        "technology": "UI5",
+        "icons": {
+            "icon": "sap-icon://line-chart",
+            "favIcon": "",
+            "phone": "",
+            "phone@2": "",
+            "tablet": "",
+            "tablet@2": ""
+        },
+        "deviceTypes": {
+            "desktop": true,
+            "tablet": true,
+            "phone": true
+        }
+    },
+    "sap.ui5": {
+        "flexEnabled": true,
+        "rootView": {
+            "viewName": "com.рекс.cryptotrading.view.Launchpad",
+            "type": "XML",
+            "async": true,
+            "id": "launchpad"
+        },
+        "dependencies": {
+            "minUI5Version": "1.60.0",
+            "libs": {
+                "sap.m": {},
+                "sap.ui.core": {},
+                "sap.f": {},
+                "sap.ui.layout": {},
+                "sap.ushell": {}
+            }
+        },
+        "contentDensities": {
+            "compact": true,
+            "cozy": true
+        },
+        "models": {
+            "i18n": {
+                "type": "sap.ui.model.resource.ResourceModel",
+                "settings": {
+                    "bundleName": "com.рекс.cryptotrading.i18n.i18n"
+                }
+            }
+        },
+        "resources": {
+            "css": [{
+                "uri": "css/style.css"
+            }]
+        },
+        "routing": {
+            "config": {
+                "routerClass": "sap.m.routing.Router",
+                "viewType": "XML",
+                "async": true,
+                "viewPath": "com.рекс.cryptotrading.view",
+                "controlAggregation": "pages",
+                "controlId": "app"
+            },
+            "routes": [{
+                "name": "launchpad",
+                "pattern": "",
+                "target": ["launchpad"]
+            }, {
+                "name": "market",
+                "pattern": "market",
+                "target": ["market"]
+            }, {
+                "name": "portfolio",
+                "pattern": "portfolio",
+                "target": ["portfolio"]
+            }, {
+                "name": "trading",
+                "pattern": "trading",
+                "target": ["trading"]
+            }],
+            "targets": {
+                "launchpad": {
+                    "viewType": "XML",
+                    "viewName": "Launchpad"
+                },
+                "market": {
+                    "viewType": "XML",
+                    "viewName": "Market"
+                },
+                "portfolio": {
+                    "viewType": "XML",
+                    "viewName": "Portfolio"
+                },
+                "trading": {
+                    "viewType": "XML",
+                    "viewName": "Trading"
+                }
+            }
+        }
+    },
+    "sap.platform.hcp": {
+        "uri": ""
+    }
+}
