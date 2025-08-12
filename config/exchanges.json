@@ -1,0 +1,24 @@
+{
+  "dex_enabled": true,
+  "metamask_wallet": "0x88bE2a6408934e32a0Ad63c368Be5b257ca63cC1",
+  "preferred_dexs": ["uniswap_v3", "sushiswap", "1inch"],
+  
+  "centralized_exchanges": {
+    "binance": {
+      "name": "Binance",
+      "enabled": false,
+      "api_key": "",
+      "api_secret": ""
+    }
+  },
+  "selected_pairs": [
+    "BTC/USDT",
+    "ETH/USDT",
+    "BNB/USDT",
+    "SOL/USDT",
+    "XRP/USDT",
+    "ADA/USDT",
+    "AVAX/USDT",
+    "DOT/USDT"
+  ]
+}
