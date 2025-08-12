@@ -1,0 +1,19 @@
+# Fix the dpkg issue first
+dpkg --configure -a
+
+# Now install Python and pip
+apt update
+apt install -y python3-pip python3-venv
+
+# Create virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Install all dependencies
+pip install flask flask-cors flask-restx sqlalchemy python-dotenv web3 eth-account requests pandas numpy
+
+# Create requirements file
+pip freeze > requirements.txt
+
+# Test the app
+python app.py
