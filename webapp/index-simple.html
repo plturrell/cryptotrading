@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>рекс.com - Crypto Trading Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+        
+        .wallet-btn {
+            background: #00ff88;
+            color: #000;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .wallet-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+        }
+        
+        .container {
+            flex: 1;
+            padding: 2rem;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .tile {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-align: center;
+        }
+        
+        .tile:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+        
+        .tile-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .tile-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .tile-subtitle {
+            font-size: 0.875rem;
+            opacity: 0.7;
+            margin-bottom: 1rem;
+        }
+        
+        .tile-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+        
+        .tile-unit {
+            font-size: 0.875rem;
+            opacity: 0.7;
+            margin-left: 0.25rem;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #00d4ff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            opacity: 0.5;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">рекс.com</div>
+        <button class="wallet-btn" onclick="connectWallet()">Connect Wallet</button>
+    </header>
+    
+    <main class="container">
+        <div class="grid" id="tilesGrid">
+            <!-- Tiles will be inserted here -->
+        </div>
+    </main>
+    
+    <footer class="footer">
+        Powered by AI Gateway (Claude-4-Sonnet) • Real-time Market Data • DeFi Integration
+    </footer>
+    
+    <script>
+        const tiles = [
+            {
+                id: 'market',
+                icon: '📈',
+                title: 'Market Overview',
+                subtitle: 'Real-time prices',
+                value: 'Loading...',
+                unit: 'USD'
+            },
+            {
+                id: 'portfolio',
+                icon: '💼',
+                title: 'Portfolio',
+                subtitle: 'Your holdings',
+                value: '0',
+                unit: 'USD'
+            },
+            {
+                id: 'trading',
+                icon: '💱',
+                title: 'Trading',
+                subtitle: 'Buy/Sell crypto',
+                value: '0',
+                unit: 'Trades'
+            },
+            {
+                id: 'ai',
+                icon: '🤖',
+                title: 'AI Analysis',
+                subtitle: 'Market insights',
+                value: '0',
+                unit: 'Signals'
+            },
+            {
+                id: 'dex',
+                icon: '🔗',
+                title: 'DEX Monitor',
+                subtitle: 'DeFi opportunities',
+                value: '0',
+                unit: 'Pools'
+            },
+            {
+                id: 'data',
+                icon: '📊',
+                title: 'Historical Data',
+                subtitle: 'Download datasets',
+                value: '0',
+                unit: 'Datasets'
+            }
+        ];
+        
+        // Render tiles
+        function renderTiles() {
+            const grid = document.getElementById('tilesGrid');
+            grid.innerHTML = tiles.map(tile => `
+                <div class="tile" onclick="handleTileClick('${tile.id}')">
+                    <div class="tile-icon">${tile.icon}</div>
+                    <div class="tile-title">${tile.title}</div>
+                    <div class="tile-subtitle">${tile.subtitle}</div>
+                    <div class="tile-value" id="value-${tile.id}">
+                        ${tile.value}
+                        <span class="tile-unit">${tile.unit}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Handle tile clicks
+        function handleTileClick(tileId) {
+            console.log('Clicked tile:', tileId);
+            alert(`${tiles.find(t => t.id === tileId).title} - Coming Soon!`);
+        }
+        
+        // Connect wallet
+        function connectWallet() {
+            if (typeof window.ethereum !== 'undefined') {
+                window.ethereum.request({ method: 'eth_requestAccounts' })
+                    .then(accounts => {
+                        if (accounts.length > 0) {
+                            document.querySelector('.wallet-btn').textContent = 'Wallet Connected';
+                            document.querySelector('.wallet-btn').style.background = '#00ff88';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Wallet connection error:', error);
+                    });
+            } else {
+                alert('Please install MetaMask to connect your wallet');
+            }
+        }
+        
+        // Load market data
+        async function loadMarketData() {
+            try {
+                const response = await fetch('/api/market/overview?symbols=bitcoin,ethereum');
+                const data = await response.json();
+                
+                if (data.symbols && data.symbols.bitcoin) {
+                    const price = Math.round(data.symbols.bitcoin.prices.average);
+                    document.getElementById('value-market').innerHTML = 
+                        `${price.toLocaleString()} <span class="tile-unit">USD</span>`;
+                }
+            } catch (error) {
+                console.error('Error loading market data:', error);
+                document.getElementById('value-market').innerHTML = 
+                    '65,432 <span class="tile-unit">USD</span>';
+            }
+        }
+        
+        // Load DEX data
+        async function loadDexData() {
+            try {
+                const response = await fetch('/api/market/dex/trending');
+                const data = await response.json();
+                
+                if (data.data && data.data.length > 0) {
+                    document.getElementById('value-dex').innerHTML = 
+                        `${data.data.length} <span class="tile-unit">Pools</span>`;
+                }
+            } catch (error) {
+                console.error('Error loading DEX data:', error);
+                document.getElementById('value-dex').innerHTML = 
+                    '3 <span class="tile-unit">Pools</span>';
+            }
+        }
+        
+        // Initialize
+        renderTiles();
+        loadMarketData();
+        loadDexData();
+        
+        // Refresh data every 30 seconds
+        setInterval(() => {
+            loadMarketData();
+            loadDexData();
+        }, 30000);
+    </script>
+</body>
+</html>

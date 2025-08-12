@@ -21,11 +21,17 @@
   "routes": [
     {
       "src": "/webapp/(.*)",
-      "dest": "/webapp/$1"
+      "dest": "/webapp/$1",
+      "headers": {
+        "cache-control": "public, max-age=3600"
+      }
     },
     {
       "src": "/css/(.*)", 
-      "dest": "/webapp/css/$1"
+      "dest": "/webapp/css/$1",
+      "headers": {
+        "cache-control": "public, max-age=86400"
+      }
     },
     {
       "src": "/manifest.json",
@@ -41,7 +47,31 @@
     },
     {
       "src": "/",
-      "dest": "/webapp/index.html"
+      "dest": "/webapp/index-simple.html",
+      "headers": {
+        "X-Frame-Options": "SAMEORIGIN",
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "origin-when-cross-origin"
+      }
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
     }
   ],
   "env": {
