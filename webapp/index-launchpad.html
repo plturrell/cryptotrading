@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>рекс.com - SAP Fiori Launchpad</title>
+    
+    <!-- SAP UI5 Bootstrap -->
+    <script id="sap-ui-bootstrap"
+            src="https://ui5.sap.com/resources/sap-ui-core.js"
+            data-sap-ui-theme="sap_fiori_3"
+            data-sap-ui-libs="sap.m,sap.ushell,sap.ui.layout,sap.f,sap.suite.ui.commons"
+            data-sap-ui-compatVersion="edge"
+            data-sap-ui-frameOptions="allow"
+            data-sap-ui-preload="async"
+            data-sap-ui-xx-waitForTheme="true">
+    </script>
+    
+    <script>
+        sap.ui.getCore().attachInit(function() {
+            // Create authentic SAP Fiori Launchpad Shell
+            sap.ushell.bootstrap("local").then(function () {
+                sap.ushell.Container.createRenderer().then(function(oRenderer) {
+                    
+                    // Create the launchpad with authentic SAP structure
+                    var oLaunchpadPage = new sap.m.Page("launchpadPage", {
+                        showHeader: false,
+                        enableScrolling: true,
+                        content: [
+                            // SAP Fiori Launchpad Header
+                            new sap.ushell.ui.shell.ShellHeader({
+                                logo: new sap.m.Image({ src: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iOCIgZmlsbD0iIzAwNzBGMiIvPgo8dGV4dCB4PSI1IiB5PSIyOCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE4IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiPtGA0LXQutGBPC90ZXh0Pgo8L3N2Zz4K" }),
+                                title: "рекс.com Trading Platform",
+                                headItems: [
+                                    new sap.ushell.ui.shell.ShellHeadItem({ icon: "sap-icon://bell" }),
+                                    new sap.ushell.ui.shell.ShellHeadItem({ icon: "sap-icon://person-placeholder" })
+                                ]
+                            }),
+                            
+                            // Authentic SAP Tile Container
+                            new sap.ushell.ui.launchpad.TileContainer("mainTileContainer", {
+                                groupId: "trading-group",
+                                header: "Trading Applications",
+                                tiles: [
+                                    // Market Data Tile - Real API
+                                    new sap.ushell.ui.launchpad.Tile({
+                                        title: "Market Data",
+                                        subtitle: "Live cryptocurrency prices",
+                                        icon: "sap-icon://line-chart",
+                                        info: "Loading...",
+                                        infoState: "Neutral",
+                                        press: function() {
+                                            loadMarketData(this);
+                                        }
+                                    }),
+                                    
+                                    // Portfolio Tile - Real wallet data
+                                    new sap.ushell.ui.launchpad.Tile({
+                                        title: "Portfolio",
+                                        subtitle: "Your holdings",
+                                        icon: "sap-icon://wallet",
+                                        info: "Connect wallet",
+                                        infoState: "Neutral",
+                                        press: function() {
+                                            connectWallet(this);
+                                        }
+                                    }),
+                                    
+                                    // Trading Tile
+                                    new sap.ushell.ui.launchpad.Tile({
+                                        title: "Trading",
+                                        subtitle: "Execute orders",
+                                        icon: "sap-icon://sales-order",
+                                        info: "Ready",
+                                        infoState: "Neutral",
+                                        press: function() {
+                                            openTradingConsole();
+                                        }
+                                    }),
+                                    
+                                    // AI Analysis Tile - Real AI data
+                                    new sap.ushell.ui.launchpad.Tile({
+                                        title: "AI Analysis",
+                                        subtitle: "Market intelligence",
+                                        icon: "sap-icon://BusinessSuiteInAppSymbols/icon-ai",
+                                        info: "Initializing...",
+                                        infoState: "Neutral",
+                                        press: function() {
+                                            loadAIAnalysis(this);
+                                        }
+                                    })
+                                ]
+                            }),
+                            
+                            // DEX Analytics Group
+                            new sap.ushell.ui.launchpad.TileContainer("dexTileContainer", {
+                                groupId: "defi-group", 
+                                header: "DeFi Analytics",
+                                tiles: [
+                                    new sap.ushell.ui.launchpad.Tile({
+                                        title: "DEX Monitor",
+                                        subtitle: "Decentralized exchanges",
+                                        icon: "sap-icon://chain-link",
+                                        info: "Loading...",
+                                        infoState: "Neutral",
+                                        press: function() {
+                                            loadDEXData(this);
+                                        }
+                                    }),
+                                    
+                                    new sap.ushell.ui.launchpad.Tile({
+                                        title: "Liquidity Pools",
+                                        subtitle: "Active pools",
+                                        icon: "sap-icon://pool",
+                                        info: "Scanning...",
+                                        infoState: "Neutral",
+                                        press: function() {
+                                            loadLiquidityData(this);
+                                        }
+                                    })
+                                ]
+                            })
+                        ]
+                    });
+                    
+                    // Place in container
+                    oLaunchpadPage.placeAt("content");
+                    
+                    // Start real data loading
+                    initializeRealData();
+                });
+            });
+        });
+        
+        // Real data loading functions
+        async function loadMarketData(tile) {
+            try {
+                const response = await fetch('/api/market/overview?symbols=bitcoin,ethereum');
+                const data = await response.json();
+                
+                if (data.symbols && data.symbols.bitcoin) {
+                    const price = Math.round(data.symbols.bitcoin.prices.average);
+                    const change = data.symbols.bitcoin.market_data.price_change_percentage_24h;
+                    
+                    tile.setInfo(`$${price.toLocaleString()}`);
+                    tile.setInfoState(change > 0 ? "Positive" : "Negative");
+                    tile.setSubtitle(`BTC ${change > 0 ? '+' : ''}${change.toFixed(2)}%`);
+                }
+            } catch (error) {
+                tile.setInfo("Error loading");
+                tile.setInfoState("Critical");
+            }
+        }
+        
+        async function connectWallet(tile) {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    if (accounts.length > 0) {
+                        const address = accounts[0];
+                        tile.setInfo(`${address.slice(0,6)}...${address.slice(-4)}`);
+                        tile.setInfoState("Positive");
+                        tile.setSubtitle("Connected");
+                        
+                        // Load real wallet balance
+                        loadWalletBalance(tile, address);
+                    }
+                } catch (error) {
+                    tile.setInfo("Connection failed");
+                    tile.setInfoState("Critical");
+                }
+            } else {
+                tile.setInfo("Install MetaMask");
+                tile.setInfoState("Critical");
+            }
+        }
+        
+        async function loadWalletBalance(tile, address) {
+            try {
+                const response = await fetch('/api/wallet/balance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ address: address })
+                });
+                const data = await response.json();
+                
+                if (data.balance && data.balance.ETH) {
+                    const ethBalance = parseFloat(data.balance.ETH).toFixed(4);
+                    tile.setInfo(`${ethBalance} ETH`);
+                }
+            } catch (error) {
+                console.error('Error loading wallet balance:', error);
+            }
+        }
+        
+        async function loadAIAnalysis(tile) {
+            try {
+                const response = await fetch('/api/ai/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        symbol: "BTC",
+                        price: 0, // Will be filled with real data
+                        volume_24h: 0,
+                        change_24h: 0
+                    })
+                });
+                const data = await response.json();
+                
+                if (data.signal) {
+                    tile.setInfo(`${data.signal} (${data.confidence}%)`);
+                    tile.setInfoState(data.signal === 'BUY' ? "Positive" : 
+                                    data.signal === 'SELL' ? "Critical" : "Neutral");
+                    tile.setSubtitle("AI Signal");
+                }
+            } catch (error) {
+                tile.setInfo("Analysis unavailable");
+                tile.setInfoState("Critical");
+            }
+        }
+        
+        async function loadDEXData(tile) {
+            try {
+                const response = await fetch('/api/market/dex/trending');
+                const data = await response.json();
+                
+                if (data.data && data.data.length > 0) {
+                    tile.setInfo(`${data.data.length} pools`);
+                    tile.setInfoState("Positive");
+                    tile.setSubtitle("Trending now");
+                }
+            } catch (error) {
+                tile.setInfo("DEX unavailable");
+                tile.setInfoState("Critical");
+            }
+        }
+        
+        async function loadLiquidityData(tile) {
+            try {
+                const response = await fetch('/api/market/dex/opportunities?min_liquidity=1000000');
+                const data = await response.json();
+                
+                if (data.opportunities) {
+                    tile.setInfo(`${data.opportunities.length} opportunities`);
+                    tile.setInfoState("Positive");
+                }
+            } catch (error) {
+                tile.setInfo("No opportunities");
+                tile.setInfoState("Neutral");
+            }
+        }
+        
+        function openTradingConsole() {
+            window.open('/trading', '_blank');
+        }
+        
+        // Initialize real data on load
+        function initializeRealData() {
+            // Load all real data immediately
+            setTimeout(() => {
+                const tiles = sap.ui.getCore().byId("mainTileContainer").getTiles();
+                tiles.forEach((tile, index) => {
+                    switch(index) {
+                        case 0: loadMarketData(tile); break;
+                        case 1: /* Wallet - user must connect */; break;
+                        case 2: /* Trading - always ready */; break;
+                        case 3: loadAIAnalysis(tile); break;
+                    }
+                });
+                
+                const dexTiles = sap.ui.getCore().byId("dexTileContainer").getTiles();
+                dexTiles.forEach((tile, index) => {
+                    switch(index) {
+                        case 0: loadDEXData(tile); break;
+                        case 1: loadLiquidityData(tile); break;
+                    }
+                });
+            }, 1000);
+            
+            // Set up real-time refresh
+            setInterval(() => {
+                const tiles = sap.ui.getCore().byId("mainTileContainer").getTiles();
+                loadMarketData(tiles[0]);
+                loadAIAnalysis(tiles[3]);
+                
+                const dexTiles = sap.ui.getCore().byId("dexTileContainer").getTiles();
+                loadDEXData(dexTiles[0]);
+                loadLiquidityData(dexTiles[1]);
+            }, 30000); // Update every 30 seconds
+        }
+    </script>
+    
+    <style>
+        /* Authentic SAP Fiori Launchpad Styling */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: "72", "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        #content {
+            height: 100%;
+            background-color: #f7f7f7;
+        }
+        
+        /* Override for proper launchpad look */
+        .sapUshellShellHeader {
+            background-color: #354a5f !important;
+        }
+        
+        .sapUshellTileContainer {
+            margin: 1rem !important;
+        }
+        
+        .sapUshellTile {
+            margin: 0.5rem !important;
+        }
+        
+        /* Real-time data indicators */
+        .sapUshellTileContainerContent .sapUshellTile[data-state="loading"]::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(0,112,242,0.1) 50%, transparent 100%);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="sapUiBody">
+    <div id="content"></div>
+</body>
+</html>

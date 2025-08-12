@@ -40,6 +40,10 @@
       "destination": "/webapp/index-fiori.html"
     },
     {
+      "source": "/launchpad",
+      "destination": "/webapp/index-launchpad.html"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/app_vercel.py"
     },
@@ -49,7 +53,7 @@
     },
     {
       "source": "/",
-      "destination": "/webapp/index-simple.html"
+      "destination": "/webapp/index-launchpad.html"
     }
   ],
   "headers": [

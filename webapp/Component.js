@@ -23,68 +23,73 @@ sap.ui.define([
             oDeviceModel.setDefaultBindingMode("OneWay");
             this.setModel(oDeviceModel, "device");
 
-            // Official SAP Data Model Structure
+            // Real Data Model - No fake data, all loaded from APIs
             var oAppModel = new JSONModel({
-                // User Profile
+                // User Profile - loaded after wallet connection
                 user: {
-                    name: "Professional Trader",
-                    role: "Senior Analyst",
-                    greeting: "Good Morning"
+                    name: null,
+                    role: null,
+                    greeting: null
                 },
                 
-                // Wallet Integration
+                // Wallet Integration - real MetaMask data only
                 wallet: {
-                    address: "0x88bE2a6408934e32a0Ad63c368Be5b257ca63cC1",
+                    address: null,
                     balance: {
-                        ETH: 0,
-                        BTC: 0,
-                        total: 0
+                        ETH: null,
+                        BTC: null,
+                        total: null
                     },
                     connected: false
                 },
                 
-                // Real-time Market Data
+                // Real-time Market Data - loaded from APIs
                 marketData: {
-                    btcPrice: "65,432",
-                    btcChange: "+2.5",
-                    btcIndicator: "Up",
-                    ethPrice: "3,524",
-                    ethChange: "+1.8",
-                    ethIndicator: "Up",
-                    totalMarketCap: "2.8T",
-                    lastUpdated: new Date().toISOString()
+                    btcPrice: null,
+                    btcChange: null,
+                    btcIndicator: null,
+                    ethPrice: null,
+                    ethChange: null,
+                    ethIndicator: null,
+                    totalMarketCap: null,
+                    lastUpdated: null,
+                    loading: true
                 },
                 
-                // Portfolio Metrics
+                // Portfolio Metrics - calculated from real wallet data
                 portfolio: {
-                    totalValue: "125,650",
-                    change24h: "+12.5",
-                    changePercent: "12.5",
-                    positions: 8,
-                    profitLoss: "+15,432"
+                    totalValue: null,
+                    change24h: null,
+                    changePercent: null,
+                    positions: null,
+                    profitLoss: null,
+                    loading: true
                 },
                 
-                // AI Analysis Results
+                // AI Analysis Results - real Claude-4-Sonnet responses
                 aiAnalysis: {
-                    signal: "BUY",
-                    confidence: "85",
-                    recommendation: "Strong bullish momentum detected. RSI at 65 indicates healthy correction. MACD positive divergence.",
-                    lastUpdate: new Date().toISOString()
+                    signal: null,
+                    confidence: null,
+                    recommendation: null,
+                    lastUpdate: null,
+                    loading: true
                 },
                 
-                // DEX Data
+                // DEX Data - real GeckoTerminal data
                 dexData: {
-                    activePools: "1,247",
-                    topPairs: ["ETH/USDC", "BTC/ETH", "MATIC/USDC"],
-                    totalLiquidity: "45.2B"
+                    activePools: null,
+                    topPairs: [],
+                    totalLiquidity: null,
+                    loading: true
                 },
                 
-                // Risk Metrics
+                // Risk Metrics - calculated from real portfolio data
                 riskMetrics: {
-                    valueAtRisk: "12.3",
-                    confidence: "95",
-                    maxDrawdown: "8.7",
-                    sharpeRatio: "1.85"
+                    valueAtRisk: null,
+                    confidence: null,
+                    maxDrawdown: null,
+                    sharpeRatio: null,
+                    loading: true
                 }
             });
             this.setModel(oAppModel, "app");
@@ -107,89 +112,148 @@ sap.ui.define([
         
         _loadMarketData: function() {
             var that = this;
+            var oModel = that.getModel("app");
+            
             jQuery.ajax({
                 url: "/api/market/overview?symbols=bitcoin,ethereum",
                 type: "GET",
                 success: function(data) {
-                    var oModel = that.getModel("app");
-                    var aTiles = oModel.getProperty("/tiles");
-                    
                     if (data.symbols && data.symbols.bitcoin) {
-                        var btcPrice = Math.round(data.symbols.bitcoin.prices.average);
-                        aTiles[0].number = btcPrice.toLocaleString();
-                        aTiles[0].info = data.symbols.bitcoin.market_data.price_change_percentage_24h > 0 ? "↑ " + data.symbols.bitcoin.market_data.price_change_percentage_24h.toFixed(2) + "%" : "↓ " + Math.abs(data.symbols.bitcoin.market_data.price_change_percentage_24h).toFixed(2) + "%";
-                        aTiles[0].infoState = data.symbols.bitcoin.market_data.price_change_percentage_24h > 0 ? "Success" : "Error";
-                        aTiles[0].stateArrow = data.symbols.bitcoin.market_data.price_change_percentage_24h > 0 ? "Up" : "Down";
+                        var btcData = data.symbols.bitcoin;
+                        var ethData = data.symbols.ethereum;
+                        
+                        // Update with real data only
+                        oModel.setProperty("/marketData", {
+                            btcPrice: btcData.prices ? Math.round(btcData.prices.average) : null,
+                            btcChange: btcData.market_data ? btcData.market_data.price_change_percentage_24h : null,
+                            btcIndicator: btcData.market_data && btcData.market_data.price_change_percentage_24h > 0 ? "Up" : "Down",
+                            ethPrice: ethData && ethData.prices ? Math.round(ethData.prices.average) : null,
+                            ethChange: ethData && ethData.market_data ? ethData.market_data.price_change_percentage_24h : null,
+                            ethIndicator: ethData && ethData.market_data && ethData.market_data.price_change_percentage_24h > 0 ? "Up" : "Down",
+                            lastUpdated: new Date().toISOString(),
+                            loading: false
+                        });
                     }
-                    
-                    oModel.setProperty("/tiles", aTiles);
                 },
-                error: function() {
-                    console.error("Failed to load market data");
+                error: function(xhr, status, error) {
+                    console.error("Failed to load market data:", error);
+                    oModel.setProperty("/marketData/loading", false);
                 }
             });
         },
         
         _loadAIAnalysis: function() {
             var that = this;
+            var oModel = that.getModel("app");
+            
+            // Get current market data for AI analysis
+            var marketData = oModel.getProperty("/marketData");
+            if (!marketData || !marketData.btcPrice) {
+                console.log("Waiting for market data before AI analysis");
+                return;
+            }
+            
             jQuery.ajax({
                 url: "/api/ai/analyze",
                 type: "POST",
                 contentType: "application/json",
                 data: JSON.stringify({
                     symbol: "BTC",
-                    price: 65000,
-                    volume_24h: 28500000000,
-                    change_24h: 2.5,
-                    indicators: {
-                        rsi: 65,
-                        macd: 150,
-                        ma_50: 63000,
-                        ma_200: 58000
-                    }
+                    price: marketData.btcPrice,
+                    change_24h: marketData.btcChange || 0,
+                    volume_24h: 0, // Will be filled with real data when available
+                    indicators: {} // Real technical indicators would come from market data
                 }),
                 success: function(data) {
-                    var oModel = that.getModel("app");
-                    var aTiles = oModel.getProperty("/tiles");
-                    
-                    // Update AI tile
-                    var aiTile = aTiles[3];
-                    aiTile.number = data.confidence || "85";
-                    aiTile.newsContent = [{
-                        title: data.signal || "HOLD",
-                        text: (data.analysis || "Analyzing market conditions...").substring(0, 100) + "..."
-                    }];
-                    aiTile.state = "Loaded";
-                    
-                    oModel.setProperty("/tiles", aTiles);
+                    // Update with real AI response only
+                    oModel.setProperty("/aiAnalysis", {
+                        signal: data.signal || null,
+                        confidence: data.confidence || null,
+                        recommendation: data.analysis || null,
+                        lastUpdate: new Date().toISOString(),
+                        loading: false
+                    });
                 },
-                error: function() {
-                    console.error("Failed to load AI analysis");
+                error: function(xhr, status, error) {
+                    console.error("Failed to load AI analysis:", error);
+                    oModel.setProperty("/aiAnalysis/loading", false);
                 }
             });
         },
         
         _loadDEXData: function() {
             var that = this;
+            var oModel = that.getModel("app");
+            
             jQuery.ajax({
                 url: "/api/market/dex/trending",
                 type: "GET",
                 success: function(data) {
-                    var oModel = that.getModel("app");
-                    var aTiles = oModel.getProperty("/tiles");
-                    
-                    // Update DEX tile
-                    if (data.data && data.data.length > 0) {
-                        aTiles[4].number = data.data.length.toLocaleString();
-                        aTiles[4].info = "Trending";
+                    // Update with real DEX data only
+                    if (data.data && Array.isArray(data.data)) {
+                        oModel.setProperty("/dexData", {
+                            activePools: data.data.length || 0,
+                            topPairs: data.data.slice(0, 3).map(item => item.name || "Unknown"),
+                            totalLiquidity: null, // Would need separate API call
+                            loading: false
+                        });
                     }
-                    
-                    oModel.setProperty("/tiles", aTiles);
                 },
-                error: function() {
-                    console.error("Failed to load DEX data");
+                error: function(xhr, status, error) {
+                    console.error("Failed to load DEX data:", error);
+                    oModel.setProperty("/dexData/loading", false);
                 }
             });
+        },
+        
+        // Add method to load real wallet data
+        _loadWalletData: function(address) {
+            if (!address) return;
+            
+            var that = this;
+            var oModel = that.getModel("app");
+            
+            jQuery.ajax({
+                url: "/api/wallet/balance",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ address: address }),
+                success: function(data) {
+                    if (data.balance) {
+                        oModel.setProperty("/wallet", {
+                            address: address,
+                            balance: {
+                                ETH: data.balance.ETH || 0,
+                                BTC: data.balance.BTC || 0,
+                                total: data.totalValue || 0
+                            },
+                            connected: true
+                        });
+                        
+                        // Calculate portfolio metrics from real wallet data
+                        that._calculatePortfolioMetrics(data);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Failed to load wallet data:", error);
+                }
+            });
+        },
+        
+        // Calculate real portfolio metrics
+        _calculatePortfolioMetrics: function(walletData) {
+            var oModel = this.getModel("app");
+            
+            if (walletData && walletData.totalValue) {
+                oModel.setProperty("/portfolio", {
+                    totalValue: walletData.totalValue,
+                    change24h: walletData.change24h || null,
+                    changePercent: walletData.changePercent || null,
+                    positions: Object.keys(walletData.balance || {}).length,
+                    profitLoss: walletData.profitLoss || null,
+                    loading: false
+                });
+            }
         }
     });
 });
