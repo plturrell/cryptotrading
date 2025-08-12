@@ -111,7 +111,9 @@ class DatabaseClient:
                 **kwargs
             )
             session.add(ai_analysis)
-            return ai_analysis.id
+            session.flush()  # Flush to get the ID
+            analysis_id = ai_analysis.id
+            return analysis_id
     
     def get_latest_analysis(self, symbol: str, model: str = None):
         """Get latest AI analysis for symbol"""

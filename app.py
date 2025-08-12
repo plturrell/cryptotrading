@@ -13,7 +13,7 @@ sys.path.insert(0, str(project_root / 'src'))
 
 from flask import Flask, render_template, send_from_directory
 from flask_cors import CORS
-from flask_restx import Api
+from flask_restx import Api, Resource
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -67,19 +67,19 @@ def health():
 
 # API endpoints
 @api.route('/api/trading/status')
-class TradingStatus(api.Resource):
+class TradingStatus(Resource):
     def get(self):
         """Get trading system status"""
         return {'status': 'active', 'platform': 'рекс.com'}
 
 @api.route('/api/market/data')
-class MarketData(api.Resource):
+class MarketData(Resource):
     def get(self):
         """Get market data"""
         return {'data': 'market_feed', 'timestamp': 'current'}
 
 @api.route('/api/ai/analyze')
-class AIAnalysis(api.Resource):
+class AIAnalysis(Resource):
     def post(self):
         """AI market analysis using DeepSeek R1"""
         from src.рекс.ml.deepseek import DeepSeekR1
@@ -103,7 +103,7 @@ class AIAnalysis(api.Resource):
         }
 
 @api.route('/api/ai/news/<string:symbol>')
-class CryptoNews(api.Resource):
+class CryptoNews(Resource):
     def get(self, symbol):
         """Get real-time crypto news via Perplexity"""
         from src.рекс.ml.perplexity import PerplexityClient
@@ -113,12 +113,12 @@ class CryptoNews(api.Resource):
         return news
 
 @api.route('/api/ai/signals/<string:symbol>')
-class TradingSignals(api.Resource):
+class TradingSignals(Resource):
     def get(self, symbol):
         """Get AI trading signals via Perplexity"""
         from src.рекс.ml.perplexity import PerplexityClient
         
-        timeframe = api.parser.parse_args().get('timeframe', '4h')
+        timeframe = '4h'  # Default timeframe
         perplexity = PerplexityClient()
         signals = perplexity.get_trading_signals(symbol.upper(), timeframe)
         return signals
