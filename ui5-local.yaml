@@ -1,0 +1,33 @@
+specVersion: '3.0'
+metadata:
+  name: com.rex.trading.launchpad
+type: application
+server:
+  customMiddleware:
+    - name: fiori-tools-proxy
+      afterMiddleware: compression
+      configuration:
+        ignoreCertError: false
+        ui5:
+          path:
+            - /resources
+            - /test-resources
+          url: https://ui5.sap.com
+        backend:
+          - path: /api
+            url: http://localhost:5001
+            client: "100"
+            destination: cryptoService
+    - name: fiori-tools-appreload
+      afterMiddleware: compression
+      configuration:
+        port: 35729
+        path: webapp
+        delay: 300
+    - name: ui5-middleware-livereload
+      afterMiddleware: compression
+      configuration:
+        debug: true
+        extraExts: "xml,json,properties"
+        port: 35729
+        watchPath: "webapp/**"

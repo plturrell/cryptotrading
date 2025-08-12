@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "name": "rex-crypto-trading-launchpad",
   "builds": [
     {
       "src": "app_vercel.py",
@@ -14,7 +15,15 @@
       "use": "@vercel/static"
     },
     {
-      "src": "manifest.json",
+      "src": "webapp/manifest.json",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "ui5.yaml",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "package.json",
       "use": "@vercel/static"
     }
   ],

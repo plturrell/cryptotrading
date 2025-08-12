@@ -1,62 +1,147 @@
 {
-    "_version": "1.12.0",
+    "_version": "1.49.0",
     "sap.app": {
-        "id": "com.рекс.cryptotrading",
+        "id": "com.rex.trading.launchpad",
         "type": "application",
         "i18n": "i18n/i18n.properties",
         "applicationVersion": {
             "version": "1.0.0"
         },
-        "title": "{{appTitle}}",
-        "description": "{{appDescription}}",
-        "resources": "resources.json",
-        "ach": "CA-UI5-DOC"
+        "title": "рекс.com - SAP Fiori Launchpad",
+        "description": "Professional Crypto Trading Platform - SAP Fiori Launchpad",
+        "tags": {
+            "keywords": ["crypto", "trading", "fiori", "launchpad", "sap"]
+        },
+        "ach": "FIN-FSCM-TRM",
+        "crossNavigation": {
+            "inbounds": {
+                "launchpad": {
+                    "semanticObject": "CryptoTrading",
+                    "action": "display",
+                    "title": "рекс.com Launchpad",
+                    "signature": {
+                        "parameters": {},
+                        "additionalParameters": "allowed"
+                    }
+                },
+                "bitcoin": {
+                    "semanticObject": "Bitcoin",
+                    "action": "analyze",
+                    "title": "Bitcoin Analytics",
+                    "signature": {
+                        "parameters": {
+                            "symbol": {
+                                "defaultValue": {
+                                    "value": "BTC"
+                                }
+                            }
+                        }
+                    }
+                },
+                "wallet": {
+                    "semanticObject": "Wallet",
+                    "action": "manage",
+                    "title": "Wallet Management",
+                    "signature": {
+                        "parameters": {},
+                        "additionalParameters": "allowed"
+                    }
+                },
+                "trading": {
+                    "semanticObject": "Trading",
+                    "action": "execute",
+                    "title": "Trading Console",
+                    "signature": {
+                        "parameters": {},
+                        "additionalParameters": "allowed"
+                    }
+                }
+            }
+        },
+        "dataSources": {
+            "mainService": {
+                "uri": "/api/odata/v4/CryptoService/",
+                "type": "OData",
+                "settings": {
+                    "annotations": ["annotation"],
+                    "localUri": "localService/metadata.xml",
+                    "odataVersion": "4.0"
+                }
+            },
+            "annotation": {
+                "uri": "localService/annotation.xml",
+                "type": "ODataAnnotation"
+            },
+            "marketData": {
+                "uri": "/api/market/data",
+                "type": "REST"
+            },
+            "walletService": {
+                "uri": "/api/wallet/balance",
+                "type": "REST"
+            },
+            "tradingService": {
+                "uri": "/api/trading/status",
+                "type": "REST"
+            }
+        }
     },
     "sap.ui": {
         "technology": "UI5",
         "icons": {
-            "icon": "sap-icon://line-chart",
-            "favIcon": "",
-            "phone": "",
-            "phone@2": "",
-            "tablet": "",
-            "tablet@2": ""
+            "icon": "sap-icon://business-objects-experience",
+            "favIcon": "favicon.ico",
+            "phone": "sap-icon://business-objects-experience",
+            "phone@2": "sap-icon://business-objects-experience",
+            "tablet": "sap-icon://business-objects-experience",
+            "tablet@2": "sap-icon://business-objects-experience"
         },
         "deviceTypes": {
             "desktop": true,
             "tablet": true,
             "phone": true
-        }
+        },
+        "supportedThemes": [
+            "sap_fiori_3",
+            "sap_fiori_3_dark",
+            "sap_fiori_3_hcb",
+            "sap_fiori_3_hcw"
+        ]
     },
     "sap.ui5": {
         "flexEnabled": true,
-        "rootView": {
-            "viewName": "com.рекс.cryptotrading.view.Launchpad",
-            "type": "XML",
-            "async": true,
-            "id": "launchpad"
-        },
         "dependencies": {
-            "minUI5Version": "1.60.0",
+            "minUI5Version": "1.84.0",
             "libs": {
                 "sap.m": {},
                 "sap.ui.core": {},
                 "sap.f": {},
                 "sap.ui.layout": {},
-                "sap.ushell": {}
+                "sap.fe.core": {},
+                "sap.suite.ui.commons": {}
+            }
+        },
+        "models": {
+            "": {
+                "dataSource": "mainService",
+                "type": "sap.ui.model.odata.v4.ODataModel",
+                "settings": {
+                    "synchronizationMode": "None",
+                    "operationMode": "Server",
+                    "autoExpandSelect": true,
+                    "earlyRequests": true
+                }
+            },
+            "i18n": {
+                "type": "sap.ui.model.resource.ResourceModel",
+                "settings": {
+                    "bundleName": "com.rex.trading.launchpad.i18n.i18n"
+                }
             }
         },
         "contentDensities": {
             "compact": true,
             "cozy": true
-        },
-        "models": {
-            "i18n": {
-                "type": "sap.ui.model.resource.ResourceModel",
-                "settings": {
-                    "bundleName": "com.рекс.cryptotrading.i18n.i18n"
-                }
-            }
         },
         "resources": {
             "css": [{
@@ -111,5 +196,13 @@
     },
     "sap.platform.hcp": {
         "uri": ""
+    },
+    "sap.fiori": {
+        "registrationIds": ["F4375"],
+        "archeType": "analytical"
+    },
+    "sap.cloud": {
+        "public": true,
+        "service": "com.rex.trading.launchpad"
     }
 }

@@ -146,13 +146,17 @@ sap.ui.define([
                         }
                     }
                 }.bind(this))
-                .catch(error => console.error("Error updating market data:", error));
+                .catch(function(error) {
+                    console.error("Error updating market data:", error);
+                });
         },
 
         _updateDEXData: function () {
             fetch('/api/market/dex/trending')
-                .then(response => response.json())
-                .then(data => {
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(data) {
                     if (data.data && data.data.length > 0) {
                         var oGridContainer = this.byId("gridContainer");
                         var oDEXTile = oGridContainer.getItems()[4];
@@ -164,7 +168,9 @@ sap.ui.define([
                         }
                     }
                 }.bind(this))
-                .catch(error => console.error("Error updating DEX data:", error));
+                .catch(function(error) {
+                    console.error("Error updating DEX data:", error);
+                });
         },
 
         _updateAISignals: function () {

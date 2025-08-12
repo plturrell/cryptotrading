@@ -4,13 +4,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>рекс.com - SAP Fiori Launchpad</title>
+    <title>рекс.com - Professional Crypto Trading Platform</title>
     
     <!-- SAP UI5 Bootstrap -->
     <script id="sap-ui-bootstrap"
             src="https://sapui5.hana.ondemand.com/resources/sap-ui-core.js"
             data-sap-ui-theme="sap_horizon_dark"
-            data-sap-ui-libs="sap.m,sap.ushell,sap.ui.layout,sap.f"
+            data-sap-ui-libs="sap.m,sap.ui.layout,sap.f"
             data-sap-ui-compatVersion="edge"
             data-sap-ui-frameOptions="allow"
             data-sap-ui-preload="async">
@@ -18,13 +18,12 @@
     
     <script>
         sap.ui.getCore().attachInit(function() {
-            // Initialize the Fiori Launchpad
+            // Initialize the SAP Fiori-style Launchpad
             sap.ui.require([
                 "sap/m/Shell",
                 "sap/m/App",
                 "sap/m/Page",
                 "sap/m/TileContainer",
-                "sap/m/StandardTile",
                 "sap/m/GenericTile",
                 "sap/m/TileContent",
                 "sap/m/NumericContent",
@@ -39,60 +38,88 @@
                 "sap/m/List",
                 "sap/m/StandardListItem",
                 "sap/m/MessageToast"
-            ], function(Shell, App, Page, TileContainer, StandardTile, GenericTile, 
+            ], function(Shell, App, Page, TileContainer, GenericTile, 
                        TileContent, NumericContent, ImageContent, NewsContent, IconPool,
                        Bar, Button, Title, Avatar, Popover, List, StandardListItem, MessageToast) {
                 
-                // Create the Shell
-                var oShell = new Shell({
+                // Create the SAP Fiori-style Shell
+                var oShell = new Shell("shell", {
                     app: new App("app", {
                         pages: [
-                            new Page("page", {
-                                title: "рекс.com Trading Platform",
+                            new Page("launchpadPage", {
+                                title: "рекс.com Crypto Trading Launchpad",
                                 enableScrolling: true,
+                                showNavButton: false,
                                 customHeader: new Bar({
                                     contentLeft: [
                                         new Button({
                                             icon: "sap-icon://menu2",
+                                            tooltip: "Navigation Menu",
                                             press: function() {
-                                                MessageToast.show("Menu");
+                                                MessageToast.show("Navigation Menu");
                                             }
                                         })
                                     ],
                                     contentMiddle: [
                                         new Title({
-                                            text: "рекс.com Trading Platform",
-                                            level: "H2"
+                                            text: "рекс.com Professional Trading Platform",
+                                            level: "H1",
+                                            titleStyle: "H3"
                                         })
                                     ],
                                     contentRight: [
                                         new Button({
                                             icon: "sap-icon://bell",
+                                            tooltip: "Notifications",
                                             press: function() {
-                                                MessageToast.show("No new notifications");
+                                                loadNotifications();
+                                            }
+                                        }),
+                                        new Button({
+                                            icon: "sap-icon://refresh",
+                                            tooltip: "Refresh Data",
+                                            press: function() {
+                                                refreshAllData();
                                             }
                                         }),
                                         new Avatar({
                                             src: "sap-icon://person-placeholder",
                                             displaySize: "XS",
+                                            tooltip: "User Menu",
                                             press: function(oEvent) {
                                                 if (!this.oPopover) {
                                                     this.oPopover = new Popover({
-                                                        title: "User Menu",
+                                                        title: "Trading Account",
                                                         placement: "Bottom",
                                                         content: new List({
                                                             items: [
                                                                 new StandardListItem({
-                                                                    title: "Settings",
-                                                                    icon: "sap-icon://action-settings"
+                                                                    title: "Account Settings",
+                                                                    icon: "sap-icon://action-settings",
+                                                                    press: function() {
+                                                                        MessageToast.show("Opening Account Settings...");
+                                                                    }
                                                                 }),
                                                                 new StandardListItem({
                                                                     title: "Connect Wallet",
-                                                                    icon: "sap-icon://wallet"
+                                                                    icon: "sap-icon://wallet",
+                                                                    press: function() {
+                                                                        connectWallet();
+                                                                    }
+                                                                }),
+                                                                new StandardListItem({
+                                                                    title: "API Keys",
+                                                                    icon: "sap-icon://key",
+                                                                    press: function() {
+                                                                        MessageToast.show("Opening API Management...");
+                                                                    }
                                                                 }),
                                                                 new StandardListItem({
                                                                     title: "Sign Out",
-                                                                    icon: "sap-icon://log"
+                                                                    icon: "sap-icon://log",
+                                                                    press: function() {
+                                                                        MessageToast.show("Signing out...");
+                                                                    }
                                                                 })
                                                             ]
                                                         })
@@ -106,107 +133,142 @@
                                 content: [
                                     new TileContainer("tileContainer", {
                                         tiles: [
-                                            // Market Overview Tile
-                                            new GenericTile({
-                                                header: "Market Overview",
-                                                subheader: "Real-time cryptocurrency prices",
+                                            // Bitcoin Market Data Tile - Connected to /api/market/data
+                                            new GenericTile("bitcoinTile", {
+                                                header: "Bitcoin (BTC)",
+                                                subheader: "Real-time market data",
+                                                state: "Loading",
                                                 press: function() {
-                                                    MessageToast.show("Opening Market Overview...");
+                                                    window.open('/api/market/data?symbol=bitcoin', '_blank');
                                                 },
                                                 tileContent: [
                                                     new TileContent({
                                                         unit: "USD",
-                                                        content: new NumericContent({
-                                                            value: "65,432",
-                                                            scale: "BTC",
-                                                            indicator: "Up",
-                                                            valueColor: "Good",
-                                                            icon: "sap-icon://BusinessSuiteInAppSymbols/icon-line-chart-dual-axis"
+                                                        content: new NumericContent("bitcoinPrice", {
+                                                            value: "Loading...",
+                                                            scale: "",
+                                                            indicator: "None",
+                                                            valueColor: "Neutral",
+                                                            icon: "sap-icon://BusinessSuiteInAppSymbols/icon-line-chart"
                                                         })
                                                     })
                                                 ]
                                             }),
                                             
-                                            // Portfolio Tile
-                                            new GenericTile({
-                                                header: "Portfolio Value",
-                                                subheader: "Your total holdings",
+                                            // Ethereum Market Data Tile - Connected to /api/market/data
+                                            new GenericTile("ethereumTile", {
+                                                header: "Ethereum (ETH)",
+                                                subheader: "Real-time market data",
+                                                state: "Loading",
                                                 press: function() {
-                                                    MessageToast.show("Opening Portfolio...");
+                                                    window.open('/api/market/data?symbol=ethereum', '_blank');
                                                 },
                                                 tileContent: [
                                                     new TileContent({
                                                         unit: "USD",
-                                                        content: new NumericContent({
-                                                            value: "125,650",
-                                                            scale: "Total",
-                                                            indicator: "Up",
-                                                            valueColor: "Good",
+                                                        content: new NumericContent("ethereumPrice", {
+                                                            value: "Loading...",
+                                                            scale: "",
+                                                            indicator: "None",
+                                                            valueColor: "Neutral",
+                                                            icon: "sap-icon://BusinessSuiteInAppSymbols/icon-line-chart"
+                                                        })
+                                                    })
+                                                ]
+                                            }),
+                                            
+                                            // Wallet Balance Tile - Connected to /api/wallet/balance
+                                            new GenericTile("walletTile", {
+                                                header: "Wallet Balance",
+                                                subheader: "Connected wallet holdings",
+                                                state: "Loading",
+                                                press: function() {
+                                                    connectWallet();
+                                                },
+                                                tileContent: [
+                                                    new TileContent({
+                                                        unit: "USD",
+                                                        content: new NumericContent("walletBalance", {
+                                                            value: "Connect Wallet",
+                                                            scale: "",
+                                                            indicator: "None",
+                                                            valueColor: "Neutral",
                                                             icon: "sap-icon://wallet"
                                                         })
                                                     })
                                                 ]
                                             }),
                                             
-                                            // Trading Tile
-                                            new GenericTile({
-                                                header: "Trading",
-                                                subheader: "Execute buy/sell orders",
-                                                press: function() {
-                                                    MessageToast.show("Opening Trading Interface...");
-                                                },
-                                                tileContent: [
-                                                    new TileContent({
-                                                        content: new ImageContent({
-                                                            src: "sap-icon://sales-order"
-                                                        })
-                                                    })
-                                                ]
-                                            }),
-                                            
-                                            // AI Analysis Tile
-                                            new GenericTile({
-                                                header: "AI Market Analysis",
-                                                subheader: "Claude-4-Sonnet insights",
-                                                press: function() {
-                                                    MessageToast.show("Loading AI Analysis...");
-                                                },
+                                            // AI Trading Signals - Connected to /api/ai/signals
+                                            new GenericTile("aiSignalsTile", {
+                                                header: "AI Trading Signals",
+                                                subheader: "Claude-4-Sonnet analysis",
+                                                state: "Loading",
                                                 frameType: "TwoByOne",
+                                                press: function() {
+                                                    loadAIAnalysis();
+                                                },
                                                 tileContent: [
                                                     new TileContent({
-                                                        content: new NewsContent({
-                                                            contentText: "BTC showing strong bullish momentum. RSI at 65, MACD positive divergence detected. Consider accumulation positions.",
-                                                            subheader: "Latest AI Signal"
+                                                        content: new NewsContent("aiSignalsContent", {
+                                                            contentText: "Loading AI market analysis...",
+                                                            subheader: "Real-time signals"
                                                         })
                                                     })
                                                 ]
                                             }),
                                             
-                                            // DEX Monitor Tile
-                                            new GenericTile({
-                                                header: "DEX Monitor",
-                                                subheader: "DeFi opportunities",
+                                            // Gas Price Monitor - Connected to /api/gas/price
+                                            new GenericTile("gasTile", {
+                                                header: "Gas Price Monitor",
+                                                subheader: "Ethereum network fees",
+                                                state: "Loading",
                                                 press: function() {
-                                                    MessageToast.show("Opening DEX Monitor...");
+                                                    window.open('/api/gas/price', '_blank');
                                                 },
                                                 tileContent: [
                                                     new TileContent({
-                                                        unit: "Active",
-                                                        content: new NumericContent({
-                                                            value: "237",
-                                                            scale: "Pools",
+                                                        unit: "Gwei",
+                                                        content: new NumericContent("gasPrice", {
+                                                            value: "Loading...",
+                                                            scale: "",
+                                                            indicator: "None",
+                                                            valueColor: "Neutral",
+                                                            icon: "sap-icon://BusinessSuiteInAppSymbols/icon-gas-station"
+                                                        })
+                                                    })
+                                                ]
+                                            }),
+                                            
+                                            // DEX Opportunities - Connected to /api/dex/opportunities
+                                            new GenericTile("dexTile", {
+                                                header: "DEX Opportunities",
+                                                subheader: "DeFi trading pools",
+                                                state: "Loading",
+                                                press: function() {
+                                                    loadDEXOpportunities();
+                                                },
+                                                tileContent: [
+                                                    new TileContent({
+                                                        unit: "Pools",
+                                                        content: new NumericContent("dexPools", {
+                                                            value: "Loading...",
+                                                            scale: "",
+                                                            indicator: "None",
+                                                            valueColor: "Neutral",
                                                             icon: "sap-icon://chain-link"
                                                         })
                                                     })
                                                 ]
                                             }),
                                             
-                                            // Historical Data Tile
-                                            new GenericTile({
+                                            // Historical Data - Connected to /api/data/historical
+                                            new GenericTile("historicalTile", {
                                                 header: "Historical Data",
-                                                subheader: "Download datasets",
+                                                subheader: "Training datasets",
+                                                state: "Loaded",
                                                 press: function() {
-                                                    MessageToast.show("Opening Historical Data...");
+                                                    loadHistoricalData();
                                                 },
                                                 tileContent: [
                                                     new TileContent({
@@ -217,37 +279,36 @@
                                                 ]
                                             }),
                                             
-                                            // Risk Analytics Tile
-                                            new GenericTile({
-                                                header: "Risk Analytics",
-                                                subheader: "Portfolio risk assessment",
+                                            // Crypto News - Connected to /api/ai/news
+                                            new GenericTile("newsTile", {
+                                                header: "Crypto News",
+                                                subheader: "Real-time market news",
+                                                state: "Loading",
                                                 press: function() {
-                                                    MessageToast.show("Opening Risk Analytics...");
+                                                    loadCryptoNews();
                                                 },
                                                 tileContent: [
                                                     new TileContent({
-                                                        unit: "%",
-                                                        content: new NumericContent({
-                                                            value: "12.3",
-                                                            scale: "VaR",
-                                                            valueColor: "Critical",
-                                                            icon: "sap-icon://alert"
+                                                        content: new NewsContent("newsContent", {
+                                                            contentText: "Loading latest crypto news...",
+                                                            subheader: "Market updates"
                                                         })
                                                     })
                                                 ]
                                             }),
                                             
-                                            // Settings Tile
-                                            new GenericTile({
-                                                header: "Settings",
-                                                subheader: "Configure platform",
+                                            // Trading Status - Connected to /api/trading/status
+                                            new GenericTile("tradingStatusTile", {
+                                                header: "Trading Status",
+                                                subheader: "System operational status",
+                                                state: "Loading",
                                                 press: function() {
-                                                    MessageToast.show("Opening Settings...");
+                                                    loadTradingStatus();
                                                 },
                                                 tileContent: [
                                                     new TileContent({
                                                         content: new ImageContent({
-                                                            src: "sap-icon://action-settings"
+                                                            src: "sap-icon://status-positive"
                                                         })
                                                     })
                                                 ]
@@ -263,62 +324,321 @@
                 // Place the Shell in the DOM
                 oShell.placeAt("content");
                 
-                // Load initial data
-                loadMarketData();
+                // Load initial data from real APIs
+                loadAllData();
                 
-                // Set up refresh interval
-                setInterval(loadMarketData, 30000);
+                // Set up refresh interval for real-time updates
+                setInterval(loadAllData, 30000);
             });
         });
         
-        // Load market data function
+        // Load all real trading data from APIs
+        function loadAllData() {
+            loadMarketData();
+            loadWalletBalance();
+            loadGasPrice();
+            loadDEXOpportunities();
+            loadAIAnalysis();
+            loadCryptoNews();
+            loadTradingStatus();
+        }
+        
+        // Load real market data from /api/market/data
         function loadMarketData() {
-            // Fetch real market data
-            fetch('/api/market/overview?symbols=bitcoin,ethereum')
+            // Bitcoin data
+            fetch('/api/market/data?symbol=bitcoin')
                 .then(response => response.json())
                 .then(data => {
-                    // Update tiles with real data
-                    var oTileContainer = sap.ui.getCore().byId("tileContainer");
-                    if (oTileContainer && data.symbols && data.symbols.bitcoin) {
-                        var oMarketTile = oTileContainer.getTiles()[0];
-                        if (oMarketTile) {
-                            var oNumericContent = oMarketTile.getTileContent()[0].getContent();
-                            oNumericContent.setValue(Math.round(data.symbols.bitcoin.prices.average).toLocaleString());
-                        }
+                    var bitcoinTile = sap.ui.getCore().byId("bitcoinTile");
+                    var bitcoinPrice = sap.ui.getCore().byId("bitcoinPrice");
+                    if (bitcoinTile && bitcoinPrice && data.prices) {
+                        var price = Math.round(data.prices.average || data.prices.coingecko || 0);
+                        var change = data.price_change_24h || 0;
+                        
+                        bitcoinPrice.setValue(price.toLocaleString());
+                        bitcoinPrice.setIndicator(change >= 0 ? "Up" : "Down");
+                        bitcoinPrice.setValueColor(change >= 0 ? "Good" : "Error");
+                        bitcoinTile.setState("Loaded");
                     }
                 })
                 .catch(error => {
-                    console.error('Error loading market data:', error);
+                    console.error('Error loading Bitcoin data:', error);
+                    var bitcoinTile = sap.ui.getCore().byId("bitcoinTile");
+                    if (bitcoinTile) bitcoinTile.setState("Failed");
                 });
+            
+            // Ethereum data
+            fetch('/api/market/data?symbol=ethereum')
+                .then(response => response.json())
+                .then(data => {
+                    var ethereumTile = sap.ui.getCore().byId("ethereumTile");
+                    var ethereumPrice = sap.ui.getCore().byId("ethereumPrice");
+                    if (ethereumTile && ethereumPrice && data.prices) {
+                        var price = Math.round(data.prices.average || data.prices.coingecko || 0);
+                        var change = data.price_change_24h || 0;
+                        
+                        ethereumPrice.setValue(price.toLocaleString());
+                        ethereumPrice.setIndicator(change >= 0 ? "Up" : "Down");
+                        ethereumPrice.setValueColor(change >= 0 ? "Good" : "Error");
+                        ethereumTile.setState("Loaded");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading Ethereum data:', error);
+                    var ethereumTile = sap.ui.getCore().byId("ethereumTile");
+                    if (ethereumTile) ethereumTile.setState("Failed");
+                });
+        }
+        
+        // Load wallet balance from /api/wallet/balance
+        function loadWalletBalance() {
+            fetch('/api/wallet/balance')
+                .then(response => response.json())
+                .then(data => {
+                    var walletTile = sap.ui.getCore().byId("walletTile");
+                    var walletBalance = sap.ui.getCore().byId("walletBalance");
+                    if (walletTile && walletBalance && data.total_usd) {
+                        walletBalance.setValue(Math.round(data.total_usd).toLocaleString());
+                        walletBalance.setValueColor("Good");
+                        walletTile.setState("Loaded");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading wallet balance:', error);
+                    var walletTile = sap.ui.getCore().byId("walletTile");
+                    if (walletTile) walletTile.setState("Failed");
+                });
+        }
+        
+        // Load gas price from /api/gas/price
+        function loadGasPrice() {
+            fetch('/api/gas/price')
+                .then(response => response.json())
+                .then(data => {
+                    var gasTile = sap.ui.getCore().byId("gasTile");
+                    var gasPrice = sap.ui.getCore().byId("gasPrice");
+                    if (gasTile && gasPrice && data.standard) {
+                        gasPrice.setValue(Math.round(data.standard).toString());
+                        gasPrice.setValueColor(data.standard > 50 ? "Error" : data.standard > 20 ? "Critical" : "Good");
+                        gasTile.setState("Loaded");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading gas price:', error);
+                    var gasTile = sap.ui.getCore().byId("gasTile");
+                    if (gasTile) gasTile.setState("Failed");
+                });
+        }
+        
+        // Load DEX opportunities from /api/dex/opportunities
+        function loadDEXOpportunities() {
+            fetch('/api/dex/opportunities')
+                .then(response => response.json())
+                .then(data => {
+                    var dexTile = sap.ui.getCore().byId("dexTile");
+                    var dexPools = sap.ui.getCore().byId("dexPools");
+                    if (dexTile && dexPools && data.opportunities) {
+                        dexPools.setValue(data.opportunities.length.toString());
+                        dexPools.setValueColor("Good");
+                        dexTile.setState("Loaded");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading DEX opportunities:', error);
+                    var dexTile = sap.ui.getCore().byId("dexTile");
+                    if (dexTile) dexTile.setState("Failed");
+                });
+        }
+        
+        // Load AI analysis from /api/ai/signals
+        function loadAIAnalysis() {
+            fetch('/api/ai/signals/BTC')
+                .then(response => response.json())
+                .then(data => {
+                    var aiSignalsTile = sap.ui.getCore().byId("aiSignalsTile");
+                    var aiSignalsContent = sap.ui.getCore().byId("aiSignalsContent");
+                    if (aiSignalsTile && aiSignalsContent && data.analysis) {
+                        aiSignalsContent.setContentText(data.analysis.substring(0, 120) + "...");
+                        aiSignalsTile.setState("Loaded");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading AI analysis:', error);
+                    var aiSignalsTile = sap.ui.getCore().byId("aiSignalsTile");
+                    if (aiSignalsTile) aiSignalsTile.setState("Failed");
+                });
+        }
+        
+        // Load crypto news from /api/ai/news
+        function loadCryptoNews() {
+            fetch('/api/ai/news/bitcoin')
+                .then(response => response.json())
+                .then(data => {
+                    var newsTile = sap.ui.getCore().byId("newsTile");
+                    var newsContent = sap.ui.getCore().byId("newsContent");
+                    if (newsTile && newsContent && data.news) {
+                        var firstNews = data.news[0] || {};
+                        newsContent.setContentText((firstNews.title || "No news available").substring(0, 100) + "...");
+                        newsTile.setState("Loaded");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading crypto news:', error);
+                    var newsTile = sap.ui.getCore().byId("newsTile");
+                    if (newsTile) newsTile.setState("Failed");
+                });
+        }
+        
+        // Load trading status from /api/trading/status
+        function loadTradingStatus() {
+            fetch('/api/trading/status')
+                .then(response => response.json())
+                .then(data => {
+                    var tradingStatusTile = sap.ui.getCore().byId("tradingStatusTile");
+                    if (tradingStatusTile && data.status === 'active') {
+                        tradingStatusTile.setState("Loaded");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading trading status:', error);
+                    var tradingStatusTile = sap.ui.getCore().byId("tradingStatusTile");
+                    if (tradingStatusTile) tradingStatusTile.setState("Failed");
+                });
+        }
+        
+        // Load historical data from /api/data/historical
+        function loadHistoricalData() {
+            window.open('/api/data/historical/bitcoin', '_blank');
+        }
+        
+        // Connect wallet functionality
+        function connectWallet() {
+            if (typeof window.ethereum !== 'undefined') {
+                window.ethereum.request({ method: 'eth_requestAccounts' })
+                    .then(() => {
+                        MessageToast.show("Wallet connected successfully!");
+                        loadWalletBalance();
+                    })
+                    .catch(error => {
+                        MessageToast.show("Failed to connect wallet: " + error.message);
+                    });
+            } else {
+                MessageToast.show("MetaMask not detected. Please install MetaMask.");
+            }
+        }
+        
+        // Refresh all data
+        function refreshAllData() {
+            MessageToast.show("Refreshing all data...");
+            loadAllData();
+        }
+        
+        // Load notifications
+        function loadNotifications() {
+            MessageToast.show("No new trading notifications");
         }
     </script>
     
     <style>
+        /* Official SAP Fiori Design System Styles */
         html, body {
             height: 100%;
             margin: 0;
             padding: 0;
+            font-family: "72", "72full", Arial, Helvetica, sans-serif;
+            background-color: var(--sapBackgroundColor);
         }
         
         #content {
             height: 100%;
         }
         
-        /* SAP Fiori Launchpad specific styles */
+        /* SAP Fiori Launchpad Shell */
+        .sapUshellShell {
+            height: 100%;
+            background: var(--sapShellColor);
+        }
+        
         .sapMShell {
             height: 100%;
+            background: var(--sapBackgroundColor);
         }
         
+        /* Tile Container - Official Fiori Spacing */
         .sapMTileContainer {
-            padding: 1rem;
+            padding: 2rem 1rem;
+            background: transparent;
         }
         
+        /* Generic Tiles - Official Fiori Styling */
         .sapMGT {
             margin: 0.5rem;
+            border-radius: 0.5rem;
+            box-shadow: var(--sapContent_Shadow0);
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .sapMGT:hover {
+            box-shadow: var(--sapContent_Shadow1);
+            transform: translateY(-2px);
+        }
+        
+        /* Tile States */
+        .sapMGT[data-sap-ui-state="Loading"] {
+            opacity: 0.7;
+        }
+        
+        .sapMGT[data-sap-ui-state="Failed"] {
+            border-left: 4px solid var(--sapErrorColor);
+        }
+        
+        .sapMGT[data-sap-ui-state="Loaded"] {
+            border-left: 4px solid var(--sapSuccessColor);
+        }
+        
+        /* Header Bar */
+        .sapMBar {
+            background: var(--sapPageHeader_Background);
+            border-bottom: 1px solid var(--sapPageHeader_BorderColor);
+        }
+        
+        /* Numeric Content */
+        .sapMNC {
+            font-weight: 600;
+        }
+        
+        /* News Content */
+        .sapMNewsContent {
+            font-size: 0.875rem;
+            line-height: 1.4;
+        }
+        
+        /* Loading Animation */
+        @keyframes sapMBusyIndicatorRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sapMTileContainer {
+                padding: 1rem 0.5rem;
+            }
+            
+            .sapMGT {
+                margin: 0.25rem;
+            }
+        }
+        
+        /* Professional Trading Theme */
+        .trading-platform {
+            --sapBrandColor: #0070f3;
+            --sapHighlightColor: #0070f3;
+            --sapActiveColor: #0070f3;
         }
     </style>
 </head>
-<body class="sapUiBody">
+<body class="sapUiBody sapUiSizeCompact trading-platform">
     <div id="content"></div>
 </body>
 </html>

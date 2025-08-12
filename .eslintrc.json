@@ -1,0 +1,46 @@
+{
+  "extends": ["@sap/eslint-config"],
+  "plugins": ["@sap/eslint-plugin-ui5-jsdocs", "@sap-ux/eslint-plugin-fiori-tools"],
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "script"
+  },
+  "env": {
+    "browser": true,
+    "es6": true,
+    "amd": true
+  },
+  "globals": {
+    "sap": "readonly",
+    "jQuery": "readonly",
+    "$": "readonly"
+  },
+  "rules": {
+    "no-console": "warn",
+    "no-debugger": "error",
+    "no-unused-vars": "warn",
+    "no-undef": "error",
+    "semi": ["error", "always"],
+    "quotes": ["error", "double"],
+    "indent": ["error", 4],
+    "linebreak-style": ["error", "unix"],
+    "eol-last": ["error", "always"],
+    "no-trailing-spaces": "error",
+    "object-curly-spacing": ["error", "always"],
+    "array-bracket-spacing": ["error", "never"],
+    "comma-dangle": ["error", "never"],
+    "prefer-const": "warn",
+    "no-var": "warn"
+  },
+  "overrides": [
+    {
+      "files": ["webapp/test/**/*.js"],
+      "env": {
+        "qunit": true
+      },
+      "globals": {
+        "sinon": "readonly"
+      }
+    }
+  ]
+}
