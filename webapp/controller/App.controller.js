@@ -133,8 +133,10 @@ sap.ui.define([
 
         _updateMarketData: function () {
             fetch('/api/market/overview?symbols=bitcoin,ethereum,binancecoin')
-                .then(response => response.json())
-                .then(data => {
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(data) {
                     if (data.symbols && data.symbols.bitcoin) {
                         var oGridContainer = this.byId("gridContainer");
                         var oMarketTile = oGridContainer.getItems()[0];

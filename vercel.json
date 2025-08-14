@@ -9,15 +9,5 @@
       "src": "/(.*)",
       "dest": "/webapp/$1"
     }
-  ],
-  "env": {
-    "XAI_API_KEY": "@xai_api_key",
-    "REDIS_URL": "@redis_url",
-    "DATABASE_URL": "@database_url"
-  },
-  "functions": {
-    "api/**.py": {
-      "runtime": "python3.12"
-    }
-  }
+  ]
 }
