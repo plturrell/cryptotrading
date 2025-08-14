@@ -5,7 +5,7 @@ sap.ui.define([
 ], function (UIComponent, Device, JSONModel) {
     "use strict";
 
-    return UIComponent.extend("com.рекс.cryptotrading.Component", {
+    return UIComponent.extend("com.rex.cryptotrading.Component", {
 
         metadata: {
             manifest: "json"

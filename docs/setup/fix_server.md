@@ -1,4 +1,4 @@
-# Fix рекс.com Server on DigitalOcean
+# Fix rex.com Server on DigitalOcean
 
 Your droplet is running at:
 - IPv4: `165.227.69.235`
@@ -40,8 +40,8 @@ wget https://raw.githubusercontent.com/plturrell/cryptotrading/main/requirements
 
 # Or clone entire repo
 cd /opt
-git clone https://github.com/plturrell/cryptotrading.git рекс.com
-cd рекс.com
+git clone https://github.com/plturrell/cryptotrading.git rex.com
+cd rex.com
 ```
 
 ### 3. Install Dependencies
@@ -58,7 +58,7 @@ source venv/bin/activate
 pip install flask flask-cors flask-restx sqlalchemy python-dotenv
 ```
 
-### 4. Start рекс.com
+### 4. Start rex.com
 ```bash
 # Quick test
 python3 app.py
@@ -70,14 +70,14 @@ python3 app.py
 ```bash
 cat > /etc/systemd/system/reks.service << 'EOF'
 [Unit]
-Description=рекс.com Trading Platform
+Description=rex.com Trading Platform
 After=network.target
 
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/opt/рекс.com
-ExecStart=/usr/bin/python3 /opt/рекс.com/app.py
+WorkingDirectory=/opt/rex.com
+ExecStart=/usr/bin/python3 /opt/rex.com/app.py
 Restart=always
 
 [Install]
@@ -134,7 +134,7 @@ tail -f /var/log/nginx/error.log
 netstat -tlnp | grep -E '(80|5000)'
 
 # Test Flask directly
-cd /opt/рекс.com
+cd /opt/rex.com
 python3 -c "import app; print('App imports OK')"
 ```
 
@@ -142,7 +142,7 @@ python3 -c "import app; print('App imports OK')"
 
 Your teaching platform will be available at:
 - http://165.227.69.235 (direct IP)
-- http://рекс.com (once DNS updates)
+- http://rex.com (once DNS updates)
 
 With features:
 - AI Trading Analysis

@@ -1,4 +1,4 @@
-# рекс.com Server Setup Commands
+# rex.com Server Setup Commands
 
 ## Option 1: Access Your Existing Server
 
@@ -9,16 +9,16 @@ If you have SSH access to 165.227.69.235, run these commands:
 ssh root@165.227.69.235
 
 # Check what's running
-systemctl status рекс
+systemctl status rex
 systemctl status nginx
 ps aux | grep python
 
 # Restart services
-systemctl restart рекс
+systemctl restart rex
 systemctl restart nginx
 
 # Check logs
-journalctl -u рекс -n 50
+journalctl -u rex -n 50
 ```
 
 ## Option 2: Create New Droplet (Recommended)
@@ -46,8 +46,8 @@ apt install -y python3 python3-pip python3-venv nginx git postgresql redis-serve
 
 # Clone your repository
 cd /opt
-git clone https://github.com/plturrell/cryptotrading.git рекс.com
-cd рекс.com
+git clone https://github.com/plturrell/cryptotrading.git rex.com
+cd rex.com
 
 # Create Python virtual environment
 python3 -m venv venv
@@ -64,18 +64,18 @@ python init_db.py
 
 ```bash
 # Create systemd service
-cat > /etc/systemd/system/рекс.service << 'EOF'
+cat > /etc/systemd/system/rex.service << 'EOF'
 [Unit]
-Description=рекс.com Trading Platform
+Description=rex.com Trading Platform
 After=network.target
 
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/opt/рекс.com
-Environment="PATH=/opt/рекс.com/venv/bin"
+WorkingDirectory=/opt/rex.com
+Environment="PATH=/opt/rex.com/venv/bin"
 Environment="FLASK_APP=app.py"
-ExecStart=/opt/рекс.com/venv/bin/python app.py
+ExecStart=/opt/rex.com/venv/bin/python app.py
 Restart=always
 
 [Install]
@@ -84,15 +84,15 @@ EOF
 
 # Start service
 systemctl daemon-reload
-systemctl enable рекс
-systemctl start рекс
+systemctl enable rex
+systemctl start rex
 ```
 
 ### 4. Configure Nginx
 
 ```bash
 # Create Nginx config
-cat > /etc/nginx/sites-available/рекс.com << 'EOF'
+cat > /etc/nginx/sites-available/rex.com << 'EOF'
 server {
     listen 80;
     server_name _;
@@ -106,7 +106,7 @@ server {
 EOF
 
 # Enable site
-ln -s /etc/nginx/sites-available/рекс.com /etc/nginx/sites-enabled/
+ln -s /etc/nginx/sites-available/rex.com /etc/nginx/sites-enabled/
 rm /etc/nginx/sites-enabled/default
 systemctl restart nginx
 ```
@@ -115,7 +115,7 @@ systemctl restart nginx
 
 ```bash
 # Check services
-systemctl status рекс
+systemctl status rex
 systemctl status nginx
 
 # Test locally
@@ -129,15 +129,15 @@ curl http://YOUR_SERVER_IP/health
 
 ```bash
 # View application logs
-journalctl -u рекс -f
+journalctl -u rex -f
 
 # Check Python errors
-cd /opt/рекс.com
+cd /opt/rex.com
 source venv/bin/activate
 python app.py
 
 # Test database connection
-python -c "from src.рекс.database import get_db; db = get_db(); print('DB OK')"
+python -c "from src.rex.database import get_db; db = get_db(); print('DB OK')"
 
 # Check port 5000
 netstat -tlnp | grep 5000
@@ -155,7 +155,7 @@ Once server is running, update DNS:
 
 Once the server is running, you'll have:
 
-1. **Live Dashboard**: http://рекс.com
+1. **Live Dashboard**: http://rex.com
 2. **API Endpoints**: 
    - `/api/ai/analyze` - AI market analysis
    - `/api/wallet/balance` - MetaMask balance

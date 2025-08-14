@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
 """
-Initialize рекс.com SQLite database
+Initialize rex.com SQLite database
 """
 
 import os
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-from рекс.database import DatabaseClient, User
+from rex.database import DatabaseClient, User
 from datetime import datetime
 import hashlib
 
 def init_database():
     """Initialize database with default data"""
-    print("🚀 Initializing рекс.com database...")
+    print("🚀 Initializing rex.com database...")
     
     # Create database client
-    db = DatabaseClient(db_path='data/рекс.db')
+    db = DatabaseClient(db_path='data/rex.db')
     
     # Create admin user
     with db.get_session() as session:
@@ -27,9 +27,9 @@ def init_database():
             # Create admin user
             admin = User(
                 username='admin',
-                email='admin@рекс.com',
+                email='admin@rex.com',
                 password_hash=hashlib.sha256('admin123'.encode()).hexdigest(),
-                api_key='рекс_admin_api_key_2024',
+                api_key='rex_admin_api_key_2024',
                 is_active=True
             )
             session.add(admin)
@@ -38,7 +38,7 @@ def init_database():
             print("ℹ️  Admin user already exists")
     
     # Create sample market data
-    from рекс.database.models import MarketData
+    from rex.database.models import MarketData
     
     with db.get_session() as session:
         # Add sample BTC data
@@ -70,7 +70,7 @@ def init_database():
         print("✅ Sample market data added")
     
     print("✅ Database initialization completed!")
-    print(f"📁 Database location: {os.path.abspath('data/рекс.db')}")
+    print(f"📁 Database location: {os.path.abspath('data/rex.db')}")
     
     db.close()
 

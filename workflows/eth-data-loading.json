@@ -1,0 +1,34 @@
+{
+  "workflow_id": "eth-data-loading",
+  "name": "ETH Data Loading Workflow",
+  "description": "Load ETH data from Yahoo Finance into database with AI analysis",
+  "version": "1.0.0",
+  "steps": [
+    {
+      "step_id": "discover-structure",
+      "agent_id": "data-management-001",
+      "action": "discover_data_structure",
+      "depends_on": []
+    },
+    {
+      "step_id": "load-historical",
+      "agent_id": "historical-loader-001",
+      "action": "load_symbol_data",
+      "depends_on": [
+        "discover-structure"
+      ]
+    },
+    {
+      "step_id": "store-and-analyze",
+      "agent_id": "database-001",
+      "action": "store_historical_data",
+      "depends_on": [
+        "load-historical"
+      ]
+    }
+  ],
+  "metadata": {},
+  "created_at": null,
+  "updated_at": null,
+  "deprecated": false
+}

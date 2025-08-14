@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent / "src"
 print("Testing direct discovery without AI model...")
 
 # Import our data management agent
-from рекс.a2a.agents.data_management_agent import DataManagementAgent
+from rex.a2a.agents.data_management_agent import DataManagementAgent
 
 # Create agent
 agent = DataManagementAgent()

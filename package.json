@@ -1,7 +1,7 @@
 {
   "name": "com-rex-trading-launchpad",
   "version": "1.0.0",
-  "description": "рекс.com - Professional Crypto Trading Platform - SAP Fiori Launchpad",
+  "description": "rex.com - Professional Crypto Trading Platform - SAP Fiori Launchpad",
   "main": "app.py",
   "scripts": {
     "start": "ui5 serve --config ui5.yaml --port 8080",
@@ -30,7 +30,7 @@
     "trading",
     "enterprise"
   ],
-  "author": "рекс.com",
+  "author": "rex.com",
   "license": "MIT",
   "devDependencies": {
     "@ui5/cli": "^4.0.9",

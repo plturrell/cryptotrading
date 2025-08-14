@@ -4,7 +4,7 @@
 **ISO Standard:** ISO/IEC/IEEE 29148:2018  
 **SAP Standard:** SAP TDD-UC-001  
 **Created:** 2025-01-12  
-**Author:** рекс Trading Platform Team  
+**Author:** rex Trading Platform Team  
 **Status:** Active  
 
 ## 1. Use Case Identification
@@ -53,27 +53,27 @@ The Data Management Agent discovers the data structure of CryptoDataDownload his
 2. **Fetch Sample Data**
    - Actor: Data Management Agent
    - Action: Downloads sample CSV from CryptoDataDownload
-   - Code Link: `src/рекс/a2a/agents/data_management_agent.py#L78-99`
+   - Code Link: `src/rex/a2a/agents/data_management_agent.py#L78-99`
 
 3. **Analyze Data Structure**
    - Actor: Data Management Agent
    - Action: Analyzes columns, data types, quality metrics
-   - Code Link: `src/рекс/a2a/agents/data_management_agent.py#L101-113`
+   - Code Link: `src/rex/a2a/agents/data_management_agent.py#L101-113`
 
 4. **Generate SAP CAP Schema**
    - Actor: Data Management Agent
    - Action: Creates CDS entity definition
-   - Code Link: `src/рекс/a2a/agents/data_management_agent.py#L209-306`
+   - Code Link: `src/rex/a2a/agents/data_management_agent.py#L209-306`
 
 5. **Generate SAP Resource Discovery**
    - Actor: Data Management Agent
    - Action: Creates OData metadata
-   - Code Link: `src/рекс/a2a/agents/data_management_agent.py#L416-486`
+   - Code Link: `src/rex/a2a/agents/data_management_agent.py#L416-486`
 
 6. **Store Schema in Registry**
    - Actor: Data Management Agent
    - Action: Saves to SQLite and/or Vercel blob
-   - Code Link: `src/рекс/a2a/agents/data_management_agent.py#L577-660`
+   - Code Link: `src/rex/a2a/agents/data_management_agent.py#L577-660`
 
 ## 6. Alternative Flows
 
@@ -117,15 +117,15 @@ The Data Management Agent discovers the data structure of CryptoDataDownload his
 {
   "success": true,
   "source": "cryptodatadownload",
-  "data_product_id": "рекс-trading-cryptodatadownload",
+  "data_product_id": "rex-trading-cryptodatadownload",
   "sap_cap_schema": {
     "entity_name": "CryptoDataDownloadHistoricalData",
-    "namespace": "рекс.trading.data",
+    "namespace": "rex.trading.data",
     "cds_definition": "...",
     "fields": ["date", "open", "high", "low", "close", "volume"]
   },
   "sap_resource_discovery": {
-    "DataProductID": "рекс-trading-cryptodatadownload",
+    "DataProductID": "rex-trading-cryptodatadownload",
     "QualityMetrics": {
       "Completeness": 0.998,
       "Accuracy": 0.995,

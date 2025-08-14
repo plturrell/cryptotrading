@@ -1,4 +1,4 @@
-# URGENT: Secure and Setup рекс.com Server
+# URGENT: Secure and Setup rex.com Server
 
 ## 1. FIRST - Change Your Password (CRITICAL!)
 
@@ -28,8 +28,8 @@ apt install -y python3-pip python3-venv nginx git curl
 
 # Clone your repository
 cd /opt
-git clone https://github.com/plturrell/cryptotrading.git рекс.com
-cd рекс.com
+git clone https://github.com/plturrell/cryptotrading.git rex.com
+cd rex.com
 
 # Create and activate virtual environment
 python3 -m venv venv
@@ -56,15 +56,15 @@ Press Ctrl+C to stop the test, then:
 # Create service file
 cat > /etc/systemd/system/reks.service << 'EOF'
 [Unit]
-Description=рекс.com Trading Platform
+Description=rex.com Trading Platform
 After=network.target
 
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/opt/рекс.com
-Environment="PATH=/opt/рекс.com/venv/bin"
-ExecStart=/opt/рекс.com/venv/bin/python /opt/рекс.com/app.py
+WorkingDirectory=/opt/rex.com
+Environment="PATH=/opt/rex.com/venv/bin"
+ExecStart=/opt/rex.com/venv/bin/python /opt/rex.com/app.py
 Restart=always
 
 [Install]
@@ -108,7 +108,7 @@ curl http://localhost/health
 
 Open in browser: http://165.227.69.235
 
-You should see the рекс.com trading platform with:
+You should see the rex.com trading platform with:
 - AI Analysis
 - MetaMask Integration
 - Real-time Data
@@ -130,4 +130,4 @@ You should see the рекс.com trading platform with:
    rm /Users/apple/projects/cryptotrading/URGENT_SETUP.md
    ```
 
-Ready to teach trading on рекс.com!
+Ready to teach trading on rex.com!

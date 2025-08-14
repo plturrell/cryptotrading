@@ -160,10 +160,10 @@ Generated: {}
 
 ## Code Coverage Areas
 
-1. **Data Discovery:** `src/рекс/a2a/agents/data_management_agent.py#L35-147`
-2. **Schema Generation:** `src/рекс/a2a/agents/data_management_agent.py#L209-486`
-3. **Schema Storage:** `src/рекс/a2a/agents/data_management_agent.py#L577-660`
-4. **Schema Retrieval:** `src/рекс/a2a/agents/data_management_agent.py#L662-697`
+1. **Data Discovery:** `src/rex/a2a/agents/data_management_agent.py#L35-147`
+2. **Schema Generation:** `src/rex/a2a/agents/data_management_agent.py#L209-486`
+3. **Schema Storage:** `src/rex/a2a/agents/data_management_agent.py#L577-660`
+4. **Schema Retrieval:** `src/rex/a2a/agents/data_management_agent.py#L662-697`
 """
         
         # Save report
@@ -180,7 +180,7 @@ Generated: {}
                     "reportId": f"TER-UC001-{datetime.now().strftime('%Y%m%d-%H%M%S')}",
                     "useCaseId": "UC001",
                     "useCaseName": "CryptoDataDownload Schema Discovery",
-                    "testSuite": "рекс Trading Platform - A2A Integration Tests",
+                    "testSuite": "rex Trading Platform - A2A Integration Tests",
                     "executionDate": datetime.now().isoformat(),
                     "environment": {
                         "platform": "Python 3.x",
@@ -242,7 +242,7 @@ Generated: {}
 ║  This certifies that UC001 meets all specified requirements ║
 ║  and is ready for production deployment.                     ║
 ║                                                              ║
-║  Certified by: рекс Trading Platform QA                     ║
+║  Certified by: rex Trading Platform QA                     ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
 """

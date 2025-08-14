@@ -1,6 +1,6 @@
-# рекс.com - Cryptocurrency AI Trading Platform
+# rex.com - Cryptocurrency AI Trading Platform
 
-This repository contains the source code and documentation for рекс.com, a professional AI-powered cryptocurrency trading platform.
+This repository contains the source code and documentation for rex.com, a professional AI-powered cryptocurrency trading platform.
 
 ## Contents
 
@@ -30,7 +30,7 @@ These documents serve as reference materials for developing and implementing AI-
 ## Deployment
 
 The platform is deployed on Vercel and accessible at:
-- Production: https://рекс.com (requires authentication)
+- Production: https://rex.com (requires authentication)
 - Vercel URL: https://cryptotrading-4gqyiuua0-plturrells-projects.vercel.app
 
 ### Local Development

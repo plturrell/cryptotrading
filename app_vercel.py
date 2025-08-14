@@ -41,7 +41,7 @@ def webapp_files(filename):
 @app.route('/health')
 def health():
     """Health check endpoint"""
-    return {'status': 'healthy', 'platform': 'рекс.com', 'version': '0.1.0'}
+    return {'status': 'healthy', 'platform': 'rex.com', 'version': '0.1.0'}
 
 # Minimal API endpoints for the frontend
 @app.route('/api/market/overview')

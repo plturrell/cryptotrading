@@ -5,7 +5,7 @@ sap.ui.define([
 ], function (Controller, MessageToast, MessageBox) {
     "use strict";
 
-    return Controller.extend("com.рекс.cryptotrading.controller.App", {
+    return Controller.extend("com.rex.cryptotrading.controller.App", {
 
         onInit: function () {
             // Set tile model

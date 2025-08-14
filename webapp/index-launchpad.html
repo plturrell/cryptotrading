@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>рекс.com - SAP Fiori Launchpad</title>
+    <title>rex.com - SAP Fiori Launchpad</title>
     
     <!-- SAP Horizon Theme Variables - Authentic Design Tokens -->
     <style>
@@ -380,7 +380,7 @@
                         config: {
                             groups: [{
                                 id: "crypto_trading_group",
-                                title: "рекс.com Crypto Trading",
+                                title: "rex.com Crypto Trading",
                                 isPreset: true,
                                 isVisible: true,
                                 tiles: []
@@ -519,72 +519,6 @@
                 function createFallbackShell() {
                     console.log("SAP ushell not available, creating fallback shell...");
                     
-                    // Create authentic SAP Fiori tiles without ushell dependency
-                    var aTileConfigs = [
-                        {
-                            title: "Bitcoin Trading",
-                            subtitle: "Real-time BTC market data",
-                            info: "Loading...",
-                            infoState: sap.m.LoadState.Loading,
-                            icon: "sap-icon://BusinessSuiteInAppSymbols/icon-analytics",
-                            loadFunction: loadMarketData
-                        },
-                        {
-                            title: "Wallet Management", 
-                            subtitle: "Portfolio & balance tracking",
-                            info: "Connect",
-                            infoState: sap.m.LoadState.Loading,
-                            icon: "sap-icon://wallet",
-                            loadFunction: loadWalletBalance
-                        },
-                        {
-                            title: "Trading Console",
-                            subtitle: "Advanced trading interface", 
-                            info: "Ready",
-                            infoState: sap.m.LoadState.Loaded,
-                            icon: "sap-icon://business-card",
-                            loadFunction: loadTradingStatus
-                        },
-                        {
-                            title: "AI Signals",
-                            subtitle: "Market analysis & insights",
-                            info: "3 Active", 
-                            infoState: sap.m.LoadState.Loaded,
-                            icon: "sap-icon://lightbulb",
-                            loadFunction: function() {
-                                MessageToast.show("AI Signals: 3 active signals detected");
-                            }
-                        }
-                    ];
-                    
-                    // Create tiles and load data
-                    aTileConfigs.forEach(function(config, index) {
-                        var oTile = new GenericTile({
-                            header: config.title,
-                            subheader: config.subtitle,
-                            tileContent: new TileContent({
-                                content: new NumericContent({
-                                    value: config.info,
-                                    state: config.infoState,
-                                    icon: config.icon
-                                })
-                            }),
-                            press: function() {
-                                MessageToast.show("Opening " + config.title + "...");
-                                if (config.loadFunction) {
-                                    config.loadFunction();
-                                }
-                            }
-                        });
-                        
-                        // Auto-load real data
-                        setTimeout(function() {
-                            if (config.loadFunction) {
-                                config.loadFunction();
-                            }
-                        }, 1000 + (index * 500));
-                    });
-                    
                     console.log("SAP Fiori tiles initialized successfully");
                 }
                 
@@ -601,7 +535,7 @@
                         
                         // Create SAP Fiori ShellBar with authentic design
                         var oShellBar = new ShellBar("shellBar", {
-                            title: "рекс.com",
+                            title: "rex.com",
                             secondTitle: "Crypto Trading Platform",
                             homeIcon: "sap-icon://home",
                             showMenuButton: true,
@@ -633,71 +567,556 @@
                             }
                         });
                         
-                        // Create main content with SAP Fiori Elements patterns
-                        var oContent = new VerticalLayout({
-                            content: [
-                                new Text({
-                                    text: "рекс.com - Professional Crypto Trading Platform"
-                                }).addStyleClass("sapUiTitleH1 sapUiMediumMarginTop sapUiMediumMarginBottom"),
-                                
-                                new Button({
-                                    text: "Bitcoin Analytics",
-                                    icon: "sap-icon://line-charts",
-                                    type: "Emphasized",
-                                    press: loadMarketData
-                                }).addStyleClass("sapUiTinyMarginEnd"),
-                                
-                                new Button({
-                                    text: "Wallet Management",
-                                    icon: "sap-icon://wallet",
-                                    type: "Default",
-                                    press: loadWalletBalance
-                                }).addStyleClass("sapUiTinyMarginEnd"),
-                                
-                                new Button({
-                                    text: "Trading Console",
-                                    icon: "sap-icon://trading-partner",
-                                    type: "Default",
-                                    press: loadTradingStatus
-                                }).addStyleClass("sapUiTinyMarginEnd"),
-                                
-                                new Text({
-                                    text: "SAP Fiori Launchpad - Enterprise Standard with Real Data Integration"
-                                }).addStyleClass("sapUiText sapUiMediumMarginTop")
-                            ]
-                        }).addStyleClass("sapUiContentPadding");
-                        
-                        // Create main page with ShellBar
-                        var oPage = new Page("launchpadPage", {
-                            customHeader: oShellBar,
-                            content: [oContent],
-                            enableScrolling: true,
-                            showNavButton: false,
-                            backgroundDesign: "Solid"
+                        // Create authentic SAP Fiori Launchpad with TileContainer
+                        sap.ui.require([
+                            "sap/m/TileContainer", 
+                            "sap/m/StandardTile"
+                        ], function(TileContainer, StandardTile) {
+                            
+                            var oTileContainer = new TileContainer("mainTileContainer", {
+                                tiles: [
+                                    new StandardTile({
+                                        title: "Bitcoin Trading",
+                                        info: "Loading...",
+                                        infoState: sap.ui.core.ValueState.None,
+                                        icon: "sap-icon://BusinessSuiteInAppSymbols/icon-analytics",
+                                        type: "Monitor",
+                                        press: function() {
+                                            loadMarketData();
+                                            MessageToast.show("Loading Bitcoin market data...");
+                                        }
+                                    }),
+                                    
+                                    new StandardTile({
+                                        title: "Wallet",
+                                        info: "Connect",
+                                        infoState: sap.ui.core.ValueState.None, 
+                                        icon: "sap-icon://wallet",
+                                        type: "Create",
+                                        press: function() {
+                                            loadWalletBalance();
+                                            MessageToast.show("Connecting wallet...");
+                                        }
+                                    }),
+                                    
+                                    new StandardTile({
+                                        title: "Trading Console",
+                                        info: "Ready",
+                                        infoState: sap.ui.core.ValueState.Success,
+                                        icon: "sap-icon://BusinessSuiteInAppSymbols/icon-trade",
+                                        type: "Create",
+                                        press: function() {
+                                            openTradingConsole();
+                                        }
+                                    }),
+                                    
+                                    new StandardTile("aiSignalsTile", {
+                                        title: "AI Signals",
+                                        info: "Loading...",
+                                        infoState: sap.ui.core.ValueState.None,
+                                        icon: "sap-icon://lightbulb",
+                                        type: "Monitor",
+                                        press: function() {
+                                            loadAISignals();
+                                        }
+                                    }),
+                                    
+                                    new StandardTile({
+                                        title: "Strands Agents",
+                                        info: "Manage",
+                                        infoState: sap.ui.core.ValueState.Information,
+                                        icon: "sap-icon://collaborate",
+                                        type: "Create",
+                                        press: function() {
+                                            openStrandsAgentConsole();
+                                        }
+                                    }),
+                                    
+                                    new StandardTile("agentMonitorTile", {
+                                        title: "Agent Monitor",
+                                        info: "Loading...",
+                                        infoState: sap.ui.core.ValueState.None,
+                                        icon: "sap-icon://monitor-payments",
+                                        type: "Monitor",
+                                        press: function() {
+                                            loadAgentStatus();
+                                        }
+                                    })
+                                ]
+                            });
+                            
+                            // Create main page with authentic SAP Fiori Launchpad layout
+                            var oPage = new Page("launchpadPage", {
+                                customHeader: oShellBar,
+                                content: [oTileContainer],
+                                enableScrolling: true,
+                                showNavButton: false,
+                                backgroundDesign: "Solid"
+                            });
+                            
+                            // Create App container
+                            var oApp = new App("app", {
+                                pages: [oPage]
+                            });
+                            
+                            // Place app in DOM
+                            oApp.placeAt("content");
+                            
+                            // Auto-load initial data
+                            setTimeout(function() {
+                                loadMarketData();
+                            }, 2000);
+                            
+                            MessageToast.show("SAP Fiori Launchpad initialized with authentic TileContainer");
+                            
+                            // Hide splash screen after launchpad is ready
+                            hideSplashScreen();
+                            
+                            // Load real data for tiles
+                            setTimeout(loadTileData, 1000);
                         });
-                        
-                        // Create App container
-                        var oApp = new App("app", {
-                            pages: [oPage]
-                        });
-                        
-                        // Place app in DOM
-                        oApp.placeAt("content");
-                        
-                        // Auto-load initial data
-                        setTimeout(function() {
-                            loadMarketData();
-                        }, 2000);
-                        
-                        MessageToast.show("SAP Fiori Launchpad (Fallback Mode) initialized");
-                        
-                        // Hide splash screen after launchpad is ready
-                        hideSplashScreen();
                     });
                 });
         
         function openTradingConsole() {
             window.open('/trading', '_blank');
+        }
+        
+        function openStrandsAgentConsole() {
+            loadStrandsAgentUI();
+        }
+        
+        function loadAgentStatus() {
+            fetch('/api/agents/status')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(text => {
+                    try {
+                        const data = JSON.parse(text);
+                        console.log('Agent status loaded:', data);
+                        showAgentStatusDialog(data);
+                    } catch (e) {
+                        console.log('Non-JSON response:', text);
+                        MessageToast.show("Agent monitoring service unavailable");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading agent status:', error);
+                    MessageToast.show("Agent monitoring offline");
+                });
+        }
+        
+        function loadStrandsAgentUI() {
+            sap.ui.require([
+                "sap/m/Dialog",
+                "sap/m/Table",
+                "sap/m/Column",
+                "sap/m/ColumnListItem",
+                "sap/m/Text",
+                "sap/m/Button",
+                "sap/m/ObjectStatus",
+                "sap/m/VBox",
+                "sap/m/HBox",
+                "sap/m/Input",
+                "sap/m/Select",
+                "sap/ui/core/Item"
+            ], function(Dialog, Table, Column, ColumnListItem, Text, Button, ObjectStatus, VBox, HBox, Input, Select, Item) {
+                
+                // Create strands agent management dialog
+                var oDialog = new Dialog("strandsAgentDialog", {
+                    title: "Strands Agent Management",
+                    contentWidth: "80%",
+                    contentHeight: "70%",
+                    verticalScrolling: false,
+                    content: [
+                        new VBox({
+                            width: "100%",
+                            items: [
+                                // Control panel
+                                new HBox({
+                                    width: "100%",
+                                    justifyContent: "SpaceBetween",
+                                    alignItems: "Center",
+                                    items: [
+                                        new Text({
+                                            text: "Active Strands Agents",
+                                            class: "sapUiMediumMargin"
+                                        }),
+                                        new HBox({
+                                            items: [
+                                                new Button({
+                                                    text: "Create Agent",
+                                                    type: "Emphasized",
+                                                    icon: "sap-icon://add",
+                                                    press: function() {
+                                                        showCreateAgentDialog();
+                                                    }
+                                                }),
+                                                new Button({
+                                                    text: "Refresh",
+                                                    icon: "sap-icon://refresh",
+                                                    press: function() {
+                                                        refreshAgentTable();
+                                                    }
+                                                })
+                                            ]
+                                        })
+                                    ]
+                                }),
+                                
+                                // Agent table
+                                new Table("agentTable", {
+                                    width: "100%",
+                                    columns: [
+                                        new Column({
+                                            header: new Text({text: "Agent ID"})
+                                        }),
+                                        new Column({
+                                            header: new Text({text: "Type"})
+                                        }),
+                                        new Column({
+                                            header: new Text({text: "Status"})
+                                        }),
+                                        new Column({
+                                            header: new Text({text: "Capabilities"})
+                                        }),
+                                        new Column({
+                                            header: new Text({text: "Actions"})
+                                        })
+                                    ],
+                                    items: []
+                                })
+                            ]
+                        })
+                    ],
+                    beginButton: new Button({
+                        text: "Close",
+                        press: function() {
+                            oDialog.close();
+                        }
+                    })
+                });
+                
+                oDialog.open();
+                loadAgentData();
+            });
+        }
+        
+        function loadAgentData() {
+            // Load agent data from API
+            fetch('/api/agents/list')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(text => {
+                    try {
+                        const agents = JSON.parse(text);
+                        populateAgentTable(agents);
+                    } catch (e) {
+                        console.error('Failed to parse agent data:', e);
+                        MessageToast.show("Failed to load agent data");
+                        populateAgentTable([]);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading agent data:', error);
+                    MessageToast.show("Agent service unavailable");
+                    populateAgentTable([]);
+                });
+        }
+        
+        
+        function populateAgentTable(agents) {
+            sap.ui.require([
+                "sap/m/ColumnListItem",
+                "sap/m/Text",
+                "sap/m/ObjectStatus",
+                "sap/m/Button",
+                "sap/m/HBox"
+            ], function(ColumnListItem, Text, ObjectStatus, Button, HBox) {
+                
+                var oTable = sap.ui.getCore().byId("agentTable");
+                if (!oTable) return;
+                
+                oTable.removeAllItems();
+                
+                agents.forEach(function(agent) {
+                    var statusState = agent.status === "active" ? "Success" : "Error";
+                    
+                    var oItem = new ColumnListItem({
+                        cells: [
+                            new Text({text: agent.agent_id}),
+                            new Text({text: agent.agent_type}),
+                            new ObjectStatus({
+                                text: agent.status,
+                                state: statusState
+                            }),
+                            new Text({text: agent.capabilities.join(", ")}),
+                            new HBox({
+                                items: [
+                                    new Button({
+                                        text: "View",
+                                        type: "Transparent",
+                                        icon: "sap-icon://detail-view",
+                                        press: function() {
+                                            showAgentDetails(agent);
+                                        }
+                                    }),
+                                    new Button({
+                                        text: agent.status === "active" ? "Stop" : "Start",
+                                        type: "Transparent",
+                                        icon: agent.status === "active" ? "sap-icon://stop" : "sap-icon://play",
+                                        press: function() {
+                                            toggleAgentStatus(agent);
+                                        }
+                                    })
+                                ]
+                            })
+                        ]
+                    });
+                    
+                    oTable.addItem(oItem);
+                });
+            });
+        }
+        
+        function showAgentDetails(agent) {
+            sap.ui.require([
+                "sap/m/Dialog",
+                "sap/m/VBox",
+                "sap/m/Label",
+                "sap/m/Text",
+                "sap/m/Button"
+            ], function(Dialog, VBox, Label, Text, Button) {
+                
+                var oDetailsDialog = new Dialog({
+                    title: "Agent Details: " + agent.agent_id,
+                    contentWidth: "50%",
+                    content: [
+                        new VBox({
+                            items: [
+                                new Label({text: "Agent ID:"}),
+                                new Text({text: agent.agent_id, class: "sapUiSmallMarginBottom"}),
+                                
+                                new Label({text: "Type:"}),
+                                new Text({text: agent.agent_type, class: "sapUiSmallMarginBottom"}),
+                                
+                                new Label({text: "Status:"}),
+                                new Text({text: agent.status, class: "sapUiSmallMarginBottom"}),
+                                
+                                new Label({text: "Model Provider:"}),
+                                new Text({text: agent.model_provider, class: "sapUiSmallMarginBottom"}),
+                                
+                                new Label({text: "Capabilities:"}),
+                                new Text({text: agent.capabilities.join(", "), class: "sapUiSmallMarginBottom"})
+                            ]
+                        })
+                    ],
+                    beginButton: new Button({
+                        text: "Close",
+                        press: function() {
+                            oDetailsDialog.close();
+                        }
+                    })
+                });
+                
+                oDetailsDialog.open();
+            });
+        }
+        
+        function toggleAgentStatus(agent) {
+            var newStatus = agent.status === "active" ? "inactive" : "active";
+            var action = newStatus === "active" ? "start" : "stop";
+            
+            fetch(`/api/agents/${agent.agent_id}/${action}`, {
+                method: 'POST'
+            })
+            .then(response => {
+                if (response.ok) {
+                    MessageToast.show(`Agent ${agent.agent_id} ${action}ed successfully`);
+                    agent.status = newStatus;
+                    populateAgentTable([agent]);
+                } else {
+                    MessageToast.show(`Failed to ${action} agent ${agent.agent_id}`);
+                }
+            })
+            .catch(error => {
+                console.error(`Error ${action}ing agent:`, error);
+                MessageToast.show(`Failed to ${action} agent`);
+            });
+        }
+        
+        function refreshAgentTable() {
+            loadAgentData();
+            MessageToast.show("Agent data refreshed");
+        }
+        
+        function showCreateAgentDialog() {
+            sap.ui.require([
+                "sap/m/Dialog",
+                "sap/m/VBox",
+                "sap/m/Label",
+                "sap/m/Input",
+                "sap/m/Select",
+                "sap/ui/core/Item",
+                "sap/m/Button"
+            ], function(Dialog, VBox, Label, Input, Select, Item, Button) {
+                
+                var oCreateDialog = new Dialog({
+                    title: "Create New Strands Agent",
+                    contentWidth: "50%",
+                    content: [
+                        new VBox({
+                            items: [
+                                new Label({text: "Agent ID:"}),
+                                new Input("newAgentId", {placeholder: "Enter unique agent ID"}),
+                                
+                                new Label({text: "Agent Type:"}),
+                                new Select("newAgentType", {
+                                    items: [
+                                        new Item({key: "historical_loader", text: "Historical Loader"}),
+                                        new Item({key: "database", text: "Database Agent"}),
+                                        new Item({key: "blockchain_strands", text: "Blockchain Strands"}),
+                                        new Item({key: "data_management", text: "Data Management"}),
+                                        new Item({key: "a2a_coordinator", text: "A2A Coordinator"})
+                                    ]
+                                }),
+                                
+                                new Label({text: "Model Provider:"}),
+                                new Select("newModelProvider", {
+                                    items: [
+                                        new Item({key: "deepseek", text: "DeepSeek"}),
+                                        new Item({key: "anthropic", text: "Anthropic"})
+                                    ],
+                                    selectedKey: "deepseek"
+                                })
+                            ]
+                        })
+                    ],
+                    beginButton: new Button({
+                        text: "Create",
+                        type: "Emphasized",
+                        press: function() {
+                            createNewAgent();
+                            oCreateDialog.close();
+                        }
+                    }),
+                    endButton: new Button({
+                        text: "Cancel",
+                        press: function() {
+                            oCreateDialog.close();
+                        }
+                    })
+                });
+                
+                oCreateDialog.open();
+            });
+        }
+        
+        function createNewAgent() {
+            var agentId = sap.ui.getCore().byId("newAgentId").getValue();
+            var agentType = sap.ui.getCore().byId("newAgentType").getSelectedKey();
+            var modelProvider = sap.ui.getCore().byId("newModelProvider").getSelectedKey();
+            
+            if (!agentId || !agentType) {
+                MessageToast.show("Please fill in all required fields");
+                return;
+            }
+            
+            var agentData = {
+                agent_id: agentId,
+                agent_type: agentType,
+                model_provider: modelProvider
+            };
+            
+            fetch('/api/agents/create', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(agentData)
+            })
+            .then(response => {
+                if (response.ok) {
+                    MessageToast.show(`Agent ${agentId} created successfully`);
+                    refreshAgentTable();
+                } else {
+                    MessageToast.show(`Failed to create agent ${agentId}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error creating agent:', error);
+                MessageToast.show("Failed to create agent");
+            });
+        }
+        
+        function showAgentStatusDialog(data) {
+            MessageToast.show(`Active agents: ${data.active_count}`);
+        }
+        
+        function loadAISignals() {
+            fetch('/api/ai/signals')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(text => {
+                    try {
+                        const data = JSON.parse(text);
+                        MessageToast.show(`AI Signals: ${data.active_signals} active signals detected`);
+                    } catch (e) {
+                        console.error('No AI signals API available:', e);
+                        MessageToast.show("AI Signals service not available");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading AI signals:', error);
+                    MessageToast.show("AI Signals service offline");
+                });
+        }
+        
+        // Auto-load real data for tiles on startup
+        function loadTileData() {
+            // Load agent status for Agent Monitor tile
+            fetch('/api/agents/status')
+                .then(response => response.json())
+                .then(data => {
+                    // Update Agent Monitor tile
+                    var agentMonitorTile = sap.ui.getCore().byId("agentMonitorTile");
+                    if (agentMonitorTile) {
+                        agentMonitorTile.setInfo(`${data.active_count} Active`);
+                        agentMonitorTile.setInfoState(data.active_count > 0 ? "Success" : "Error");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading tile data:', error);
+                });
+            
+            // Load AI signals (if API exists)
+            fetch('/api/ai/signals')
+                .then(response => response.json())
+                .then(data => {
+                    var aiSignalsTile = sap.ui.getCore().byId("aiSignalsTile");
+                    if (aiSignalsTile) {
+                        aiSignalsTile.setInfo(`${data.active_signals || 0} Active`);
+                        aiSignalsTile.setInfoState(data.active_signals > 0 ? "Warning" : "None");
+                    }
+                })
+                .catch(error => {
+                    // AI signals API doesn't exist yet, show "No Data"
+                    var aiSignalsTile = sap.ui.getCore().byId("aiSignalsTile");
+                    if (aiSignalsTile) {
+                        aiSignalsTile.setInfo("No Data");
+                        aiSignalsTile.setInfoState("None");
+                    }
+                });
         }
         
         // Set up periodic data refresh
@@ -758,7 +1177,7 @@
 <body class="sapUiBody">
     <!-- Splash Screen -->
     <div id="splashScreen">
-        <div class="splash-logo">рекс.com</div>
+        <div class="splash-logo">rex.com</div>
         <div class="splash-subtitle">Crypto Trading Platform</div>
         <div class="splash-loader"></div>
     </div>

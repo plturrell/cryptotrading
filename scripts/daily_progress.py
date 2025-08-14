@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Daily progress tracker for рекс.com 30-day plan
+Daily progress tracker for rex.com 30-day plan
 """
 
 import os
@@ -10,11 +10,11 @@ from typing import Dict, List, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-from рекс.database import DatabaseClient
+from rex.database import DatabaseClient
 
 class DailyProgressTracker:
     def __init__(self):
-        self.db = DatabaseClient(db_path='data/рекс.db')
+        self.db = DatabaseClient(db_path='data/rex.db')
         self.start_date = datetime(2025, 8, 12)  # Today
         self.current_day = (datetime.now() - self.start_date).days + 1
         
@@ -81,7 +81,7 @@ class DailyProgressTracker:
     
     def display_progress(self):
         """Display current progress and today's tasks"""
-        print(f"🚀 рекс.com 30-Day Progress Tracker")
+        print(f"🚀 rex.com 30-Day Progress Tracker")
         print(f"{'='*50}")
         print(f"📅 Day {self.current_day} of 30")
         print(f"📆 Date: {datetime.now().strftime('%Y-%m-%d')}")
@@ -121,7 +121,7 @@ class DailyProgressTracker:
         
         # What's been completed
         print(f"\n✅ Completed Systems:")
-        print("  • Basic infrastructure (рекс.com platform)")
+        print("  • Basic infrastructure (rex.com platform)")
         print("  • Database system (SQLite)")
         print("  • AI integration (DeepSeek R1, Perplexity)")
         print("  • Blockchain integration (MetaMask)")

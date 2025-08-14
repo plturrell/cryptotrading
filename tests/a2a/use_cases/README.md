@@ -1,6 +1,6 @@
 # A2A Use Case Testing Framework
 
-This directory contains SAP-standard ISO-compliant use case documentation and test implementations for the рекс Trading Platform A2A agent system.
+This directory contains SAP-standard ISO-compliant use case documentation and test implementations for the rex Trading Platform A2A agent system.
 
 ## Structure
 
@@ -127,6 +127,6 @@ Track use case test status:
 
 ## Contact
 
-- **Product Owner:** рекс Trading Platform Team
-- **QA Lead:** quality@рекс.com
-- **Compliance:** compliance@рекс.com
+- **Product Owner:** rex Trading Platform Team
+- **QA Lead:** quality@rex.com
+- **Compliance:** compliance@rex.com

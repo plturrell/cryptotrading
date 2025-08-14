@@ -19,8 +19,8 @@ from pathlib import Path
 # Add src to Python path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent / "src"))
 
-from рекс.a2a.agents.data_management_agent import DataManagementAgent
-from рекс.a2a.protocols import MessageType, A2AProtocol
+from rex.a2a.agents.data_management_agent import DataManagementAgent
+from rex.a2a.protocols import MessageType, A2AProtocol
 
 class TestUC001CryptoDataDownloadSchemaDiscovery:
     """Test class for UC001: CryptoDataDownload Schema Discovery"""
@@ -29,8 +29,8 @@ class TestUC001CryptoDataDownloadSchemaDiscovery:
     def setup_agent(self):
         """Setup Data Management Agent for testing"""
         # Mock database and storage
-        with patch('рекс.a2a.agents.data_management_agent.get_db') as mock_db, \
-             patch('рекс.a2a.agents.data_management_agent.VercelBlobStorage') as mock_blob:
+        with patch('rex.a2a.agents.data_management_agent.get_db') as mock_db, \
+             patch('rex.a2a.agents.data_management_agent.VercelBlobStorage') as mock_blob:
             
             # Setup mock database
             mock_session = Mock()
@@ -64,7 +64,7 @@ unix,date,symbol,open,high,low,close,Volume BTC,Volume USD
         """
         Test Scenario TS001: Valid discovery request
         Expected: Schema stored successfully
-        Code Link: src/рекс/a2a/agents/data_management_agent.py#L35-61
+        Code Link: src/rex/a2a/agents/data_management_agent.py#L35-61
         """
         agent, mock_session, mock_blob = setup_agent
         
@@ -93,7 +93,7 @@ unix,date,symbol,open,high,low,close,Volume BTC,Volume USD
             # Verify SAP CAP schema structure
             cap_schema = result_data['sap_cap_schema']
             assert cap_schema['entity_name'] == 'CryptoDataDownloadHistoricalData'
-            assert cap_schema['namespace'] == 'рекс.trading.data'
+            assert cap_schema['namespace'] == 'rex.trading.data'
             assert 'cds_definition' in cap_schema
             
             # Verify quality metrics are calculated
@@ -112,7 +112,7 @@ unix,date,symbol,open,high,low,close,Volume BTC,Volume USD
         """
         Test Scenario TS002: Network timeout
         Expected: Graceful error handling
-        Code Link: src/рекс/a2a/agents/data_management_agent.py#L139-147
+        Code Link: src/rex/a2a/agents/data_management_agent.py#L139-147
         """
         agent, _, _ = setup_agent
         
@@ -194,7 +194,7 @@ unix,date,symbol,open,high,low,close,Volume BTC,Volume USD
         """
         Test Scenario TS005: Schema storage and retrieval
         Expected: Schema stored and retrieved correctly
-        Code Link: src/рекс/a2a/agents/data_management_agent.py#L577-697
+        Code Link: src/rex/a2a/agents/data_management_agent.py#L577-697
         """
         agent, mock_session, mock_blob = setup_agent
         

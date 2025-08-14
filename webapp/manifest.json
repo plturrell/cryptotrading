@@ -7,7 +7,7 @@
         "applicationVersion": {
             "version": "1.0.0"
         },
-        "title": "рекс.com - SAP Fiori Launchpad",
+        "title": "rex.com - SAP Fiori Launchpad",
         "description": "Professional Crypto Trading Platform - SAP Fiori Launchpad",
         "tags": {
             "keywords": ["crypto", "trading", "fiori", "launchpad", "sap"]
@@ -18,7 +18,7 @@
                 "launchpad": {
                     "semanticObject": "CryptoTrading",
                     "action": "display",
-                    "title": "рекс.com Launchpad",
+                    "title": "rex.com Launchpad",
                     "signature": {
                         "parameters": {},
                         "additionalParameters": "allowed"
@@ -153,7 +153,7 @@
                 "routerClass": "sap.m.routing.Router",
                 "viewType": "XML",
                 "async": true,
-                "viewPath": "com.рекс.cryptotrading.view",
+                "viewPath": "com.rex.cryptotrading.view",
                 "controlAggregation": "pages",
                 "controlId": "app"
             },

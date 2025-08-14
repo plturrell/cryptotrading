@@ -7,8 +7,8 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.рекс.ai import AIGatewayClient
-from src.рекс.storage import VercelBlobClient, put_json_blob
+from src.rex.ai import AIGatewayClient
+from src.rex.storage import VercelBlobClient, put_json_blob
 import json
 
 def test_ai_gateway():
@@ -107,7 +107,7 @@ def test_vercel_blob():
         
         # Test 4: Quick JSON Upload
         print("\n4. Testing Quick JSON Upload...")
-        test_data = {"test": "data", "platform": "рекс.com"}
+        test_data = {"test": "data", "platform": "rex.com"}
         result = put_json_blob("test/quick_upload.json", test_data)
         print(f"Quick upload result: {result}")
         

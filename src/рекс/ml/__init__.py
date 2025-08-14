@@ -1,1 +1,0 @@
-# DeepSeek R1 integration for рекс.com

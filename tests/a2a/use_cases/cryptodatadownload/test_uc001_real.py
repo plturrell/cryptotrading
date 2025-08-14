@@ -13,7 +13,7 @@ from pathlib import Path
 # Add src to Python path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent / "src"))
 
-from рекс.a2a.agents.data_management_agent import data_management_agent
+from rex.a2a.agents.data_management_agent import data_management_agent
 
 async def test_real_cryptodatadownload_discovery():
     """Real test against CryptoDataDownload API"""

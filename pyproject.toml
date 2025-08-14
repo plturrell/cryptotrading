@@ -3,9 +3,9 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "рекс"
+name = "rex"
 version = "0.1.0"
-description = "рекс.com - Professional cryptocurrency AI trading platform"
+description = "rex.com - Professional cryptocurrency AI trading platform"
 authors = [{name = "Paul Turrell", email = "plturrell@gmail.com"}]
 license = {text = "MIT"}
 readme = "README.md"

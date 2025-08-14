@@ -8,7 +8,7 @@ sap.ui.define([
 ], function(Controller, MessageToast, Dialog, Button, Text, Fragment) {
     "use strict";
 
-    return Controller.extend("com.рекс.cryptotrading.controller.Launchpad", {
+    return Controller.extend("com.rex.cryptotrading.controller.Launchpad", {
         
         onInit: function() {
             // Initialize controller
@@ -55,7 +55,7 @@ sap.ui.define([
             
             if (!this._oUserPopover) {
                 Fragment.load({
-                    name: "com.рекс.cryptotrading.fragment.UserMenu",
+                    name: "com.rex.cryptotrading.fragment.UserMenu",
                     controller: this
                 }).then(function(oPopover) {
                     this._oUserPopover = oPopover;
