@@ -1,16 +1,5 @@
 {
   "version": 2,
-  "name": "rex-a2a-blockchain",
-  "builds": [
-    {
-      "src": "webapp/index-launchpad.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "api/**.py", 
-      "use": "@vercel/python"
-    }
-  ],
   "routes": [
     {
       "src": "/api/(.*)",
