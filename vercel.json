@@ -2,12 +2,6 @@
   "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "functions": {
-    "api/mcp.py": {
-      "runtime": "@vercel/python"
-    }
-  },
-
   "routes": [
     {
       "src": "/api/mcp/(.*)",
