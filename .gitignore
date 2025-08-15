@@ -159,8 +159,7 @@ venv.bak/
 .dmypy.json
 dmypy.json
 
-# Cleanup directory for standalone files
-cleanup/
+
 secrets.json
 *.key
 *.pem
