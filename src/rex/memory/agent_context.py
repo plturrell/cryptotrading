@@ -367,6 +367,10 @@ class AgentContextManager:
         merged['last_updated'] = datetime.utcnow().isoformat()
         return merged
     
+    def update_context(self, session_id: str, agent_id: str, context_updates: Dict) -> bool:
+        """Alias for update_agent_context for backward compatibility"""
+        return self.update_agent_context(session_id, agent_id, context_updates)
+    
     def _summarize_context(self, context_data: Dict) -> Dict:
         """Create a summary of context data for history"""
         return {

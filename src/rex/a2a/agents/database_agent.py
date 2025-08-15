@@ -20,7 +20,7 @@ from ..protocols import A2AMessage, A2AProtocol, MessageType
 # Import observability
 from ...observability import (
     get_logger, get_tracer, get_error_tracker, get_business_metrics,
-    observable_agent_method, track_errors, ErrorSeverity, ErrorCategory,
+    observable_agent_method, track_error, ErrorSeverity, ErrorCategory,
     trace_context
 )
 
@@ -64,120 +64,121 @@ class DatabaseAgent(MemoryStrandsAgent):
                 start_time = datetime.now()
                 
                 try:
-                symbol = data_payload['symbol']
-                records = data_payload['data']
-                
-                logger.info(f"Storing {len(records)} records for {symbol} in {storage_type}")
-                
-                stored_count = 0
-                analysis_results = {}
-                
-                if storage_type == "sqlite":
-                    # Store in SQLite MarketDataSource table
-                    from ...database.models import MarketDataSource
+                    symbol = data_payload['symbol']
+                    records = data_payload['data']
                     
-                    with self.db.get_session() as session:
-                        for record in records:
-                            market_record = MarketDataSource(
-                                source=record.get('source', 'historical_loader'),
-                                symbol=symbol,
-                                price=float(record.get('close', 0)),
-                                volume_24h=float(record.get('volume', 0)) if record.get('volume') else None,
-                                change_24h=float(record.get('returns', 0)) if record.get('returns') else None,
-                                data_type='historical',
-                                timestamp=datetime.fromisoformat(record.get('date', datetime.now().isoformat())) if record.get('date') else datetime.now()
-                            )
-                            session.add(market_record)
-                            stored_count += 1
-                        session.commit()
+                    logger.info(f"Storing {len(records)} records for {symbol} in {storage_type}")
+                    
+                    stored_count = 0
+                    analysis_results = {}
                 
-                elif storage_type == "vercel_blob":
-                    # Store in Vercel blob storage
-                    blob_data = {
+                    if storage_type == "sqlite":
+                        # Store in SQLite MarketDataSource table
+                        from ...database.models import MarketDataSource
+                        
+                        with self.db.get_session() as session:
+                            for record in records:
+                                market_record = MarketDataSource(
+                                    source=record.get('source', 'historical_loader'),
+                                    symbol=symbol,
+                                    price=float(record.get('close', 0)),
+                                    volume_24h=float(record.get('volume', 0)) if record.get('volume') else None,
+                                    change_24h=float(record.get('returns', 0)) if record.get('returns') else None,
+                                    data_type='historical',
+                                    timestamp=datetime.fromisoformat(record.get('date', datetime.now().isoformat())) if record.get('date') else datetime.now()
+                                )
+                                session.add(market_record)
+                                stored_count += 1
+                            session.commit()
+                    
+                    elif storage_type == "vercel_blob":
+                        # Store in Vercel blob storage
+                        blob_data = {
+                            "symbol": symbol,
+                            "records": records,
+                            "count": len(records),
+                            "stored_at": datetime.now().isoformat()
+                        }
+                        
+                        blob_key = f"historical_data/{symbol}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                        blob_result = self.blob_storage.upload_json(blob_key, blob_data)
+                        
+                        if blob_result.get('success'):
+                            stored_count = len(records)
+                            logger.info(f"Stored to Vercel blob: {blob_result['url']}")
+                        else:
+                            raise Exception(f"Blob storage failed: {blob_result.get('error')}")
+                    
+                    else:
+                        raise ValueError(f"Unsupported storage_type: {storage_type}")
+                
+                    # Perform AI analysis if requested
+                    if ai_analysis and records:
+                        latest_record = records[-1]  # Most recent data point
+                        analysis_results = self._analyze_with_all_providers(symbol, latest_record)
+                        
+                        # Store AI analyses
+                        for provider, analysis in analysis_results.items():
+                            if analysis.get('success'):
+                                self.db.save_ai_analysis(
+                                    symbol=symbol,
+                                    model=provider,
+                                    analysis_type='market_analysis',
+                                    analysis=json.dumps(analysis)
+                                )
+                        
+                        # Trigger memory storage for successful AI analysis
+                        if analysis_results:
+                            try:
+                                import asyncio
+                                # Create shared memory for AI analysis results
+                                analysis_summary = f"Stored {len(records)} {symbol} records with AI analysis from {len(analysis_results)} providers. "
+                                analysis_summary += f"Latest price: ${latest_record.get('close', 0):.2f}. "
+                                analysis_summary += f"Providers: {', '.join(analysis_results.keys())}"
+                                
+                                # Use asyncio to run memory creation
+                                loop = asyncio.get_event_loop()
+                                if loop.is_running():
+                                    # Schedule the memory creation as a task
+                                    asyncio.create_task(self.store_analysis_memory({
+                                        'symbol': symbol,
+                                        'signal': 'DATA_STORED',
+                                        'confidence': 0.8,
+                                        'reasoning': analysis_summary
+                                    }, is_shared=True))
+                                else:
+                                    # Run synchronously if no event loop
+                                    asyncio.run(self.store_analysis_memory({
+                                        'symbol': symbol,
+                                        'signal': 'DATA_STORED', 
+                                        'confidence': 0.8,
+                                        'reasoning': analysis_summary
+                                    }, is_shared=True))
+                                    
+                            except Exception as e:
+                                logger.warning(f"Could not store analysis memory: {e}")
+                                # Continue execution even if memory storage fails
+                    
+                    # Send A2A success confirmation
+                    return {
+                        "success": True,
+                        "agent_id": self.agent_id,
+                        "records_stored": stored_count,
+                        "ai_analyses": len(analysis_results),
                         "symbol": symbol,
-                        "records": records,
-                        "count": len(records),
-                        "stored_at": datetime.now().isoformat()
+                        "timestamp": datetime.now().isoformat(),
+                        "message": f"Stored {stored_count} records with {len(analysis_results)} AI analyses"
                     }
                     
-                    blob_key = f"historical_data/{symbol}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-                    blob_result = self.blob_storage.upload_json(blob_key, blob_data)
-                    
-                    if blob_result.get('success'):
-                        stored_count = len(records)
-                        logger.info(f"Stored to Vercel blob: {blob_result['url']}")
-                    else:
-                        raise Exception(f"Blob storage failed: {blob_result.get('error')}")
-                
-                else:
-                    raise ValueError(f"Unsupported storage_type: {storage_type}")
-                
-                # Perform AI analysis if requested
-                if ai_analysis and records:
-                    latest_record = records[-1]  # Most recent data point
-                    analysis_results = self._analyze_with_all_providers(symbol, latest_record)
-                    
-                    # Store AI analyses
-                    for provider, analysis in analysis_results.items():
-                        if analysis.get('success'):
-                            self.db.save_ai_analysis(
-                                symbol=symbol,
-                                model=provider,
-                                analysis_type='market_analysis',
-                                analysis=json.dumps(analysis)
-                            )
-                    
-                    # Trigger memory storage for successful AI analysis
-                    if analysis_results:
-                        try:
-                            import asyncio
-                            # Create shared memory for AI analysis results
-                            analysis_summary = f"Stored {len(records)} {symbol} records with AI analysis from {len(analysis_results)} providers. "
-                            analysis_summary += f"Latest price: ${latest_record.get('close', 0):.2f}. "
-                            analysis_summary += f"Providers: {', '.join(analysis_results.keys())}"
-                            
-                            # Use asyncio to run memory creation
-                            loop = asyncio.get_event_loop()
-                            if loop.is_running():
-                                # Schedule the memory creation as a task
-                                asyncio.create_task(self.store_analysis_memory({
-                                    'symbol': symbol,
-                                    'signal': 'DATA_STORED',
-                                    'confidence': 0.8,
-                                    'reasoning': analysis_summary
-                                }, is_shared=True))
-                            else:
-                                # Run synchronously if no event loop
-                                asyncio.run(self.store_analysis_memory({
-                                    'symbol': symbol,
-                                    'signal': 'DATA_STORED', 
-                                    'confidence': 0.8,
-                                    'reasoning': analysis_summary
-                                }, is_shared=True))
-                                
-                        except Exception as e:
-                            logger.warning(f"Could not store analysis memory: {e}")
-                            # Continue execution even if memory storage fails
-                
-                # Send A2A success confirmation
-                return {
-                    "success": True,
-                    "agent_id": self.agent_id,
-                    "records_stored": stored_count,
-                    "ai_analyses": len(analysis_results),
-                    "symbol": symbol,
-                    "timestamp": datetime.now().isoformat(),
-                    "message": f"Stored {stored_count} records with {len(analysis_results)} AI analyses"
-                }
-                
-            except Exception as e:
-                logger.error(f"Error storing data: {e}")
-                return {
-                    "success": False,
-                    "agent_id": self.agent_id,
-                    "error": str(e),
-                    "timestamp": datetime.now().isoformat()
-                }
+                except Exception as e:
+                    track_error(e, severity=ErrorSeverity.HIGH, category=ErrorCategory.DATABASE_ERROR)
+                    logger.error(f"Error storing data: {e}")
+                    return {
+                        "success": False,
+                        "agent_id": self.agent_id,
+                        "error": str(e),
+                        "timestamp": datetime.now().isoformat()
+                    }
 
         @tool
         def analyze_symbol_with_ai(symbol: str, data_context: Dict[str, Any], providers: List[str] = None) -> Dict[str, Any]:

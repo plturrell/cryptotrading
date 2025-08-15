@@ -1,0 +1,11 @@
+{
+  "request": {
+    "base_url": "https://www.koyfin.com/help/",
+    "max_depth": 4,
+    "max_pages": 150,
+    "extract_features": true,
+    "generate_spec": true
+  },
+  "agent_response": "No content",
+  "timestamp": "20250814_234442"
+}

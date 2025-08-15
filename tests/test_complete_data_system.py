@@ -11,7 +11,7 @@ sys.path.append('.')
 from src.rex.ml.multi_crypto_yfinance_client import get_multi_crypto_client
 from src.rex.ml.equity_indicators_client import get_equity_indicators_client
 from src.rex.ml.fx_rates_client import get_fx_rates_client
-from src.rex.ml.comprehensive_metrics_client import get_comprehensive_metrics_client
+from src.rex.ml.get_comprehensive_indicators_client import get_comprehensive_indicators_client
 import pandas as pd
 from datetime import datetime
 import logging
@@ -28,7 +28,7 @@ def test_complete_data_system():
     crypto_client = get_multi_crypto_client()
     equity_client = get_equity_indicators_client()
     fx_client = get_fx_rates_client()
-    metrics_client = get_comprehensive_metrics_client()
+    metrics_client = get_comprehensive_indicators_client()
     
     print("📊 Testing all data sources for BTC prediction...")
     
@@ -108,7 +108,7 @@ def test_alert_systems():
     print("=" * 70)
     
     fx_client = get_fx_rates_client()
-    metrics_client = get_comprehensive_metrics_client()
+    metrics_client = get_comprehensive_indicators_client()
     
     # Test FX early warning
     print("1️⃣ FX Early Warning Signals:")
@@ -154,7 +154,7 @@ def test_data_coverage():
     crypto_client = get_multi_crypto_client()
     equity_client = get_equity_indicators_client()
     fx_client = get_fx_rates_client()
-    metrics_client = get_comprehensive_metrics_client()
+    metrics_client = get_comprehensive_indicators_client()
     
     # Count available indicators
     crypto_pairs = len(crypto_client.SUPPORTED_PAIRS)

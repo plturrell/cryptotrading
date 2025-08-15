@@ -43,9 +43,9 @@ class A2ACoordinator(MemoryStrandsAgent):
         self.message_history = []
         
         # Set initial goals and state (using memory system methods)
-        self.add_memory_goal("Facilitate efficient A2A communication", "high")
-        self.add_memory_goal("Maintain message routing accuracy", "high")
-        self.set_agent_state("ready", {"initialized_at": datetime.now().isoformat()})
+        self.add_goal("Facilitate efficient A2A communication", "high")
+        self.add_goal("Maintain message routing accuracy", "high")
+        self.set_state("ready", {"initialized_at": datetime.now().isoformat()})
     
     def _create_tools(self):
         """Create A2A coordination tools for Strands framework"""

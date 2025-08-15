@@ -361,3 +361,45 @@ class MemoryStrandsAgent(BaseStrandsAgent):
             'context_history': self.agent_context.get_context_history(self.session_id, self.agent_id),
             'a2a_memories': self.a2a_memory_system.export_memories(self.agent_id)
         }
+    
+    def add_goal(self, goal_description: str, priority: str = "medium") -> bool:
+        """Add goal to agent's goals"""
+        try:
+            goal = {
+                'description': goal_description,
+                'priority': priority,
+                'created_at': datetime.now().isoformat(),
+                'status': 'active'
+            }
+            
+            context = self.agent_context.get_agent_context(self.session_id, self.agent_id)
+            if context:
+                goals = context.get('goals', [])
+                goals.append(goal)
+                return self.agent_context.update_context(
+                    session_id=self.session_id,
+                    agent_id=self.agent_id,
+                    context_updates={'goals': goals}
+                )
+            return False
+        except Exception as e:
+            logger.error(f"Error adding goal for agent {self.agent_id}: {e}")
+            return False
+    
+    def set_state(self, state: str, state_data: Optional[Dict] = None):
+        """Set agent state"""
+        try:
+            state_info = {
+                'state': state,
+                'state_data': state_data or {},
+                'updated_at': datetime.now().isoformat()
+            }
+            
+            return self.agent_context.update_context(
+                session_id=self.session_id,
+                agent_id=self.agent_id,
+                context_updates={'state': state_info}
+            )
+        except Exception as e:
+            logger.error(f"Error setting state for agent {self.agent_id}: {e}")
+            return False
