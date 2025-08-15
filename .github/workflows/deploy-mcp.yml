@@ -1,0 +1,64 @@
+name: Deploy MCP to Vercel
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'src/mcp/**'
+      - 'api/mcp.py'
+      - 'requirements.txt'
+      - 'vercel.json'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'src/mcp/**'
+      - 'api/mcp.py'
+
+jobs:
+  test-mcp:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-asyncio
+    
+    - name: Test MCP modules
+      run: |
+        python -m pytest src/mcp/ -v --tb=short
+      continue-on-error: true
+    
+    - name: Validate MCP API endpoint
+      run: |
+        python -c "
+        import sys
+        sys.path.append('.')
+        from api.mcp import create_app
+        app = create_app()
+        print('MCP API endpoint validation: PASSED')
+        "
+
+  deploy:
+    needs: test-mcp
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to Vercel
+      uses: amondnet/vercel-action@v25
+      with:
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+        vercel-args: '--prod'
+        working-directory: ./

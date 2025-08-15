@@ -1,13 +1,28 @@
 {
   "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "functions": {
+    "api/mcp.py": {
+      "runtime": "python3.9"
+    }
+  },
+  "env": {
+    "MCP_API_KEY": "@mcp_api_key",
+    "JWT_SECRET": "@jwt_secret"
+  },
   "routes": [
+    {
+      "src": "/api/mcp/(.*)",
+      "dest": "/api/mcp.py"
+    },
     {
       "src": "/api/(.*)",
       "dest": "/api/$1"
     },
     {
       "src": "/(.*)",
-      "dest": "/webapp/$1"
+      "dest": "/dist/$1"
     }
   ]
 }
