@@ -4,13 +4,10 @@
   "outputDirectory": "dist",
   "functions": {
     "api/mcp.py": {
-      "runtime": "python3.9"
+      "runtime": "@vercel/python"
     }
   },
-  "env": {
-    "MCP_API_KEY": "@mcp_api_key",
-    "JWT_SECRET": "@jwt_secret"
-  },
+
   "routes": [
     {
       "src": "/api/mcp/(.*)",
