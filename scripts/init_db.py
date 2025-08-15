@@ -7,7 +7,7 @@ import os
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-from rex.database import DatabaseClient, User
+from cryptotrading.data.database import DatabaseClient, User
 from datetime import datetime
 import hashlib
 
@@ -38,7 +38,7 @@ def init_database():
             print("ℹ️  Admin user already exists")
     
     # Create sample market data
-    from rex.database.models import MarketData
+    from cryptotrading.data.database.models import MarketData
     
     with db.get_session() as session:
         # Add sample BTC data

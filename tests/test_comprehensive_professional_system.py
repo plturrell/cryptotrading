@@ -19,8 +19,8 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 
 # Import our enhanced components
-from src.rex.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
-from src.rex.ml.professional_trading_config import ProfessionalTradingConfig, MarketRegime
+from cryptotrading.core.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
+from cryptotrading.core.ml.professional_trading_config import ProfessionalTradingConfig, MarketRegime
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

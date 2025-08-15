@@ -21,8 +21,8 @@ from dotenv import load_dotenv
 
 # Import observability components
 try:
-    from src.rex.observability.dashboard import register_observability_routes, create_dashboard_route
-    from src.rex.observability.tracer import instrument_flask_app
+    from cryptotrading.infrastructure.monitoring.dashboard import register_observability_routes, create_dashboard_route
+    from cryptotrading.infrastructure.monitoring.tracer import instrument_flask_app
     OBSERVABILITY_AVAILABLE = True
 except ImportError:
     OBSERVABILITY_AVAILABLE = False
@@ -55,7 +55,7 @@ load_dotenv()
 
 # Initialize database
 try:
-    from src.rex.database import get_db
+    from cryptotrading.data.database import get_db
     db = get_db()
 except Exception as e:
     print(f"Database initialization warning: {e}")
@@ -129,7 +129,7 @@ class TradingStatus(Resource):
 class MarketData(Resource):
     def get(self):
         """Get market data from Yahoo Finance with full observability"""
-        from src.rex.observability import get_logger, get_business_metrics, trace_context, track_errors, ErrorSeverity, ErrorCategory
+        from cryptotrading.infrastructure.monitoring import get_logger, get_business_metrics, trace_context, track_errors, ErrorSeverity, ErrorCategory
         
         logger = get_logger("api.market")
         business_metrics = get_business_metrics()
@@ -148,7 +148,7 @@ class MarketData(Resource):
                     "method": "GET"
                 })
                 
-                from src.rex.historical_data.yahoo_finance import YahooFinanceClient
+                from cryptotrading.data.historical.yahoo_finance import YahooFinanceClient
                 
                 yahoo_client = YahooFinanceClient()
                 data = yahoo_client.get_realtime_price(symbol)
@@ -184,7 +184,7 @@ class MarketData(Resource):
                 })
                 
                 # Track error
-                from src.rex.observability import get_error_tracker
+                from cryptotrading.infrastructure.monitoring import get_error_tracker
                 error_tracker = get_error_tracker()
                 error_tracker.track_error(e, severity=ErrorSeverity.HIGH, category=ErrorCategory.API_ERROR)
                 
@@ -200,7 +200,7 @@ class MarketData(Resource):
 class AIAnalysis(Resource):
     def post(self):
         """AI market analysis using Claude-4-Sonnet with full observability"""
-        from src.rex.observability import get_logger, get_business_metrics, trace_context, ErrorSeverity, ErrorCategory
+        from cryptotrading.infrastructure.monitoring import get_logger, get_business_metrics, trace_context, ErrorSeverity, ErrorCategory
         
         logger = get_logger("api.ai.analyze")
         business_metrics = get_business_metrics()
@@ -222,7 +222,7 @@ class AIAnalysis(Resource):
                     "method": "POST"
                 })
                 
-                from src.rex.ai import AIGatewayClient
+                from cryptotrading.core.ai import AIGatewayClient
                 
                 ai = AIGatewayClient()
                 analysis = ai.analyze_market(data)
@@ -262,7 +262,7 @@ class AIAnalysis(Resource):
                 })
                 
                 # Track error
-                from src.rex.observability import get_error_tracker
+                from cryptotrading.infrastructure.monitoring import get_error_tracker
                 error_tracker = get_error_tracker()
                 error_tracker.track_error(e, severity=ErrorSeverity.HIGH, category=ErrorCategory.AI_ERROR)
                 
@@ -285,7 +285,7 @@ class AIAnalysis(Resource):
 class CryptoNews(Resource):
     def get(self, symbol):
         """Get real-time crypto news via Perplexity"""
-        from src.rex.ml.perplexity import PerplexityClient
+        from cryptotrading.core.ml.perplexity import PerplexityClient
         
         perplexity = PerplexityClient()
         news = perplexity.search_crypto_news(symbol.upper())
@@ -295,7 +295,7 @@ class CryptoNews(Resource):
 class TradingSignals(Resource):
     def get(self, symbol):
         """Get AI trading signals via Perplexity"""
-        from src.rex.ml.perplexity import PerplexityClient
+        from cryptotrading.core.ml.perplexity import PerplexityClient
         
         timeframe = '4h'  # Default timeframe
         perplexity = PerplexityClient()
@@ -358,7 +358,7 @@ class GasPrice(Resource):
 class MarketOverview(Resource):
     def get(self):
         """Get market overview for multiple symbols"""
-        from src.rex.market_data import MarketDataAggregator
+        from cryptotrading.data.market_data import MarketDataAggregator
         
         symbols = request.args.get('symbols', 'bitcoin,ethereum,binancecoin').split(',')
         
@@ -370,7 +370,7 @@ class MarketOverview(Resource):
 class DexOpportunities(Resource):
     def get(self):
         """Get DEX trading opportunities"""
-        from src.rex.market_data import MarketDataAggregator
+        from cryptotrading.data.market_data import MarketDataAggregator
         
         min_liquidity = float(request.args.get('min_liquidity', 10000))
         
@@ -382,7 +382,7 @@ class DexOpportunities(Resource):
 class DexTrending(Resource):
     def get(self):
         """Get trending DEX pools"""
-        from src.rex.market_data import GeckoTerminalClient
+        from cryptotrading.data.market_data import GeckoTerminalClient
         
         network = request.args.get('network', None)
         
@@ -394,7 +394,7 @@ class DexTrending(Resource):
 class DexPool(Resource):
     def get(self, network, address):
         """Get specific DEX pool data"""
-        from src.rex.market_data import GeckoTerminalClient
+        from cryptotrading.data.market_data import GeckoTerminalClient
         
         client = GeckoTerminalClient()
         pool_data = client.get_pool_by_address(network, address)
@@ -409,8 +409,8 @@ class DexPool(Resource):
 class HistoricalData(Resource):
     def get(self, symbol):
         """Get historical market data from Yahoo Finance with full observability"""
-        from src.rex.observability import get_logger, get_business_metrics, trace_context, ErrorSeverity, ErrorCategory
-        from src.rex.historical_data.yahoo_finance import YahooFinanceClient
+        from cryptotrading.infrastructure.monitoring import get_logger, get_business_metrics, trace_context, ErrorSeverity, ErrorCategory
+        from cryptotrading.data.historical.yahoo_finance import YahooFinanceClient
         from datetime import datetime, timedelta
         
         logger = get_logger("api.historical")
@@ -516,7 +516,7 @@ class HistoricalData(Resource):
                 })
                 
                 # Track error
-                from src.rex.observability import get_error_tracker
+                from cryptotrading.infrastructure.monitoring import get_error_tracker
                 error_tracker = get_error_tracker()
                 error_tracker.track_error(e, severity=ErrorSeverity.HIGH, category=ErrorCategory.API_ERROR)
                 
@@ -532,7 +532,7 @@ class HistoricalData(Resource):
 class DownloadHistoricalData(Resource):
     def get(self, symbol):
         """Download historical data for model training"""
-        from src.rex.historical_data import HistoricalDataAggregator
+        from cryptotrading.data.historical import HistoricalDataAggregator
         
         source = request.args.get('source', 'all')
         
@@ -553,7 +553,7 @@ class DownloadHistoricalData(Resource):
 class TrainingDataset(Resource):
     def get(self, symbol):
         """Get or create training dataset with indicators"""
-        from src.rex.historical_data import HistoricalDataAggregator
+        from cryptotrading.data.historical import HistoricalDataAggregator
         
         lookback_days = int(request.args.get('days', 365))
         
@@ -584,7 +584,7 @@ class TrainingDataset(Resource):
 class AvailableDatasets(Resource):
     def get(self):
         """List available training datasets"""
-        from src.rex.historical_data import HistoricalDataAggregator
+        from cryptotrading.data.historical import HistoricalDataAggregator
         
         aggregator = HistoricalDataAggregator()
         datasets = aggregator.get_available_datasets()
@@ -598,7 +598,7 @@ class AvailableDatasets(Resource):
 class APILimits(Resource):
     def get(self):
         """Get current API rate limit status"""
-        from src.rex.utils import rate_limiter
+        from cryptotrading.utils import rate_limiter
         
         return {
             "limits": rate_limiter.get_all_limits(),
@@ -610,7 +610,7 @@ class AIStrategy(Resource):
     def post(self):
         """Generate personalized trading strategy using Claude-4"""
         try:
-            from src.rex.ai import AIGatewayClient
+            from cryptotrading.core.ai import AIGatewayClient
             
             user_profile = api.payload
             ai = AIGatewayClient()
@@ -618,7 +618,7 @@ class AIStrategy(Resource):
             
             # Store in blob storage
             try:
-                from src.rex.storage import put_json_blob
+                from cryptotrading.data.storage import put_json_blob
                 blob_result = put_json_blob(
                     f"strategies/user_{user_profile.get('user_id', 'anonymous')}.json",
                     strategy
@@ -636,7 +636,7 @@ class AISentiment(Resource):
     def post(self):
         """Analyze news sentiment using Claude-4"""
         try:
-            from src.rex.ai import AIGatewayClient
+            from cryptotrading.core.ai import AIGatewayClient
             
             news_items = api.payload.get('news', [])
             ai = AIGatewayClient()
@@ -651,7 +651,7 @@ class StoredSignals(Resource):
     def get(self, symbol):
         """Get stored trading signals from Vercel Blob"""
         try:
-            from src.rex.storage import VercelBlobClient
+            from cryptotrading.data.storage import VercelBlobClient
             
             client = VercelBlobClient()
             signals = client.get_latest_signals(symbol)
@@ -667,7 +667,7 @@ class StoredSignals(Resource):
     def post(self, symbol):
         """Store new trading signal in Vercel Blob"""
         try:
-            from src.rex.storage import VercelBlobClient
+            from cryptotrading.data.storage import VercelBlobClient
             
             signal_data = api.payload
             client = VercelBlobClient()

@@ -15,7 +15,7 @@ from datetime import datetime
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../src'))
 
 try:
-    from rex.a2a.registry.registry import agent_registry
+    from cryptotrading.infrastructure.registry.registry import agent_registry
     REAL_REGISTRY_AVAILABLE = True
     logger = logging.getLogger(__name__)
     logger.info("Connected to real agent registry")

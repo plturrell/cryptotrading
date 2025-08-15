@@ -8,8 +8,8 @@ import sys
 import os
 sys.path.append('.')
 
-from src.rex.ml.multi_crypto_yfinance_client import get_multi_crypto_client
-from src.rex.a2a.agents.historical_loader_agent import get_historical_loader_agent
+from cryptotrading.core.ml.multi_crypto_yfinance_client import get_multi_crypto_client
+from cryptotrading.core.agents.specialized.historical_loader_agent import get_historical_loader_agent
 import asyncio
 import logging
 

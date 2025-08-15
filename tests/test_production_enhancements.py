@@ -27,7 +27,7 @@ def test_production_enhancements():
     try:
         # Import and initialize
         print("1️⃣ Testing Enhanced Client with Production Features...")
-        from src.rex.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
+        from cryptotrading.core.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
         
         client = EnhancedComprehensiveMetricsClient()
         

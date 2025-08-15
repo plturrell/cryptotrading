@@ -14,15 +14,15 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.mcp.protocol import MCPProtocol, MCPRequest, MCPResponse, MCPError, MCPErrorCode
-from src.mcp.server import MCPServer
-from src.mcp.client import MCPClient, MCPClientSession
-from src.mcp.transport import StdioTransport, WebSocketTransport, SSETransport
-from src.mcp.capabilities import ServerCapabilities, ClientCapabilities, CapabilityNegotiator
-from src.mcp.tools import MCPTool, ToolResult, CryptoTradingTools
-from src.mcp.resources import Resource, JsonResource, DynamicResource, CryptoTradingResources
-from src.strands.tools import tool, get_tool_spec, is_tool
-from src.strands.models.grok_model import GrokModel
+from cryptotrading.core.protocols.mcp.protocol import MCPProtocol, MCPRequest, MCPResponse, MCPError, MCPErrorCode
+from cryptotrading.core.protocols.mcp.server import MCPServer
+from cryptotrading.core.protocols.mcp.client import MCPClient, MCPClientSession
+from cryptotrading.core.protocols.mcp.transport import StdioTransport, WebSocketTransport, SSETransport
+from cryptotrading.core.protocols.mcp.capabilities import ServerCapabilities, ClientCapabilities, CapabilityNegotiator
+from cryptotrading.core.protocols.mcp.tools import MCPTool, ToolResult, CryptoTradingTools
+from cryptotrading.core.protocols.mcp.resources import Resource, JsonResource, DynamicResource, CryptoTradingResources
+from cryptotrading.core.agents.tools import tool, get_tool_spec, is_tool
+from cryptotrading.core.agents.models.grok_model import GrokModel
 
 
 class TestMCPProtocol:
@@ -426,7 +426,7 @@ class TestGrokModelStreaming:
         model = GrokModel(api_key="test-key")
         
         # Test streaming
-        from src.strands.types.content import Message
+        from cryptotrading.core.agents.types.content import Message
         messages = [Message(role="user", content="Hello")]
         
         events = []
@@ -463,11 +463,11 @@ class TestGrokModelStreaming:
         
         # Create model and tool specs
         model = GrokModel(api_key="test-key")
-        from src.strands.types.tools import ToolSpec
+        from cryptotrading.core.agents.types.tools import ToolSpec
         tool_specs = [ToolSpec(name="test_tool", description="Test tool", parameters={})]
         
         # Test streaming with tools
-        from src.strands.types.content import Message
+        from cryptotrading.core.agents.types.content import Message
         messages = [Message(role="user", content="Use the test tool")]
         
         events = []

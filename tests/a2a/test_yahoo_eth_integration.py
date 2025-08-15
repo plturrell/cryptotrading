@@ -7,10 +7,10 @@ import pytest
 import asyncio
 from datetime import datetime, timedelta
 
-from src.rex.ml.yfinance_client import get_yfinance_client
-from src.rex.a2a.agents.historical_loader_agent import HistoricalLoaderAgent
-from src.rex.a2a.agents.data_management_agent import DataManagementAgent
-from src.rex.a2a.agents.database_agent import DatabaseAgent
+from cryptotrading.core.ml.yfinance_client import get_yfinance_client
+from cryptotrading.core.agents.specialized.historical_loader_agent import HistoricalLoaderAgent
+from cryptotrading.core.agents.specialized.data_management_agent import DataManagementAgent
+from cryptotrading.core.agents.specialized.database_agent import DatabaseAgent
 
 
 class TestYahooETHIntegration:

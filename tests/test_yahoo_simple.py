@@ -9,7 +9,7 @@ import os
 sys.path.append('.')
 
 # Direct import without A2A dependencies
-from src.rex.ml.multi_crypto_yfinance_client import MultiCryptoYFinanceClient
+from cryptotrading.core.ml.multi_crypto_yfinance_client import MultiCryptoYFinanceClient
 import logging
 
 logging.basicConfig(level=logging.INFO)

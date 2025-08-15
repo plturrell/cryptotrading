@@ -36,7 +36,7 @@ async def verify_100_implementation() -> Dict[str, Any]:
     try:
         # Import and initialize enhanced client
         print("📊 Initializing Enhanced Comprehensive Metrics Client...")
-        from src.rex.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
+        from cryptotrading.core.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
         client = EnhancedComprehensiveMetricsClient()
         print(f"✅ Client initialized with {len(client.COMPREHENSIVE_INDICATORS)} indicators")
         
@@ -147,7 +147,7 @@ async def verify_100_implementation() -> Dict[str, Any]:
         
         # Test professional strategies
         try:
-            from src.rex.ml.professional_trading_config import ProfessionalTradingConfig
+            from cryptotrading.core.ml.professional_trading_config import ProfessionalTradingConfig
             strategies = ProfessionalTradingConfig.get_all_indicator_sets()
             if len(strategies) >= 6:
                 strands_score += 25

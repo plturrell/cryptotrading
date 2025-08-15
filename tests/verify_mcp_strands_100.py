@@ -16,18 +16,18 @@ import time
 sys.path.append(str(Path(__file__).parent))
 
 # Import all components to test
-from src.mcp.server import MCPServer
-from src.mcp.client import MCPClient, MCPClientSession
-from src.mcp.protocol import MCPProtocol, MCPRequest, MCPResponse
-from src.mcp.transport import StdioTransport
-from src.mcp.tools import CryptoTradingTools, MCPTool, ToolResult
-from src.mcp.resources import CryptoTradingResources
-from src.mcp.capabilities import ServerCapabilities, ClientCapabilities
-from src.mcp.validation import ParameterValidator, ValidatedMCPTool
-from src.strands.agent import Agent
-from src.strands.models.grok_model import GrokModel
-from src.strands.tools import tool, get_tool_spec, is_tool
-from src.strands.types.tools import ToolSpec
+from cryptotrading.core.protocols.mcp.server import MCPServer
+from cryptotrading.core.protocols.mcp.client import MCPClient, MCPClientSession
+from cryptotrading.core.protocols.mcp.protocol import MCPProtocol, MCPRequest, MCPResponse
+from cryptotrading.core.protocols.mcp.transport import StdioTransport
+from cryptotrading.core.protocols.mcp.tools import CryptoTradingTools, MCPTool, ToolResult
+from cryptotrading.core.protocols.mcp.resources import CryptoTradingResources
+from cryptotrading.core.protocols.mcp.capabilities import ServerCapabilities, ClientCapabilities
+from cryptotrading.core.protocols.mcp.validation import ParameterValidator, ValidatedMCPTool
+from cryptotrading.core.agents.agent import Agent
+from cryptotrading.core.agents.models.grok_model import GrokModel
+from cryptotrading.core.agents.tools import tool, get_tool_spec, is_tool
+from cryptotrading.core.agents.types.tools import ToolSpec
 # from src.rex.diagnostics.analyzer import create_diagnostic_analyzer  # Optional
 
 
@@ -170,14 +170,14 @@ class ComprehensiveVerifier:
                 print("✅ Async processing interface")
             
             # Test message handling
-            from src.strands.types.content import Message
+            from cryptotrading.core.agents.types.content import Message
             msg = Message(role="user", content="test")
             if msg.role == "user" and msg.content == "test":
                 score += 20
                 print("✅ Message handling")
             
             # Test streaming events
-            from src.strands.types.streaming import MessageStartEvent, ContentBlockDelta
+            from cryptotrading.core.agents.types.streaming import MessageStartEvent, ContentBlockDelta
             start_event = MessageStartEvent(messageId="123", role="assistant")
             delta_event = ContentBlockDelta(index=0, text="test")
             if start_event.messageId == "123" and delta_event.text == "test":
@@ -185,7 +185,7 @@ class ComprehensiveVerifier:
                 print("✅ Streaming events")
             
             # Test tool specifications
-            from src.strands.types.tools import ToolSpec
+            from cryptotrading.core.agents.types.tools import ToolSpec
             spec = ToolSpec(name="test", description="Test tool", parameters={})
             if spec.name == "test":
                 score += 20
@@ -260,7 +260,7 @@ class ComprehensiveVerifier:
                 print("✅ Model configuration")
             
             # Test streaming interface (structure)
-            from src.strands.types.content import Message
+            from cryptotrading.core.agents.types.content import Message
             messages = [Message(role="user", content="test")]
             
             # Verify streaming method exists and has correct signature
@@ -271,7 +271,7 @@ class ComprehensiveVerifier:
                 print("✅ Streaming interface")
             
             # Test tool spec handling
-            from src.strands.types.tools import ToolSpec
+            from cryptotrading.core.agents.types.tools import ToolSpec
             tool_specs = [ToolSpec(name="test", description="Test", parameters={})]
             
             # The streaming method should accept tool_specs
@@ -428,7 +428,7 @@ class ComprehensiveVerifier:
                 print("✅ Resource reading")
             
             # Test parameter validation
-            from src.mcp.validation import ParameterValidator
+            from cryptotrading.core.protocols.mcp.validation import ParameterValidator
             validator = ParameterValidator()
             is_valid, errors = validator.validate_parameters(
                 {"name": "test"}, 
@@ -462,7 +462,7 @@ class ComprehensiveVerifier:
                 print("✅ Message handler setup")
             
             # Test transport interface
-            from src.mcp.transport import MCPTransport
+            from cryptotrading.core.protocols.mcp.transport import MCPTransport
             if hasattr(MCPTransport, 'connect') and hasattr(MCPTransport, 'receive_messages'):
                 score += 20
                 print("✅ Transport interface")
@@ -531,14 +531,14 @@ class ComprehensiveVerifier:
                 print("⚠️  Diagnostic integration (partial)")
             
             # Test CLI integration structure
-            from src.mcp.cli import MCPDiagnosticCLI
+            from cryptotrading.core.protocols.mcp.cli import MCPDiagnosticCLI
             cli = MCPDiagnosticCLI()
             if hasattr(cli, 'cmd_start_server') and hasattr(cli, 'cmd_test_client'):
                 score += 25
                 print("✅ CLI integration")
             
             # Test validation integration
-            from src.mcp.validation import ValidatedMCPTool
+            from cryptotrading.core.protocols.mcp.validation import ValidatedMCPTool
             validated_tool = ValidatedMCPTool(
                 name="validated_test",
                 description="Validated test tool",
@@ -629,7 +629,7 @@ class ComprehensiveVerifier:
         
         try:
             # Test diagnostic CLI
-            from src.mcp.cli import MCPDiagnosticCLI
+            from cryptotrading.core.protocols.mcp.cli import MCPDiagnosticCLI
             cli = MCPDiagnosticCLI()
             
             if hasattr(cli, 'cmd_run_diagnostic'):
@@ -637,7 +637,7 @@ class ComprehensiveVerifier:
                 print("✅ Diagnostic CLI")
             
             # Test parameter validation diagnostics
-            from src.mcp.validation import ParameterValidator
+            from cryptotrading.core.protocols.mcp.validation import ParameterValidator
             validator = ParameterValidator()
             
             # Test valid parameters

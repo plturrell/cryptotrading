@@ -137,7 +137,7 @@ class CriticalProductionEvaluator:
         """Test if basic imports and initialization work"""
         try:
             # Test import
-            from src.rex.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
+            from cryptotrading.core.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
             
             # Test initialization
             self.measure_memory("initialization")
@@ -176,7 +176,7 @@ class CriticalProductionEvaluator:
     async def test_error_handling_edge_cases(self):
         """Test error handling with malicious/edge case inputs"""
         try:
-            from src.rex.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
+            from cryptotrading.core.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
             client = EnhancedComprehensiveMetricsClient()
             
             # Test 1: Empty data inputs
@@ -260,7 +260,7 @@ class CriticalProductionEvaluator:
     async def test_performance_and_memory(self):
         """Test performance and memory usage under realistic loads"""
         try:
-            from src.rex.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
+            from cryptotrading.core.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
             
             # Test 1: Multiple client initialization (memory leak test)
             memory_start = psutil.Process().memory_info().rss / 1024 / 1024
@@ -318,7 +318,7 @@ class CriticalProductionEvaluator:
     async def test_real_data_integration(self):
         """Test integration with real Yahoo Finance data"""
         try:
-            from src.rex.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
+            from cryptotrading.core.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
             client = EnhancedComprehensiveMetricsClient()
             
             # Test 1: Real data retrieval
@@ -395,7 +395,7 @@ class CriticalProductionEvaluator:
     async def test_concurrency_and_threading(self):
         """Test concurrent access and threading safety"""
         try:
-            from src.rex.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
+            from cryptotrading.core.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
             
             # Test 1: Concurrent client access
             clients = [EnhancedComprehensiveMetricsClient() for _ in range(5)]
@@ -485,7 +485,7 @@ class CriticalProductionEvaluator:
                     del os.environ['GROK_API_KEY']
                 
                 # Should still work without API keys for basic functionality
-                from src.rex.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
+                from cryptotrading.core.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
                 client = EnhancedComprehensiveMetricsClient()
                 
                 # Basic operations should work
@@ -511,7 +511,7 @@ class CriticalProductionEvaluator:
                 
                 # Try import (should still work with proper package structure)
                 try:
-                    from src.rex.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
+                    from cryptotrading.core.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
                 except ImportError:
                     self.add_critical_issue("Import fails without current directory in path")
                 
@@ -526,7 +526,7 @@ class CriticalProductionEvaluator:
     async def test_security_and_validation(self):
         """Test security and input validation"""
         try:
-            from src.rex.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
+            from cryptotrading.core.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
             client = EnhancedComprehensiveMetricsClient()
             
             # Test 1: File path traversal attempts
@@ -599,7 +599,7 @@ class CriticalProductionEvaluator:
     async def test_production_scenarios(self):
         """Simulate real production scenarios"""
         try:
-            from src.rex.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
+            from cryptotrading.core.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
             
             # Scenario 1: High-frequency trading simulation
             client = EnhancedComprehensiveMetricsClient()

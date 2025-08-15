@@ -6,8 +6,8 @@ Comprehensive validation of all enhanced features for perfect implementation
 import asyncio
 import logging
 from datetime import datetime
-from src.rex.a2a.agents.historical_loader_agent import get_historical_loader_agent
-from src.rex.a2a.protocols.enhanced_message_types import (
+from cryptotrading.core.agents.specialized.historical_loader_agent import get_historical_loader_agent
+from cryptotrading.core.protocols.a2a.enhanced_message_types import (
     CURRENT_PROTOCOL_VERSION,
     EnhancedMessageType,
     ComprehensiveIndicatorsRequest,

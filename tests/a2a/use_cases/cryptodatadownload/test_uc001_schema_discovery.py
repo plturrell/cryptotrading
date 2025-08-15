@@ -19,8 +19,8 @@ from pathlib import Path
 # Add src to Python path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent / "src"))
 
-from rex.a2a.agents.data_management_agent import DataManagementAgent
-from rex.a2a.protocols import MessageType, A2AProtocol
+from cryptotrading.core.agents.specialized.data_management_agent import DataManagementAgent
+from cryptotrading.core.protocols.a2a import MessageType, A2AProtocol
 
 class TestUC001CryptoDataDownloadSchemaDiscovery:
     """Test class for UC001: CryptoDataDownload Schema Discovery"""

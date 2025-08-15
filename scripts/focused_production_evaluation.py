@@ -115,7 +115,7 @@ class FocusedProductionEvaluator:
         """Test if critical imports work without crashing"""
         try:
             start_time = time.time()
-            from src.rex.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
+            from cryptotrading.core.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
             import_time = time.time() - start_time
             
             if import_time > 5:
@@ -131,7 +131,7 @@ class FocusedProductionEvaluator:
     def test_basic_functionality(self):
         """Test basic functionality without external dependencies"""
         try:
-            from src.rex.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
+            from cryptotrading.core.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
             
             start_time = time.time()
             client = EnhancedComprehensiveMetricsClient()
@@ -168,7 +168,7 @@ class FocusedProductionEvaluator:
     def test_critical_error_handling(self):
         """Test error handling for critical scenarios"""
         try:
-            from src.rex.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
+            from cryptotrading.core.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
             client = EnhancedComprehensiveMetricsClient()
             
             # Test 1: Empty/None inputs
@@ -203,7 +203,7 @@ class FocusedProductionEvaluator:
     def test_memory_usage(self):
         """Test for obvious memory leaks"""
         try:
-            from src.rex.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
+            from cryptotrading.core.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
             
             # Baseline memory
             process = psutil.Process()
@@ -244,7 +244,7 @@ class FocusedProductionEvaluator:
     def test_performance_bottlenecks(self):
         """Test for obvious performance bottlenecks"""
         try:
-            from src.rex.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
+            from cryptotrading.core.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
             client = EnhancedComprehensiveMetricsClient()
             
             # Test repeated method calls
@@ -284,7 +284,7 @@ class FocusedProductionEvaluator:
     def test_security_vulnerabilities(self):
         """Test for obvious security vulnerabilities"""
         try:
-            from src.rex.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
+            from cryptotrading.core.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
             
             # Test 1: Path traversal in config
             dangerous_paths = [
@@ -335,7 +335,7 @@ class FocusedProductionEvaluator:
             
             # Test import without config file
             try:
-                from src.rex.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
+                from cryptotrading.core.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
                 client = EnhancedComprehensiveMetricsClient(config_path="nonexistent.yaml")
                 self.add_warning("Should fail gracefully with missing config")
             except:

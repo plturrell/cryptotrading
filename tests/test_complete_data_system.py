@@ -8,10 +8,10 @@ import sys
 import os
 sys.path.append('.')
 
-from src.rex.ml.multi_crypto_yfinance_client import get_multi_crypto_client
-from src.rex.ml.equity_indicators_client import get_equity_indicators_client
-from src.rex.ml.fx_rates_client import get_fx_rates_client
-from src.rex.ml.get_comprehensive_indicators_client import get_comprehensive_indicators_client
+from cryptotrading.core.ml.multi_crypto_yfinance_client import get_multi_crypto_client
+from cryptotrading.core.ml.equity_indicators_client import get_equity_indicators_client
+from cryptotrading.core.ml.fx_rates_client import get_fx_rates_client
+from cryptotrading.core.ml.get_comprehensive_indicators_client import get_comprehensive_indicators_client
 import pandas as pd
 from datetime import datetime
 import logging

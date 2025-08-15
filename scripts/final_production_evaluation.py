@@ -33,7 +33,7 @@ class FinalProductionEvaluator:
         
         try:
             # Import enhanced client
-            from src.rex.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
+            from cryptotrading.core.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
             client = EnhancedComprehensiveMetricsClient()
             
             print("\n📊 CORE FUNCTIONALITY ASSESSMENT")

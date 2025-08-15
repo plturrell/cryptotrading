@@ -7,7 +7,7 @@ import sys
 import os
 sys.path.append('.')
 
-from src.rex.ml.multi_crypto_yfinance_client import get_multi_crypto_client
+from cryptotrading.core.ml.multi_crypto_yfinance_client import get_multi_crypto_client
 import yfinance as yf
 from datetime import datetime
 import requests

@@ -20,8 +20,8 @@ from .events import EventType, MCPEvent, create_event_publisher
 # Strand imports (assuming they exist in the project)
 try:
     from strands import Agent, tool
-    from ..rex.a2a.agents.base_strands_agent import BaseStrandsAgent
-    from ..rex.a2a.agents.a2a_strands_agent import A2AStrandsAgent
+    from ..rex.a2a.agents.base_strands_agent import StrandsAgent
+    from ..rex.a2a.agents.a2a_strands_agent import StrandsAgent
     from ..rex.a2a.protocols.a2a_protocol import A2AMessage, MessageType, A2AProtocol
     STRAND_AVAILABLE = True
 except ImportError:
@@ -49,7 +49,7 @@ class MCPStrandBridge:
         self.config = config or MCPStrandConfig()
         self.mcp_server: Optional[MCPServer] = None
         self.mcp_client: Optional[MCPClient] = None
-        self.strand_agents: Dict[str, BaseStrandsAgent] = {}
+        self.strand_agents: Dict[str, StrandsAgent] = {}
         self.mcp_tools_registry: Dict[str, MCPTool] = {}
         self.event_publisher = create_event_publisher()
         
@@ -65,7 +65,7 @@ class MCPStrandBridge:
         """Set MCP client for the bridge"""
         self.mcp_client = client
     
-    def register_strand_agent(self, agent: BaseStrandsAgent):
+    def register_strand_agent(self, agent: StrandsAgent):
         """Register a Strand agent with the bridge"""
         self.strand_agents[agent.agent_id] = agent
         logger.info(f"Registered Strand agent: {agent.agent_id}")
@@ -83,7 +83,7 @@ class MCPStrandBridge:
             self.mcp_tools_registry[tool_name] = mcp_tool
             logger.debug(f"Registered MCP tool for Strand use: {tool_name}")
     
-    def _add_mcp_tools_to_agent(self, agent: BaseStrandsAgent):
+    def _add_mcp_tools_to_agent(self, agent: StrandsAgent):
         """Add MCP tools to a Strand agent"""
         if not STRAND_AVAILABLE:
             return
@@ -98,7 +98,7 @@ class MCPStrandBridge:
             elif hasattr(agent.agent, 'tools'):
                 agent.agent.tools.append(strand_tool)
     
-    def _create_strand_tool_wrapper(self, mcp_tool: MCPTool, agent: BaseStrandsAgent):
+    def _create_strand_tool_wrapper(self, mcp_tool: MCPTool, agent: StrandsAgent):
         """Create a Strand tool wrapper for an MCP tool"""
         if not STRAND_AVAILABLE:
             return None
@@ -455,7 +455,7 @@ def setup_mcp_strand_integration(mcp_server: MCPServer = None,
     return bridge
 
 
-def register_strand_agent_with_mcp(agent: BaseStrandsAgent) -> bool:
+def register_strand_agent_with_mcp(agent: StrandsAgent) -> bool:
     """Register a Strand agent with MCP bridge"""
     try:
         bridge = get_mcp_strand_bridge()

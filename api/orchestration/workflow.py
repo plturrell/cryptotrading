@@ -7,12 +7,12 @@ import json
 import logging
 from typing import Dict, Any
 
-from src.rex.a2a.orchestration import (
+from cryptotrading.core.protocols.a2a.orchestration import (
     OrchestrationService,
     WorkflowTemplates,
     workflow_registry
 )
-from src.rex.a2a.orchestration.message_queue import workflow_queue
+from cryptotrading.core.protocols.a2a.orchestration.message_queue import workflow_queue
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)

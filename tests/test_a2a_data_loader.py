@@ -12,7 +12,7 @@ import os
 # Load environment variables
 load_dotenv()
 
-from src.rex.historical_data import (
+from cryptotrading.data.historical import (
     A2AHistoricalDataLoader, 
     DataLoadRequest,
     FREDClient,
@@ -158,8 +158,8 @@ async def test_strand_integration():
     print("TESTING STRAND FRAMEWORK INTEGRATION")
     print("=" * 60)
     
-    from src.strands.agent import Agent
-    from src.strands.types.tools import ToolSpec
+    from cryptotrading.core.agents.agent import Agent
+    from cryptotrading.core.agents.types.tools import ToolSpec
     
     # Create a simple strand agent with data loading capability
     def get_market_overview() -> dict:

@@ -20,7 +20,7 @@ def test_real_data_functionality():
     try:
         # Test imports
         print("1️⃣ Testing Import...")
-        from src.rex.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
+        from cryptotrading.core.ml.enhanced_comprehensive_metrics_client import EnhancedComprehensiveMetricsClient
         print("   ✅ Import successful")
         
         # Test initialization 

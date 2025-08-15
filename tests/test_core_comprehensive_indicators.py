@@ -7,9 +7,9 @@ import sys
 import os
 sys.path.append('.')
 
-from src.rex.ml.comprehensive_indicators_client import ComprehensiveIndicatorsClient
-from src.rex.ml.professional_trading_config import ProfessionalTradingConfig, MarketRegime
-from src.rex.a2a.protocols.enhanced_message_types import CURRENT_PROTOCOL_VERSION
+from cryptotrading.core.ml.comprehensive_indicators_client import ComprehensiveIndicatorsClient
+from cryptotrading.core.ml.professional_trading_config import ProfessionalTradingConfig, MarketRegime
+from cryptotrading.core.protocols.a2a.enhanced_message_types import CURRENT_PROTOCOL_VERSION
 import logging
 
 # Set up logging
@@ -85,7 +85,7 @@ def test_enhanced_message_types():
         logger.info(f"✓ Features: {version.features}")
         
         # Test message types
-        from src.rex.a2a.protocols.enhanced_message_types import EnhancedMessageType
+        from cryptotrading.core.protocols.a2a.enhanced_message_types import EnhancedMessageType
         message_types = [msg_type.value for msg_type in EnhancedMessageType]
         logger.info(f"✓ Enhanced message types: {len(message_types)}")
         
@@ -138,7 +138,7 @@ def test_integration_completeness():
             logger.warning(f"⚠ Configuration file missing: {config_path}")
         
         # Test that all imports work
-        from src.rex.ml.get_comprehensive_indicators_client import get_comprehensive_indicators_client
+        from cryptotrading.core.ml.get_comprehensive_indicators_client import get_comprehensive_indicators_client
         client = get_comprehensive_indicators_client()
         logger.info(f"✓ Factory function works")
         

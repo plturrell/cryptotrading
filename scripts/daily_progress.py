@@ -10,7 +10,7 @@ from typing import Dict, List, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-from rex.database import DatabaseClient
+from cryptotrading.data.database import DatabaseClient
 
 class DailyProgressTracker:
     def __init__(self):

@@ -6,7 +6,7 @@ Verifies integration of institutional indicators with strands MCP pattern
 import asyncio
 import logging
 from datetime import datetime
-from src.rex.a2a.agents.historical_loader_agent import get_historical_loader_agent
+from cryptotrading.core.agents.specialized.historical_loader_agent import get_historical_loader_agent
 
 # Set up logging
 logging.basicConfig(

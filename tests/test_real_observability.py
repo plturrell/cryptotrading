@@ -19,7 +19,7 @@ async def test_historical_agent():
     
     try:
         # Import real agent
-        from src.rex.a2a.agents.historical_loader_agent import HistoricalLoaderAgent
+        from cryptotrading.core.agents.specialized.historical_loader_agent import HistoricalLoaderAgent
         
         # Create agent instance  
         agent = HistoricalLoaderAgent()
@@ -58,7 +58,7 @@ async def test_database_agent():
     
     try:
         # Import real agent
-        from src.rex.a2a.agents.database_agent import DatabaseAgent
+        from cryptotrading.core.agents.specialized.database_agent import DatabaseAgent
         
         # Create agent instance
         agent = DatabaseAgent()
@@ -113,7 +113,7 @@ def test_observability_components():
     
     try:
         # Test imports
-        from src.rex.observability import (
+        from cryptotrading.infrastructure.monitoring import (
             get_logger, get_tracer, get_error_tracker, get_metrics,
             get_business_metrics, trace_context
         )

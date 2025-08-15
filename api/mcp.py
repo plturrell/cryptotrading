@@ -10,8 +10,8 @@ from flask import Flask, request, jsonify
 import os
 
 # MCP imports
-from src.mcp.enhanced_server import create_enhanced_mcp_server
-from src.mcp.auth import AuthMiddleware, AuthContext
+from cryptotrading.core.protocols.mcp.enhanced_server import create_enhanced_mcp_server
+from cryptotrading.core.protocols.mcp.auth import AuthMiddleware, AuthContext
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -200,7 +200,7 @@ def create_app():
     def metrics_endpoint():
         """Metrics endpoint"""
         try:
-            from src.mcp.metrics import mcp_metrics
+            from cryptotrading.core.protocols.mcp.metrics import mcp_metrics
             
             metrics_data = mcp_metrics.export_metrics('json')
             return jsonify(json.loads(metrics_data))
