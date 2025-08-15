@@ -1,0 +1,15 @@
+{
+  "hash": "9dd468f5e72f2a65549a4687b1689c8fdf47576a1b3218a7b257c32b433502bc",
+  "timestamp": "2025-08-13T17:19:39.416720",
+  "payload": {
+    "test_id": "prod_test_001",
+    "timestamp": "2025-08-13T17:19:39.416563",
+    "data": {
+      "symbol": "ETH-USD",
+      "price": 3000,
+      "volume": 1000000
+    },
+    "message": "Production local storage test"
+  },
+  "size": 180
+}
