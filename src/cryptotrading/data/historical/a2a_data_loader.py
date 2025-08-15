@@ -12,9 +12,9 @@ import logging
 from pathlib import Path
 from dataclasses import dataclass
 
-from ...strands.agent import Agent
-from ...strands.models.model import Model
-from ...strands.types.tools import ToolSpec
+from ...core.agents.strands import StrandsAgent
+from ...core.agents.base import BaseAgent
+from ...utils.tools import ToolSpec
 
 from .yahoo_finance import YahooFinanceClient
 from .fred_client import FREDClient
@@ -38,7 +38,7 @@ class A2AHistoricalDataLoader:
     Orchestrates multiple data sources using strand framework
     """
     
-    def __init__(self, data_dir: Optional[str] = None, model: Optional[Model] = None):
+    def __init__(self, data_dir: Optional[str] = None, model: Optional[Any] = None):
         self.data_dir = Path(data_dir or "data/historical/a2a")
         self.data_dir.mkdir(parents=True, exist_ok=True)
         
