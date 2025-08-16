@@ -17,16 +17,24 @@ from .cache import mcp_cache
 from .metrics import mcp_metrics
 from .events import EventType, MCPEvent, create_event_publisher
 
-# Strand imports (assuming they exist in the project)
+# Strand imports - use the actual project paths
 try:
-    from strands import Agent, tool
-    from ..rex.a2a.agents.base_strands_agent import StrandsAgent
-    from ..rex.a2a.agents.a2a_strands_agent import StrandsAgent
-    from ..rex.a2a.protocols.a2a_protocol import A2AMessage, MessageType, A2AProtocol
+    from ...agents.strands import StrandsAgent
     STRAND_AVAILABLE = True
 except ImportError:
     STRAND_AVAILABLE = False
     logging.warning("Strand framework not available - MCP integration will be limited")
+    # Import base agent as fallback
+    from ...agents.base import BaseAgent as StrandsAgent
+
+# Optional external strands framework
+try:
+    from strands import Agent, tool
+    EXTERNAL_STRANDS_AVAILABLE = True
+except ImportError:
+    EXTERNAL_STRANDS_AVAILABLE = False
+    def tool(func):
+        return func
 
 logger = logging.getLogger(__name__)
 

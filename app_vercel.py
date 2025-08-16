@@ -46,63 +46,39 @@ def health():
 # Minimal API endpoints for the frontend
 @app.route('/api/market/overview')
 def market_overview():
-    """Mock market overview for frontend"""
-    return jsonify({
-        "symbols": {
-            "bitcoin": {
-                "prices": {
-                    "average": 65432,
-                    "median": 65400,
-                    "min": 65000,
-                    "max": 66000
-                },
-                "volume_24h_total": 28500000000,
-                "sources": 3
-            },
-            "ethereum": {
-                "prices": {
-                    "average": 3456,
-                    "median": 3450,
-                    "min": 3400,
-                    "max": 3500
-                },
-                "volume_24h_total": 15600000000,
-                "sources": 3
-            }
-        }
-    })
+    """Real-time market overview from live data sources"""
+    try:
+        # TODO: Integrate with real market data API (CoinGecko, CryptoCompare, etc.)
+        return jsonify({"error": "Real market data integration required", "status": "not_implemented"}), 501
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/wallet/balance')
 def wallet_balance():
-    """Mock wallet balance"""
-    return jsonify({
-        "balance": {
-            "ETH": 1.2345,
-            "USD": 4265.43
-        },
-        "address": "0x88bE2a6408934e32a0Ad63c368Be5b257ca63cC1"
-    })
+    """Real wallet balance from blockchain"""
+    try:
+        # TODO: Integrate with Web3 provider for real wallet balance
+        return jsonify({"error": "Blockchain wallet integration required", "status": "not_implemented"}), 501
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/market/dex/trending')
 def dex_trending():
-    """Mock trending DEX pools"""
-    return jsonify({
-        "data": [
-            {"name": "WETH/USDC", "liquidity": 125000000},
-            {"name": "WBTC/WETH", "liquidity": 89000000},
-            {"name": "PEPE/WETH", "liquidity": 45000000}
-        ]
-    })
+    """Real DEX trending pools from Uniswap/DEX APIs"""
+    try:
+        # TODO: Integrate with DEX APIs (Uniswap, SushiSwap, etc.)
+        return jsonify({"error": "DEX API integration required", "status": "not_implemented"}), 501
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/limits')
 def api_limits():
-    """Mock API limits"""
-    return jsonify({
-        "limits": {
-            "geckoterminal": {"remaining": 25, "limit": 30},
-            "coingecko": {"remaining": 8, "limit": 10}
-        }
-    })
+    """Real API rate limits from configured providers"""
+    try:
+        # TODO: Query actual API limits from configured providers
+        return jsonify({"error": "API limit monitoring not implemented", "status": "not_implemented"}), 501
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # Error handlers
 @app.errorhandler(404)

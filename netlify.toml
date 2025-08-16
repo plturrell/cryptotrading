@@ -1,0 +1,25 @@
+[build]
+  publish = "webapp"
+  command = "echo 'Static deployment - no build required'"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[functions]
+  directory = "api"
+  node_bundler = "esbuild"
+
+[dev]
+  command = "python3 -m http.server 8000 --directory webapp"
+  port = 8000
+  publish = "webapp"

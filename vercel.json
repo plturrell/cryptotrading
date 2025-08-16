@@ -1,19 +1,67 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "routes": [
+  "buildCommand": "echo 'No build required'",
+  "outputDirectory": "webapp",
+  "functions": {
+    "api/mcp.py": {
+      "runtime": "@vercel/python@3.9.0"
+    },
+    "api/mcts-calculate.ts": {
+      "maxDuration": 30,
+      "memory": 512,
+      "runtime": "@vercel/node@18.x"
+    }
+  },
+  "env": {
+    "MCTS_ITERATIONS": "1000",
+    "MCTS_EXPLORATION": "1.4",
+    "MCTS_SIM_DEPTH": "10",
+    "MCTS_TIMEOUT": "25",
+    "MCTS_MAX_MEMORY_MB": "400",
+    "MCTS_CACHE_TTL": "300",
+    "MCTS_PROGRESSIVE_WIDENING": "true",
+    "MCTS_RAVE": "true",
+    "MCTS_PARALLEL_SIMS": "4",
+    "OTEL_ENABLED": "false"
+  },
+  "headers": [
     {
-      "src": "/api/mcp/(.*)",
-      "dest": "/api/mcp.py"
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/mcp/(.*)",
+      "destination": "/api/mcp.py"
     },
     {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "source": "/mcts/:path*",
+      "destination": "/api/mcts-calculate"
     },
     {
-      "src": "/(.*)",
-      "dest": "/dist/$1"
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "destination": "/webapp/$1",
+      "permanent": false
     }
   ]
 }

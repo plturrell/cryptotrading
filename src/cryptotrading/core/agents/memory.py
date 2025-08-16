@@ -3,6 +3,7 @@ Memory-enabled agent that extends BaseAgent with memory capabilities.
 Consolidates memory functionality from multiple previous implementations.
 """
 from typing import Dict, Any, Optional, List
+from datetime import datetime
 from .base import BaseAgent
 
 class MemoryAgent(BaseAgent):

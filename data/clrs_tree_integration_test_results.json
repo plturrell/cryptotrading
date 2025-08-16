@@ -1,0 +1,68 @@
+{
+  "clrs_algorithms": {
+    "sorting": {
+      "insertion_sort": true,
+      "quicksort": true,
+      "heapsort": true
+    },
+    "search": {
+      "binary_search": true
+    },
+    "graph": {
+      "dfs": true,
+      "bfs": true
+    },
+    "dynamic_programming": {
+      "lcs": true
+    },
+    "string": {
+      "naive_match": true,
+      "kmp_match": true
+    }
+  },
+  "tree_operations": {
+    "basic": {
+      "flatten": true,
+      "map": true
+    },
+    "path": {
+      "get_path": true
+    },
+    "structural": {
+      "depth": true,
+      "node_count": true
+    },
+    "diff_merge": {
+      "diff": true
+    }
+  },
+  "mcp_tools": {
+    "clrs_analysis": {
+      "executed": true,
+      "has_results": true
+    },
+    "dependency_graph": {
+      "executed": true,
+      "has_graph": true
+    },
+    "hierarchical_indexing": {
+      "executed": true,
+      "has_hierarchy": true
+    },
+    "optimization": {
+      "executed": true,
+      "has_recommendations": true
+    }
+  },
+  "cli_commands": {
+    "clrs_analyze_code": true,
+    "tree_analyze_structure": true,
+    "dependency_graph_analysis": true,
+    "optimization_recommendations": true
+  },
+  "integration_score": 100.0,
+  "errors": [],
+  "recommendations": [
+    "\u2705 Excellent integration! Ready for deployment"
+  ]
+}

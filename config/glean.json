@@ -1,0 +1,67 @@
+{
+  "server": {
+    "url": "http://localhost:8888",
+    "timeout": 30,
+    "retry_attempts": 3,
+    "retry_delay": 1
+  },
+  "indexing": {
+    "source_path": "src/cryptotrading",
+    "output_path": "data/glean/index",
+    "languages": ["python"],
+    "exclude_patterns": [
+      "__pycache__",
+      "*.pyc",
+      "*.pyo",
+      ".git",
+      "node_modules",
+      "venv",
+      ".env",
+      "*.log",
+      ".pytest_cache",
+      ".coverage"
+    ],
+    "include_tests": true,
+    "max_file_size_mb": 10
+  },
+  "analysis": {
+    "max_depth": 5,
+    "timeout": 60,
+    "cache_results": true,
+    "cache_ttl_hours": 24,
+    "parallel_workers": 4
+  },
+  "monitoring": {
+    "enabled": true,
+    "debounce_delay_seconds": 1,
+    "max_recent_results": 100,
+    "log_level": "INFO"
+  },
+  "architecture": {
+    "layers": [
+      "cryptotrading.webapp",
+      "cryptotrading.api",
+      "cryptotrading.core.agents",
+      "cryptotrading.core.protocols",
+      "cryptotrading.core.ml",
+      "cryptotrading.data",
+      "cryptotrading.infrastructure",
+      "cryptotrading.utils"
+    ],
+    "forbidden_dependencies": {
+      "cryptotrading.core": ["cryptotrading.infrastructure"],
+      "cryptotrading.data": ["cryptotrading.core.agents", "cryptotrading.core.protocols"],
+      "cryptotrading.utils": ["cryptotrading.core", "cryptotrading.data", "cryptotrading.infrastructure"],
+      "cryptotrading.infrastructure": ["cryptotrading.core.agents", "cryptotrading.core.protocols"]
+    },
+    "module_size_limits": {
+      "max_functions_per_module": 20,
+      "max_classes_per_module": 10,
+      "max_lines_per_file": 500
+    },
+    "coupling_limits": {
+      "max_dependencies_per_module": 15,
+      "max_dependents_per_module": 20
+    }
+  }
+}

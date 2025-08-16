@@ -1,0 +1,120 @@
+{
+  "timestamp": 0.286955333,
+  "glean_analysis": {
+    "indexing": {
+      "status": "success",
+      "unit": "main",
+      "stats": {
+        "files_indexed": 114,
+        "total_symbols": 1479,
+        "total_occurrences": 30060
+      },
+      "facts_stored": 30174
+    },
+    "architecture": {
+      "status": "completed",
+      "violations": [],
+      "total_violations": 0,
+      "rules_checked": 3
+    },
+    "dependencies": {
+      "module": "src/cryptotrading/core",
+      "dependencies": {
+        "direct": [],
+        "transitive": [],
+        "depth_map": {}
+      },
+      "total_dependencies": 0,
+      "max_depth_analyzed": 3
+    },
+    "symbols": {
+      "functions": 1174,
+      "classes": 347
+    }
+  },
+  "mcp_status": {
+    "available_tools": 3,
+    "tools": [
+      {
+        "name": "analyze_code_dependencies",
+        "description": "Analyze code dependencies using Glean",
+        "parameters": {
+          "module": {
+            "type": "string",
+            "description": "Module to analyze"
+          },
+          "depth": {
+            "type": "integer",
+            "description": "Analysis depth",
+            "default": 2
+          }
+        }
+      },
+      {
+        "name": "validate_architecture",
+        "description": "Validate architectural constraints",
+        "parameters": {}
+      },
+      {
+        "name": "find_code_symbols",
+        "description": "Find functions and classes in codebase",
+        "parameters": {
+          "symbol_type": {
+            "type": "string",
+            "enum": [
+              "function",
+              "class",
+              "all"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "agent_tests": {
+    "glean_client_tests": {
+      "indexing": {
+        "success": true,
+        "files_indexed": 114,
+        "symbols_found": 1479
+      },
+      "querying": {
+        "success": true,
+        "functions_found": 1157,
+        "classes_found": 338
+      },
+      "architecture": {
+        "success": true,
+        "violations": 0,
+        "rules_checked": 3
+      }
+    },
+    "mcp_integration": {
+      "tool_registration": {
+        "success": true,
+        "tools_registered": 3
+      },
+      "tool_execution": {
+        "success": true,
+        "dependencies_found": 0
+      }
+    }
+  },
+  "integration_status": "success",
+  "report": {
+    "overall_health_score": 90.0,
+    "max_score": 100,
+    "health_percentage": 90.0,
+    "status": "excellent",
+    "recommendations": [
+      "System is healthy - continue regular monitoring"
+    ],
+    "summary": {
+      "files_analyzed": 114,
+      "symbols_cataloged": 1521,
+      "architecture_violations": 0,
+      "mcp_tools_available": 3,
+      "tests_passed": 5
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "overall_score": 85.57142857142857,
+  "component_scores": {
+    "Code Analyzer": 100.0,
+    "CLI Integration": 100.0,
+    "MCP Integration": 90.0,
+    "Framework Integration": 55.0,
+    "Code Quality": 54.0,
+    "Dependencies": 100.00000000000001,
+    "Architecture": 100.0
+  },
+  "total_issues": 20,
+  "analysis_duration": 0.0031652450561523438,
+  "report": "\n============================================================\n\ud83c\udfaf FINAL INTEGRATION ANALYSIS REPORT\n============================================================\n\n\ud83d\udfe1 Overall Integration Score: 85.6% - \u2705 GOOD\n\u23f1\ufe0f  Analysis Duration: 0.00 seconds\n\n\ud83d\udcca Component Scores:\n----------------------------------------\n\u2705 Code Analyzer         100.0%\n\u2705 CLI Integration       100.0%\n\u2705 MCP Integration        90.0%\n\u274c Framework Integration   55.0%\n\u274c Code Quality           54.0%\n\u2705 Dependencies          100.0%\n\u2705 Architecture          100.0%\n\n\u26a0\ufe0f  Total Issues Found: 20\n\n\ud83d\udd27 Top Priority Fixes:\n  1. MCP Integration: Glean integration not found in MCP server\n  2. Framework Integration: Framework CLI not found\n  3. Framework Integration: No Glean integration in framework\n  4. Code Quality: F-string in logging: realtime_analyzer.py\n  5. Code Quality: Broad exception handling: realtime_analyzer.py\n\n\ud83d\udca1 Recommendations:\n  1. Add missing dependencies\n  2. Complete framework integration\n  3. Complete architecture implementation\n\n============================================================\n\u2705 GOOD INTEGRATION - MINOR IMPROVEMENTS NEEDED\n============================================================",
+  "success": false
+}

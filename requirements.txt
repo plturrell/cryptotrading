@@ -21,3 +21,16 @@ opentelemetry-instrumentation-flask>=0.41b0
 opentelemetry-instrumentation-requests>=0.41b0
 opentelemetry-instrumentation-aiohttp-client>=0.41b0
 python-json-logger>=2.0.7
+
+# Glean Integration Dependencies
+networkx>=2.8.0
+watchdog>=2.1.0
+click>=8.0.0
+docker>=6.0.0
+radon>=5.1.0
+rich>=12.0.0
+
+# SCIP Integration for Glean Python Support
+scip-python>=0.3.0
+protobuf>=3.20.0
+lsif-py>=0.7.0
