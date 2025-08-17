@@ -1,22 +1,13 @@
 {
   "functions": {
-    "api/mcp.py": {
-      "runtime": "python3.9",
-      "maxDuration": 30
-    },
-    "api/mcp-tools.py": {
-      "runtime": "python3.9",
-      "maxDuration": 60
+    "app_vercel.py": {
+      "runtime": "python3.9"
     }
   },
   "rewrites": [
     {
-      "source": "/mcp/(.*)",
-      "destination": "/api/mcp"
-    },
-    {
-      "source": "/mcp-tools/(.*)",
-      "destination": "/api/mcp-tools"
+      "source": "/(.*)",
+      "destination": "/app_vercel.py"
     }
   ],
   "headers": [
