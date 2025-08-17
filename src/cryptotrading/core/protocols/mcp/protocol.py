@@ -28,6 +28,8 @@ from typing import Dict, Any, Optional, Union, List
 from dataclasses import dataclass, asdict
 from enum import Enum
 
+from .security.error_sanitizer import get_error_sanitizer, sanitize_mcp_error
+
 
 class MCPErrorCode(Enum):
     """Standard MCP error codes following JSON-RPC 2.0 specification.
@@ -447,10 +449,14 @@ class MCPProtocol:
             result = await handler(request.params or {})
             return self.create_response(request.id, result)
         except Exception as e:
+            # Sanitize error message for security
+            sanitizer = get_error_sanitizer()
+            sanitized_error = sanitize_mcp_error(e, sanitizer)
+            
             return self.create_error_response(
                 request.id,
                 MCPErrorCode.INTERNAL_ERROR,
-                f"Internal error: {str(e)}"
+                sanitized_error.public_message
             )
     
     def validate_capabilities(self, capabilities: Dict[str, Any]) -> bool:

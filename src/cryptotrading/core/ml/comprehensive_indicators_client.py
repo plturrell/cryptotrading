@@ -50,7 +50,7 @@ class ComprehensiveIndicatorsClient:
         return {
             # Volatility & Fear Metrics
             '^VIX': {
-                'name': 'CBOE Volatility Index', 
+                'name': 'CBOE Volatility Index (via Yahoo Finance)', 
                 'category': 'volatility',
                 'crypto_correlation': -0.75,
                 'predictive_power': 'very_high',
@@ -91,7 +91,7 @@ class ComprehensiveIndicatorsClient:
                 'weight': 0.05
             },
             '^SKEW': {
-                'name': 'CBOE Skew Index',
+                'name': 'CBOE Skew Index (via Yahoo Finance)',
                 'category': 'volatility',
                 'crypto_correlation': -0.55,
                 'predictive_power': 'medium',

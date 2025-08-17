@@ -6,10 +6,12 @@ Only used for caching, not primary storage
 import json
 import redis
 import logging
-from typing import Any, Optional, Dict, List
+from typing import Any, Optional, Dict, List, Tuple
 from datetime import datetime, timedelta
 import hashlib
 from functools import wraps
+from collections import OrderedDict
+import threading
 
 logger = logging.getLogger(__name__)
 
@@ -20,17 +22,173 @@ class CacheConfig:
     REGISTRY_TTL = 1800  # 30 minutes for registry data
     ANALYSIS_TTL = 7200  # 2 hours for AI analysis
     MARKET_DATA_TTL = 300  # 5 minutes for market data
+    
+    # Local cache limits
+    MAX_LOCAL_CACHE_SIZE = 1000  # Maximum entries in local cache
+    MAX_LOCAL_CACHE_MEMORY_MB = 100  # Maximum memory usage in MB
+    CLEANUP_INTERVAL = 300  # Cleanup interval in seconds
+
+class LRUCache:
+    """Thread-safe LRU cache with size and memory limits"""
+    
+    def __init__(self, max_size: int = 1000, max_memory_mb: int = 100):
+        self.max_size = max_size
+        self.max_memory_bytes = max_memory_mb * 1024 * 1024
+        self._cache = OrderedDict()
+        self._lock = threading.RLock()
+        self._current_memory = 0
+    
+    def get(self, key: str) -> Optional[Tuple[Any, Optional[datetime]]]:
+        """Get value and expiry from cache"""
+        with self._lock:
+            if key not in self._cache:
+                return None
+            
+            # Move to end (most recently used)
+            value, expires_at, size = self._cache.pop(key)
+            self._cache[key] = (value, expires_at, size)
+            
+            # Check expiry
+            if expires_at and datetime.now() > expires_at:
+                self._remove_key(key)
+                return None
+            
+            return value, expires_at
+    
+    def set(self, key: str, value: Any, expires_at: Optional[datetime] = None):
+        """Set value with optional expiry"""
+        with self._lock:
+            # Estimate memory usage
+            estimated_size = self._estimate_size(value)
+            
+            # Remove existing key if present
+            if key in self._cache:
+                self._remove_key(key)
+            
+            # Ensure we have space
+            self._make_space(estimated_size)
+            
+            # Add new entry
+            self._cache[key] = (value, expires_at, estimated_size)
+            self._current_memory += estimated_size
+    
+    def delete(self, key: str):
+        """Delete key from cache"""
+        with self._lock:
+            self._remove_key(key)
+    
+    def _remove_key(self, key: str):
+        """Remove key and update memory counter"""
+        if key in self._cache:
+            _, _, size = self._cache.pop(key)
+            self._current_memory -= size
+    
+    def _make_space(self, needed_size: int):
+        """Make space by evicting LRU items"""
+        # Check size limit
+        while len(self._cache) >= self.max_size:
+            oldest_key = next(iter(self._cache))
+            self._remove_key(oldest_key)
+        
+        # Check memory limit
+        while (self._current_memory + needed_size) > self.max_memory_bytes and self._cache:
+            oldest_key = next(iter(self._cache))
+            self._remove_key(oldest_key)
+    
+    def _estimate_size(self, value: Any) -> int:
+        """Estimate memory usage of value"""
+        try:
+            # Primary estimation method - JSON serialization
+            json_str = json.dumps(value, default=str)
+            return len(json_str.encode('utf-8'))
+        except (TypeError, ValueError, OverflowError) as e:
+            # JSON serialization failed, try pickle
+            try:
+                import pickle
+                return len(pickle.dumps(value))
+            except Exception as pickle_error:
+                logger.warning(f"Size estimation failed for both JSON and pickle: json_error={e}, pickle_error={pickle_error}")
+                # Conservative fallback based on object type
+                if isinstance(value, str):
+                    return len(value.encode('utf-8'))
+                elif isinstance(value, (list, tuple)):
+                    return len(value) * 100  # Estimate 100 bytes per item
+                elif isinstance(value, dict):
+                    return len(value) * 200  # Estimate 200 bytes per key-value pair
+                else:
+                    return 4096  # 4KB conservative fallback
+    
+    def cleanup_expired(self):
+        """Remove expired entries"""
+        with self._lock:
+            now = datetime.now()
+            expired_keys = []
+            
+            for key, (_, expires_at, _) in self._cache.items():
+                if expires_at and now > expires_at:
+                    expired_keys.append(key)
+            
+            for key in expired_keys:
+                self._remove_key(key)
+            
+            return len(expired_keys)
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """Get cache statistics"""
+        with self._lock:
+            return {
+                'size': len(self._cache),
+                'max_size': self.max_size,
+                'memory_bytes': self._current_memory,
+                'max_memory_bytes': self.max_memory_bytes,
+                'utilization_percent': (len(self._cache) / self.max_size) * 100,
+                'memory_utilization_percent': (self._current_memory / self.max_memory_bytes) * 100
+            }
+
 
 class RedisCache:
-    """Production Redis cache with automatic serialization"""
+    """Production Redis cache with automatic serialization and LRU fallback"""
     
-    def __init__(self, redis_url: str = None, prefix: str = "reks"):
+    def __init__(self, redis_url: str = None, prefix: str = "cryptotrading"):
         self.redis_url = redis_url or CacheConfig.REDIS_URL
         self.prefix = prefix
         self.redis_client = None
-        self.fallback_cache = {}  # Local fallback
+        
+        # LRU fallback cache with size limits
+        self.fallback_cache = LRUCache(
+            max_size=CacheConfig.MAX_LOCAL_CACHE_SIZE,
+            max_memory_mb=CacheConfig.MAX_LOCAL_CACHE_MEMORY_MB
+        )
+        
+        # Background cleanup
+        self._cleanup_timer = None
+        self._start_cleanup_timer()
         
         self._connect()
+    
+    def _start_cleanup_timer(self):
+        """Start background cleanup timer"""
+        import threading
+        
+        def cleanup_expired():
+            try:
+                removed = self.fallback_cache.cleanup_expired()
+                if removed > 0:
+                    logger.debug(f"Cleaned up {removed} expired cache entries")
+            except Exception as e:
+                logger.error(f"Cache cleanup error: {e}")
+            finally:
+                # Schedule next cleanup
+                self._cleanup_timer = threading.Timer(
+                    CacheConfig.CLEANUP_INTERVAL, cleanup_expired
+                )
+                self._cleanup_timer.start()
+        
+        # Start initial cleanup
+        self._cleanup_timer = threading.Timer(
+            CacheConfig.CLEANUP_INTERVAL, cleanup_expired
+        )
+        self._cleanup_timer.start()
     
     def _json_serializer(self, obj):
         """JSON serializer for datetime and other common objects"""
@@ -104,11 +262,7 @@ class RedisCache:
         cache_entry = self.fallback_cache.get(key)
         if cache_entry:
             value, expires_at = cache_entry
-            if expires_at is None or datetime.now() < expires_at:
-                return value
-            else:
-                # Expired
-                del self.fallback_cache[key]
+            return value
         
         return None
     
@@ -128,7 +282,7 @@ class RedisCache:
         
         # Use local fallback
         expires_at = datetime.now() + timedelta(seconds=ttl) if ttl else None
-        self.fallback_cache[key] = (value, expires_at)
+        self.fallback_cache.set(key, value, expires_at)
         return True
     
     def delete(self, key: str) -> bool:
@@ -144,10 +298,54 @@ class RedisCache:
                 result = False
         
         # Also remove from local cache
-        if key in self.fallback_cache:
-            del self.fallback_cache[key]
+        self.fallback_cache.delete(key)
         
         return result
+    
+    def get_cache_stats(self) -> Dict[str, Any]:
+        """Get comprehensive cache statistics"""
+        stats = {
+            'redis_connected': self.redis_client is not None,
+            'local_cache': self.fallback_cache.get_stats()
+        }
+        
+        if self.redis_client:
+            try:
+                info = self.redis_client.info()
+                stats['redis'] = {
+                    'used_memory': info.get('used_memory', 0),
+                    'used_memory_human': info.get('used_memory_human', '0B'),
+                    'connected_clients': info.get('connected_clients', 0),
+                    'total_commands_processed': info.get('total_commands_processed', 0),
+                    'keyspace_hits': info.get('keyspace_hits', 0),
+                    'keyspace_misses': info.get('keyspace_misses', 0)
+                }
+                
+                # Calculate hit rate
+                hits = stats['redis']['keyspace_hits']
+                misses = stats['redis']['keyspace_misses']
+                total = hits + misses
+                stats['redis']['hit_rate_percent'] = (hits / total * 100) if total > 0 else 0
+                
+            except Exception as e:
+                stats['redis'] = {'error': str(e)}
+        
+        return stats
+    
+    def close(self):
+        """Close cache connections and cleanup"""
+        # Stop cleanup timer
+        if self._cleanup_timer:
+            self._cleanup_timer.cancel()
+            
+        # Close Redis connection
+        if self.redis_client:
+            try:
+                self.redis_client.close()
+            except Exception as e:
+                logger.warning(f"Error closing Redis connection: {e}")
+            
+        logger.info("Cache closed")
     
     def exists(self, key: str) -> bool:
         """Check if key exists in cache"""
@@ -166,7 +364,7 @@ class RedisCache:
             if expires_at is None or datetime.now() < expires_at:
                 return True
             else:
-                del self.fallback_cache[key]
+                self.fallback_cache.delete(key)
         
         return False
     
@@ -238,12 +436,15 @@ class RedisCache:
         cleared = 0
         keys_to_delete = []
         
-        for key in self.fallback_cache.keys():
-            if pattern.replace('*', '') in key:
-                keys_to_delete.append(key)
+        # Get keys safely from cache (LRUCache doesn't have .keys() method)
+        with self.fallback_cache._lock:
+            pattern_key = pattern.replace('*', '')
+            for key in list(self.fallback_cache._cache.keys()):
+                if pattern_key in key:
+                    keys_to_delete.append(key)
         
         for key in keys_to_delete:
-            del self.fallback_cache[key]
+            self.fallback_cache.delete(key)
             cleared += 1
         
         return cleared
@@ -275,10 +476,11 @@ class RedisCache:
                 logger.warning(f"Redis expire error: {e}")
         
         # Update local cache expiration
-        if key in self.fallback_cache:
-            value, _ = self.fallback_cache[key]
+        cache_entry = self.fallback_cache.get(key)
+        if cache_entry:
+            value, _ = cache_entry
             expires_at = datetime.now() + timedelta(seconds=ttl)
-            self.fallback_cache[key] = (value, expires_at)
+            self.fallback_cache.set(key, value, expires_at)
             return True
         
         return False

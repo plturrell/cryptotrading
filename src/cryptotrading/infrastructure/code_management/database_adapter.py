@@ -6,14 +6,22 @@ Provides database operations for issues, metrics, and code files with unified in
 import json
 import logging
 import uuid
-from typing import Dict, List, Any, Optional
 from datetime import datetime
+from typing import Dict, List, Optional, Any
+from enum import Enum
 from dataclasses import asdict
 
 from ..database import UnifiedDatabase
 from .intelligent_code_manager import CodeIssue, IssueType, FixStatus
 
 logger = logging.getLogger(__name__)
+
+class EnumJSONEncoder(json.JSONEncoder):
+    """Custom JSON encoder for enum types"""
+    def default(self, obj):
+        if isinstance(obj, Enum):
+            return obj.value
+        return super().default(obj)
 
 class CodeManagementDatabaseAdapter:
     """Database adapter for code management operations"""
@@ -26,6 +34,13 @@ class CodeManagementDatabaseAdapter:
         """Save issue to database and return ID"""
         issue_id = str(uuid.uuid4())
         
+        # Create metadata with initial lifecycle state
+        issue_metadata = {
+            "lifecycle_state": "detected",
+            "priority": "medium",
+            "created_by": "system"
+        }
+        
         cursor = self.db.db_conn.cursor()
         try:
             if self.db.config.mode.value == "local":
@@ -37,11 +52,11 @@ class CodeManagementDatabaseAdapter:
                         fix_status, metadata, created_at, updated_at
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
-                    issue_id, issue.issue_type.value, issue.severity.value, 
+                    issue_id, issue.type.value, issue.severity, 
                     "detected", "medium", issue.file_path, issue.line_number,
                     issue.description, issue.suggested_fix, 
                     1 if issue.auto_fixable else 0, issue.fix_status.value,
-                    json.dumps(asdict(issue)), datetime.now(), datetime.now()
+                    json.dumps(issue_metadata, cls=EnumJSONEncoder), datetime.now(), datetime.now()
                 ))
             else:
                 # PostgreSQL
@@ -52,10 +67,10 @@ class CodeManagementDatabaseAdapter:
                         fix_status, metadata, created_at, updated_at
                     ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
-                    issue_id, issue.issue_type.value, issue.severity.value,
+                    issue_id, issue.type.value, issue.severity,
                     "detected", "medium", issue.file_path, issue.line_number,
                     issue.description, issue.suggested_fix, issue.auto_fixable,
-                    issue.fix_status.value, json.dumps(asdict(issue)), 
+                    issue.fix_status.value, json.dumps(issue_metadata, cls=EnumJSONEncoder), 
                     datetime.now(), datetime.now()
                 ))
             
@@ -102,7 +117,9 @@ class CodeManagementDatabaseAdapter:
                 rows = cursor.fetchall()
                 return [dict(row) for row in rows]
             else:
-                cursor.execute(query.replace("?", "%s"), params)
+                # Use proper PostgreSQL parameterized query
+                postgres_query = query.replace("?", "%s")
+                cursor.execute(postgres_query, params)
                 rows = cursor.fetchall()
                 return [dict(row) for row in rows]
                 
@@ -134,6 +151,35 @@ class CodeManagementDatabaseAdapter:
             
         except Exception as e:
             logger.error("Failed to update issue status: %s", e)
+            self.db.db_conn.rollback()
+            return False
+        finally:
+            cursor.close()
+    
+    async def update_issue_metadata(self, issue_id: str, metadata: Dict[str, Any]) -> bool:
+        """Update issue metadata"""
+        cursor = self.db.db_conn.cursor()
+        try:
+            metadata_json = json.dumps(metadata, cls=EnumJSONEncoder)
+            
+            if self.db.config.mode.value == "local":
+                cursor.execute("""
+                    UPDATE issues 
+                    SET metadata = ?, updated_at = ?
+                    WHERE id = ?
+                """, (metadata_json, datetime.now(), issue_id))
+            else:
+                cursor.execute("""
+                    UPDATE issues 
+                    SET metadata = %s, updated_at = %s
+                    WHERE id = %s
+                """, (metadata_json, datetime.now(), issue_id))
+            
+            self.db.db_conn.commit()
+            return cursor.rowcount > 0
+            
+        except Exception as e:
+            logger.error("Failed to update issue metadata: %s", e)
             self.db.db_conn.rollback()
             return False
         finally:
@@ -301,7 +347,7 @@ class CodeManagementDatabaseAdapter:
                     ) VALUES (?, ?, ?, ?, ?, ?, ?)
                 """, (
                     event_id, event_type, component, severity, message,
-                    json.dumps(details or {}), datetime.now()
+                    json.dumps(details or {}, cls=EnumJSONEncoder), datetime.now()
                 ))
             else:
                 cursor.execute("""
@@ -310,7 +356,7 @@ class CodeManagementDatabaseAdapter:
                     ) VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """, (
                     event_id, event_type, component, severity, message,
-                    details or {}, datetime.now()
+                    json.dumps(details or {}, cls=EnumJSONEncoder), datetime.now()
                 ))
             
             self.db.db_conn.commit()

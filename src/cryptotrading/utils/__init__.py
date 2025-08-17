@@ -1,5 +1,5 @@
 """
-Utility modules for rex.com
+Utility modules for cryptotrading.com
 """
 
 from .rate_limiter import rate_limiter, RateLimiter

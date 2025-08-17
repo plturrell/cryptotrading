@@ -7,7 +7,6 @@ import json
 import logging
 from pathlib import Path
 from typing import Dict, List, Any
-from dataclasses import dataclass
 from datetime import datetime
 
 from .scip_indexer import index_project_for_glean
@@ -17,17 +16,17 @@ from .typescript_indexer import index_typescript_files
 
 logger = logging.getLogger(__name__)
 
-@dataclass
 class MultiLanguageStats:
     """Statistics for multi-language indexing"""
-    python_files: int = 0
-    javascript_files: int = 0
-    typescript_files: int = 0
-    cap_files: int = 0
-    xml_files: int = 0
-    json_files: int = 0
-    total_facts: int = 0
-    indexing_duration: float = 0.0
+    def __init__(self):
+        self.python_files: int = 0
+        self.javascript_files: int = 0
+        self.typescript_files: int = 0
+        self.cap_files: int = 0
+        self.xml_files: int = 0
+        self.json_files: int = 0
+        self.total_facts: int = 0
+        self.indexing_duration: float = 0.0
 
 class UnifiedLanguageIndexer:
     """Unified indexer for all supported languages in the project"""
@@ -104,11 +103,11 @@ class UnifiedLanguageIndexer:
             # Update stats to reflect actual file count
             if "stats" in result:
                 result["stats"]["files_indexed"] = actual_count
-                logger.info(f"Python indexing: {actual_count} files processed")
+                logger.info("Python indexing: %d files processed", actual_count)
             
             return result
-        except Exception as e:
-            logger.error("Python indexing failed: %s", e)
+        except (OSError, ValueError, ImportError) as e:
+            logger.error("Python indexing failed: %s", str(e))
             return {"glean_facts": [], "stats": {"files_indexed": 0}}
     
     def _index_cap(self) -> Dict[str, Any]:
@@ -116,8 +115,8 @@ class UnifiedLanguageIndexer:
         logger.info("🏢 Indexing SAP CAP files...")
         try:
             return index_cap_project_for_glean(str(self.project_root))
-        except Exception as e:
-            logger.error("CAP indexing failed: %s", e)
+        except (OSError, ValueError, ImportError) as e:
+            logger.error("CAP indexing failed: %s", str(e))
             return {"glean_facts": [], "stats": {"files_indexed": 0}}
     
     def _index_javascript_ui5(self) -> Dict[str, Any]:
@@ -125,8 +124,8 @@ class UnifiedLanguageIndexer:
         logger.info("📱 Indexing JavaScript/UI5 files...")
         try:
             return index_javascript_ui5_for_glean(str(self.project_root))
-        except Exception as e:
-            logger.error("JavaScript/UI5 indexing failed: %s", e)
+        except (OSError, ValueError, ImportError) as e:
+            logger.error("JavaScript/UI5 indexing failed: %s", str(e))
             return {"glean_facts": [], "stats": {"files_indexed": 0}}
     
     def _index_typescript(self) -> Dict[str, Any]:
@@ -138,13 +137,13 @@ class UnifiedLanguageIndexer:
             ts_files = [f for f in self.project_root.rglob("*.ts") if "node_modules" not in str(f)]
             tsx_files = [f for f in self.project_root.rglob("*.tsx") if "node_modules" not in str(f)]
             files_indexed = len(ts_files) + len(tsx_files)
-            logger.info(f"TypeScript indexing: {files_indexed} files processed, {len(facts)} facts generated")
+            logger.info("TypeScript indexing: %d files processed, %d facts generated", files_indexed, len(facts))
             return {
                 "glean_facts": facts,
                 "stats": {"files_indexed": files_indexed}
             }
-        except Exception as e:
-            logger.error("TypeScript indexing failed: %s", e)
+        except (OSError, ValueError, ImportError) as e:
+            logger.error("TypeScript indexing failed: %s", str(e))
             return {"glean_facts": [], "stats": {"files_indexed": 0}}
     
     def _index_configuration_files(self) -> Dict[str, Any]:
@@ -215,8 +214,8 @@ class UnifiedLanguageIndexer:
                 })
                 files_indexed += 1
             
-        except Exception as e:
-            logger.error("Configuration file indexing failed: %s", e)
+        except (OSError, ValueError) as e:
+            logger.error("Configuration file indexing failed: %s", str(e))
         
         return {
             "glean_facts": facts,

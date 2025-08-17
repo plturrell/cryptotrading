@@ -1,11 +1,14 @@
 """
-Blockchain integration for rex.com
-Currently removed - all blockchain clients required external APIs
+Blockchain integration for cryptotrading.com
+Real blockchain integration using Anvil for A2A messaging and consensus
 """
 
-# Blockchain clients removed:
-# - MetaMaskClient: Required Infura API key
-# - EthereumClient: Contained fake DeFi data
-# Future integration should use real blockchain providers
+from .anvil_client import AnvilA2AClient, A2AMessage, AgentRegistration, start_anvil_node, stop_anvil_node
 
-__all__ = []
+__all__ = [
+    'AnvilA2AClient',
+    'A2AMessage', 
+    'AgentRegistration',
+    'start_anvil_node',
+    'stop_anvil_node'
+]

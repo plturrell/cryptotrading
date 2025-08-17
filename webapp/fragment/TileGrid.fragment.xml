@@ -19,20 +19,20 @@
                     <NumericContent
                         value="{app>/marketData/btcPrice}"
                         scale="USD"
-                        indicator="Up"
-                        valueColor="Good"
+                        indicator="{app>/marketData/btcIndicator}"
+                        valueColor="{= ${app>/marketData/btcChange} > 0 ? 'Good' : 'Error' }"
                         withMargin="false"/>
                 </content>
             </TileContent>
         </tileContent>
     </GenericTile>
     
-    <!-- Portfolio Management Tile -->
+    <!-- ML Predictions Tile -->
     <GenericTile 
-        header="Portfolio Management" 
-        subheader="Total holdings and performance"
+        header="ML Predictions" 
+        subheader="Real-time price forecasting"
         press="onTilePress"
-        state="Loaded"
+        state="{= ${app>/mlPredictions/loading} ? 'Loading' : 'Loaded' }"
         size="Medium">
         <layoutData>
             <f:GridContainerItemLayoutData columns="12" rows="14"/>
@@ -41,22 +41,22 @@
             <TileContent>
                 <content>
                     <NumericContent
-                        value="125,650"
-                        scale="USD"
-                        indicator="Up"
-                        valueColor="Good"
+                        value="{app>/mlPredictions/btc/confidence}"
+                        scale="% Confidence"
+                        indicator="{= ${app>/mlPredictions/btc/price_change_percent} > 0 ? 'Up' : 'Down' }"
+                        valueColor="{= ${app>/mlPredictions/btc/confidence} > 80 ? 'Good' : 'Neutral' }"
                         withMargin="false"/>
                 </content>
             </TileContent>
         </tileContent>
     </GenericTile>
     
-    <!-- Trading Console Tile -->
+    <!-- Model Training Tile -->
     <GenericTile 
-        header="Trading Console"
-        subheader="Execute buy and sell orders"
+        header="Model Training"
+        subheader="Train and deploy ML models"
         press="onTilePress"
-        state="Loaded"
+        state="{= ${app>/mlPredictions/loading} ? 'Loading' : 'Loaded' }"
         size="Medium">
         <layoutData>
             <f:GridContainerItemLayoutData columns="12" rows="14"/>
@@ -65,8 +65,8 @@
             <TileContent>
                 <content>
                     <NumericContent
-                        value="24"
-                        scale="Active"
+                        value="{app>/mlPredictions/models_trained}"
+                        scale="Models"
                         valueColor="Neutral"
                         withMargin="false"/>
                 </content>
@@ -77,9 +77,9 @@
     <!-- AI Market Intelligence Tile - Large 2x1 format -->
     <GenericTile 
         header="AI Market Intelligence"
-        subheader="Claude-4-Sonnet analysis engine"
+        subheader="ML-powered price predictions"
         press="onTilePress"
-        state="Loaded"
+        state="{= ${app>/mlPredictions/loading} ? 'Loading' : 'Loaded' }"
         frameType="TwoByOne">
         <layoutData>
             <f:GridContainerItemLayoutData columns="25" rows="14"/>
@@ -88,19 +88,19 @@
             <TileContent>
                 <content>
                     <NewsContent
-                        contentText="BTC showing strong bullish momentum. RSI at 65 indicates healthy correction. MACD positive divergence detected. Recommend accumulation positions at current levels with stop-loss at $62,000."
-                        subheader="Latest Signal: BUY (85% confidence)"/>
+                        contentText="{= 'BTC: $' + ${app>/mlPredictions/btc/current_price} + ' → $' + ${app>/mlPredictions/btc/predicted_price} + ' (' + (${app>/mlPredictions/btc/price_change_percent} > 0 ? '+' : '') + ${app>/mlPredictions/btc/price_change_percent} + '%). ETH: $' + ${app>/mlPredictions/eth/current_price} + ' → $' + ${app>/mlPredictions/eth/predicted_price} + '. Model accuracy: ' + ${app>/mlPredictions/btc/model_accuracy} + '%' }"
+                        subheader="{= 'ML Prediction: ' + (${app>/mlPredictions/btc/price_change_percent} > 0 ? 'BULLISH' : 'BEARISH') + ' (' + ${app>/mlPredictions/btc/confidence} + '% confidence)' }"/>
                 </content>
             </TileContent>
         </tileContent>
     </GenericTile>
     
-    <!-- DEX Analytics Tile -->
+    <!-- ML Feature Store Tile -->
     <GenericTile 
-        header="DEX Analytics"
-        subheader="Decentralized exchange monitor"
+        header="Feature Store"
+        subheader="ML feature engineering"
         press="onTilePress"
-        state="Loaded"
+        state="{= ${app>/featureStore/loading} ? 'Loading' : 'Loaded' }"
         size="Medium">
         <layoutData>
             <f:GridContainerItemLayoutData columns="12" rows="14"/>
@@ -109,8 +109,8 @@
             <TileContent>
                 <content>
                     <NumericContent
-                        value="1,247"
-                        scale="Pools"
+                        value="{app>/featureStore/total_features}"
+                        scale="Features"
                         valueColor="Neutral"
                         withMargin="false"/>
                 </content>
@@ -159,6 +159,30 @@
                         value="2.3"
                         scale="TB"
                         valueColor="Neutral"
+                        withMargin="false"/>
+                </content>
+            </TileContent>
+        </tileContent>
+    </GenericTile>
+    
+    <!-- Code Analysis Tile -->
+    <GenericTile 
+        header="Code Analysis"
+        subheader="Multi-language indexer dashboard"
+        press="onCodeAnalysisPress"
+        state="Loaded"
+        size="Medium">
+        <layoutData>
+            <f:GridContainerItemLayoutData columns="12" rows="14"/>
+        </layoutData>
+        <tileContent>
+            <TileContent>
+                <content>
+                    <NumericContent
+                        value="106.5"
+                        scale="K Facts"
+                        indicator="Up"
+                        valueColor="Good"
                         withMargin="false"/>
                 </content>
             </TileContent>

@@ -1143,7 +1143,8 @@ class EnhancedComprehensiveMetricsClient:
             import re
             pattern = r'^\d+\.\d+\.\d+$'
             return bool(re.match(pattern, version))
-        except:
+        except (ImportError, AttributeError, TypeError) as e:
+            logger.warning(f"Version format validation failed: {e}")
             return False
     
     def _is_version_compatible(self, available: str, requested: str) -> bool:
@@ -1155,7 +1156,8 @@ class EnhancedComprehensiveMetricsClient:
             # Major version must match, minor can be >= requested
             return (av_parts[0] == req_parts[0] and 
                    av_parts[1] >= req_parts[1])
-        except:
+        except (ValueError, AttributeError, IndexError) as e:
+            logger.warning(f"Version compatibility check failed for '{available}' vs '{requested}': {e}")
             return False
     
     def migrate_from_legacy_protocol(self, legacy_data: Dict[str, Any]) -> Dict[str, Any]:

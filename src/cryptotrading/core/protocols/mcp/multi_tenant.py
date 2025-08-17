@@ -297,44 +297,6 @@ class TenantAwareTools:
         
         return portfolio
     
-    async def execute_trade(self, auth_context: AuthContext, 
-                          symbol: str, side: str, amount: float,
-                          order_type: str = "market") -> Dict[str, Any]:
-        """Execute tenant-aware trade"""
-        # Check trading permissions
-        permission_check = self.isolation.check_trading_permission(
-            auth_context, "trade", symbol
-        )
-        
-        if not permission_check["allowed"]:
-            raise ValueError(permission_check["reason"])
-        
-        # Check position limits
-        position_check = self.isolation.check_position_limits(
-            auth_context, symbol, amount
-        )
-        
-        if not position_check["allowed"]:
-            raise ValueError(position_check["reason"])
-        
-        # Record the operation
-        self.isolation.record_trading_operation(
-            auth_context, "trade", symbol, amount
-        )
-        
-        # Execute trade (mock implementation)
-        trade_result = {
-            "order_id": f"order_{auth_context.tenant_id}_{int(datetime.now().timestamp())}",
-            "symbol": symbol,
-            "side": side,
-            "amount": amount,
-            "order_type": order_type,
-            "status": "filled",
-            "tenant_id": auth_context.tenant_id,
-            "timestamp": datetime.now().isoformat()
-        }
-        
-        return trade_result
     
     async def get_risk_metrics(self, auth_context: AuthContext, 
                              scope: str = "portfolio") -> Dict[str, Any]:

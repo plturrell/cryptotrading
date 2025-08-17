@@ -15,9 +15,24 @@ sys.path.insert(0, str(project_root / 'src'))
 from flask import Flask, send_from_directory, jsonify
 from flask_cors import CORS
 
+# Import unified bootstrap
+from cryptotrading.core.bootstrap_unified import setup_flask_app
+
 app = Flask(__name__, 
            static_folder='webapp',
            template_folder='webapp')
+
+# Setup unified monitoring and storage
+bootstrap = setup_flask_app(app, "cryptotrading-vercel")
+monitor = bootstrap.get_monitor()
+storage = bootstrap.get_storage()
+feature_flags = bootstrap.get_feature_flags()
+
+# Log Vercel startup
+monitor.log_info("Vercel app starting", {
+    "platform": "vercel",
+    "features": feature_flags.get_feature_flags()
+})
 
 # CORS configuration
 CORS(app, origins=['*'])
@@ -41,17 +56,23 @@ def webapp_files(filename):
 @app.route('/health')
 def health():
     """Health check endpoint"""
-    return {'status': 'healthy', 'platform': 'rex.com', 'version': '0.1.0'}
+    monitor.increment_counter("health_check")
+    return {'status': 'healthy', 'platform': 'cryptotrading.com', 'version': '0.1.0'}
 
 # Minimal API endpoints for the frontend
 @app.route('/api/market/overview')
 def market_overview():
     """Real-time market overview from live data sources"""
-    try:
-        # TODO: Integrate with real market data API (CoinGecko, CryptoCompare, etc.)
-        return jsonify({"error": "Real market data integration required", "status": "not_implemented"}), 501
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    with monitor.span("market_overview") as span:
+        span.set_attribute("endpoint", "/api/market/overview")
+        try:
+            monitor.increment_counter("api.market.overview.requests")
+            # TODO: Integrate with real market data API (CoinGecko, CryptoCompare, etc.)
+            monitor.increment_counter("api.market.overview.not_implemented")
+            return jsonify({"error": "Real market data integration required", "status": "not_implemented"}), 501
+        except Exception as e:
+            monitor.record_error(e, {"endpoint": "/api/market/overview"})
+            return jsonify({"error": str(e)}), 500
 
 @app.route('/api/wallet/balance')
 def wallet_balance():

@@ -15,7 +15,7 @@ from .client import MCPClient, MCPClientSession
 from .transport import StdioTransport, WebSocketTransport, SSETransport
 from .tools import CryptoTradingTools, MCPTool, ToolResult
 from .resources import CryptoTradingResources
-# from ..rex.diagnostics import create_diagnostic_analyzer  # Optional import
+# from ..cryptotrading.diagnostics import create_diagnostic_analyzer  # Optional import
 from ..strands.models.grok_model import GrokModel
 
 logger = logging.getLogger(__name__)

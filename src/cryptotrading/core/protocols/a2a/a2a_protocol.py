@@ -1,5 +1,5 @@
 """
-A2A Protocol Definitions for rex.com
+A2A Protocol Definitions for cryptotrading.com
 Ensures 100% A2A compliance across all agents
 """
 

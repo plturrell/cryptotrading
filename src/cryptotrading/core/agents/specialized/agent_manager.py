@@ -21,8 +21,8 @@ try:
         AgentRole,
         ResourceType
     )
-    from ....infrastructure.database.client import get_db
-    from ....infrastructure.database.models import A2AAgent
+    from ....data.database.client import get_db
+    from ....data.database.models import A2AAgent
     INFRASTRUCTURE_AVAILABLE = True
 except ImportError:
     # Mock classes for testing

@@ -301,19 +301,97 @@ class IntelligentCodeManager:
         return max(0, 100 - sum(debt_factors))
     
     def _calculate_maintainability(self) -> float:
-        """Calculate maintainability index (0-100)"""
-        # Analyze function length, complexity, documentation, etc.
-        return 85.0  # Placeholder
+        """Calculate maintainability index (0-100) based on real code analysis"""
+        if not self.code_files:
+            raise ValueError("No code files available for maintainability analysis")
+        
+        # Real maintainability calculation based on actual code metrics
+        total_score = 0
+        file_count = 0
+        
+        for file_path, content in self.code_files.items():
+            lines = content.split('\n')
+            # Calculate based on real metrics: file length, comment ratio, function size
+            line_count = len(lines)
+            comment_lines = sum(1 for line in lines if line.strip().startswith('#') or line.strip().startswith('//'))
+            comment_ratio = comment_lines / line_count if line_count > 0 else 0
+            
+            # Maintainability factors
+            size_penalty = max(0, (line_count - 500) / 10)  # Penalty for large files
+            comment_bonus = comment_ratio * 20  # Bonus for good documentation
+            
+            file_score = max(0, 100 - size_penalty + comment_bonus)
+            total_score += file_score
+            file_count += 1
+        
+        return total_score / file_count if file_count > 0 else 0
     
     def _calculate_security_score(self) -> float:
-        """Calculate security score (0-100)"""
-        # Check for common security issues
-        return 90.0  # Placeholder
+        """Calculate security score (0-100) based on real security analysis"""
+        if not self.code_files:
+            raise ValueError("No code files available for security analysis")
+        
+        # Real security analysis - scan for actual security issues
+        security_issues = 0
+        total_lines = 0
+        
+        security_patterns = [
+            'password', 'secret', 'api_key', 'token', 'hardcoded',
+            'eval(', 'exec(', 'subprocess.', 'os.system',
+            'shell=True', 'input(', 'raw_input('
+        ]
+        
+        for content in self.code_files.values():
+            lines = content.lower().split('\n')
+            total_lines += len(lines)
+            
+            for line in lines:
+                for pattern in security_patterns:
+                    if pattern in line and not line.strip().startswith('#'):
+                        security_issues += 1
+        
+        # Calculate security score based on issue density
+        issue_density = (security_issues / total_lines * 1000) if total_lines > 0 else 0
+        security_score = max(0, 100 - (issue_density * 10))
+        
+        return security_score
     
     def _calculate_performance_score(self) -> float:
-        """Calculate performance score (0-100)"""
-        # Analyze performance patterns
-        return 88.0  # Placeholder
+        """Calculate performance score (0-100) based on real performance analysis"""
+        if not self.code_files:
+            raise ValueError("No code files available for performance analysis")
+        
+        # Real performance analysis - look for performance anti-patterns
+        performance_issues = 0
+        total_functions = 0
+        
+        performance_patterns = [
+            'for.*in.*range.*len', 'list.*append.*loop',
+            '.*\.append.*for.*in', 'global ', '.*sleep.*loop',
+            'while True:', 'recursion', '.*\\*\\*.*loop'
+        ]
+        
+        for content in self.code_files.values():
+            lines = content.lower().split('\n')
+            
+            # Count function definitions
+            function_count = sum(1 for line in lines if line.strip().startswith('def '))
+            total_functions += function_count
+            
+            # Check for performance anti-patterns
+            for line in lines:
+                for pattern in performance_patterns:
+                    if pattern in line and not line.strip().startswith('#'):
+                        performance_issues += 1
+        
+        # Calculate performance score
+        if total_functions == 0:
+            return 50.0  # Neutral score if no functions found
+        
+        issue_ratio = performance_issues / total_functions if total_functions > 0 else 0
+        performance_score = max(0, 100 - (issue_ratio * 25))
+        
+        return performance_score
     
     def _count_issues_by_type(self) -> Dict[str, int]:
         """Count issues by type"""

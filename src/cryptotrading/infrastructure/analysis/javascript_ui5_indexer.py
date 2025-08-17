@@ -4,12 +4,10 @@ Indexes .js files, controllers, views, and UI5 components
 """
 
 import re
-import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Set, Tuple
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
-from datetime import datetime
 import xml.etree.ElementTree as ET
 
 logger = logging.getLogger(__name__)
@@ -113,7 +111,7 @@ class JavaScriptUI5Indexer:
             return document
             
         except Exception as e:
-            logger.error(f"Failed to index JS file {file_path}: {e}")
+            logger.error("Failed to index JS file %s: %s", file_path, str(e))
             return None
     
     def index_xml_view(self, file_path: Path) -> Optional[JSDocument]:
@@ -134,12 +132,11 @@ class JavaScriptUI5Indexer:
             return document
             
         except Exception as e:
-            logger.error(f"Failed to index XML view {file_path}: {e}")
+            logger.error("Failed to index XML view %s: %s", file_path, str(e))
             return None
     
     def _parse_functions(self, content: str, document: JSDocument):
         """Parse JavaScript functions"""
-        lines = content.split('\n')
         
         # Regular functions
         for match in self.FUNCTION_PATTERN.finditer(content):
@@ -256,10 +253,40 @@ class JavaScriptUI5Indexer:
         if extend_match:
             controller.extends = extend_match.group(2)
         
-        # Parse event handlers
+        # Parse event handlers and methods in UI5 controller
         for match in self.EVENT_HANDLER_PATTERN.finditer(content):
             handler_name = match.group(0).split(':')[0].strip()
             controller.event_handlers.append(handler_name)
+        
+        # Parse UI5 controller methods (including onInit, onPress, etc.)
+        ui5_method_pattern = re.compile(r'(\w+)\s*:\s*function\s*\([^)]*\)\s*{', re.MULTILINE)
+        for match in ui5_method_pattern.finditer(content):
+            method_name = match.group(1)
+            line_num = content[:match.start()].count('\n')
+            
+            method = JSFunction(
+                name=method_name,
+                parameters=[],  # Could parse parameters if needed
+                is_async=False,
+                is_arrow=False,
+                line_start=line_num
+            )
+            controller.methods.append(method)
+        
+        # Also parse async methods in UI5 controllers
+        ui5_async_method_pattern = re.compile(r'async\s+(\w+)\s*\([^)]*\)\s*{', re.MULTILINE)
+        for match in ui5_async_method_pattern.finditer(content):
+            method_name = match.group(1)
+            line_num = content[:match.start()].count('\n')
+            
+            method = JSFunction(
+                name=method_name,
+                parameters=[],
+                is_async=True,
+                is_arrow=False,
+                line_start=line_num
+            )
+            controller.methods.append(method)
         
         return controller
     
@@ -280,7 +307,7 @@ class JavaScriptUI5Indexer:
             self._extract_xml_controls(root, view)
             
         except ET.ParseError as e:
-            logger.warning(f"Failed to parse XML view {filename}: {e}")
+            logger.warning("Failed to parse XML view %s: %s", filename, str(e))
         
         return view
     
@@ -317,7 +344,7 @@ class JavaScriptUI5Indexer:
             doc = self.index_file(js_file)
             if doc:
                 self.documents.append(doc)
-                logger.info(f"Indexed JS file {js_file}")
+                logger.info("Indexed JS file %s", js_file)
         
         # Index XML view files
         for xml_file in directory.rglob("*.xml"):
@@ -327,7 +354,7 @@ class JavaScriptUI5Indexer:
             doc = self.index_xml_view(xml_file)
             if doc:
                 self.documents.append(doc)
-                logger.info(f"Indexed XML view {xml_file}")
+                logger.info("Indexed XML view %s", xml_file)
     
     def generate_glean_facts(self) -> List[Dict[str, Any]]:
         """Generate Glean facts from JavaScript documents"""
@@ -398,6 +425,23 @@ class JavaScriptUI5Indexer:
                         "event_handlers": controller.event_handlers
                     }
                 })
+                
+                # Generate function facts for UI5 controller methods
+                for method in controller.methods:
+                    facts.append({
+                        "predicate": "javascript.Function",
+                        "key": {
+                            "name": method.name,
+                            "file": doc.relative_path
+                        },
+                        "value": {
+                            "parameters": method.parameters,
+                            "is_async": method.is_async,
+                            "is_arrow": method.is_arrow,
+                            "line": method.line_start,
+                            "context": "ui5_controller"
+                        }
+                    })
             
             # Generate UI5 view facts
             if doc.ui5_view:

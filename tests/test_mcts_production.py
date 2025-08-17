@@ -7,7 +7,7 @@ import time
 from unittest.mock import Mock, patch, AsyncMock
 from datetime import datetime
 
-from src.cryptotrading.core.agents.specialized.mcts_calculation_agent_v2 import (
+from src.cryptotrading.core.agents.specialized.mcts_calculation_agent import (
     ProductionMCTSCalculationAgent, 
     ProductionTradingEnvironment,
     MCTSConfig,
@@ -194,7 +194,7 @@ class TestProductionMCTSAgent:
     @pytest.mark.asyncio
     async def test_rave_algorithm(self, trading_environment):
         """Test RAVE (Rapid Action Value Estimation)"""
-        from src.cryptotrading.core.agents.specialized.mcts_calculation_agent_v2 import MCTSNodeV2
+        from src.cryptotrading.core.agents.specialized.mcts_calculation_agent import MCTSNodeV2
         
         root = MCTSNodeV2(state={'test': 'state'})
         

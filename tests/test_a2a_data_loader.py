@@ -1,23 +1,17 @@
 """
 Comprehensive test for A2A Historical Data Loader
-Tests FRED, CBOE, DeFiLlama, and Yahoo Finance integration
+Tests FRED and Yahoo Finance integration only
 """
 
 import asyncio
 import logging
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
 import os
-
-# Load environment variables
-load_dotenv()
 
 from cryptotrading.data.historical import (
     A2AHistoricalDataLoader, 
     DataLoadRequest,
     FREDClient,
-    CBOEClient, 
-    DeFiLlamaClient,
     YahooFinanceClient
 )
 
@@ -55,43 +49,8 @@ async def test_individual_clients():
     else:
         print("   ✗ FRED API key not configured")
     
-    # Test CBOE Client
-    print("\n2. Testing CBOE Client...")
-    cboe_client = CBOEClient()
-    
-    # Test VIX data
-    vix_data = cboe_client.download_volatility_data("VIX")
-    if vix_data is not None:
-        print(f"   ✓ CBOE VIX: {len(vix_data)} observations")
-        print(f"   ✓ Latest VIX: {vix_data['VIX_Close'].iloc[-1]:.2f}")
-    
-    # Test VIX term structure
-    term_structure = cboe_client.get_vix_term_structure()
-    if not term_structure.empty:
-        print(f"   ✓ VIX Term Structure: {len(term_structure)} observations")
-        if 'VIX_CONTANGO' in term_structure.columns:
-            print(f"   ✓ Latest VIX Contango: {term_structure['VIX_CONTANGO'].iloc[-1]:.2f}")
-    
-    # Test DeFiLlama Client
-    print("\n3. Testing DeFiLlama Client...")
-    defillama_client = DeFiLlamaClient()
-    
-    # Test total TVL
-    tvl_data = defillama_client.get_total_tvl_history()
-    if tvl_data is not None:
-        print(f"   ✓ DeFiLlama Total TVL: {len(tvl_data)} observations")
-        print(f"   ✓ Latest Total TVL: ${tvl_data['TOTAL_TVL_USD'].iloc[-1]/1e9:.1f}B")
-    
-    # Test protocol data
-    uniswap_data = defillama_client.get_protocol_tvl("uniswap")
-    if uniswap_data is not None:
-        print(f"   ✓ Uniswap TVL: {len(uniswap_data)} observations")
-        tvl_col = [col for col in uniswap_data.columns if 'TVL' in col.upper()]
-        if tvl_col:
-            print(f"   ✓ Latest Uniswap TVL: ${uniswap_data[tvl_col[0]].iloc[-1]/1e9:.1f}B")
-    
     # Test Yahoo Finance Client
-    print("\n4. Testing Yahoo Finance Client...")
+    print("\n2. Testing Yahoo Finance Client...")
     yahoo_client = YahooFinanceClient()
     
     # Test BTC data
@@ -137,9 +96,8 @@ async def test_a2a_comprehensive_loader():
     print("\n3. Testing Custom Data Request...")
     
     custom_request = DataLoadRequest(
-        sources=["yahoo", "cboe"],  # Test subset of sources
+        sources=["yahoo", "fred"],  # Test subset of sources
         symbols=["BTC", "ETH"],
-        cboe_indices=["VIX", "SKEW"],
         start_date=start_date,
         end_date=end_date,
         align_data=True,
@@ -151,6 +109,43 @@ async def test_a2a_comprehensive_loader():
     print(f"   Custom Request Status: {custom_result.get('status')}")
     if custom_result.get('status') == 'error':
         print(f"   Error: {custom_result.get('error')}")
+
+async def test_data_integration():
+    """Test data integration between FRED and Yahoo Finance"""
+    print("\n" + "=" * 60)
+    print("TESTING DATA INTEGRATION")
+    print("=" * 60)
+    
+    # Get recent data (last 3 days)
+    start_date = (datetime.now() - timedelta(days=3)).strftime('%Y-%m-%d')
+    end_date = datetime.now().strftime('%Y-%m-%d')
+    
+    print("\n1. Testing Data Source Integration...")
+    
+    try:
+        # Load key indicators
+        yahoo_client = YahooFinanceClient()
+        btc_data = yahoo_client.download_data("BTC", start_date=start_date, end_date=end_date, save=False)
+        
+        fred_client = FREDClient()
+        treasury_data = None
+        if fred_client.api_key:
+            treasury_data = fred_client.get_series_data("DGS10", start_date=start_date, end_date=end_date, save=False)
+        
+        # Build overview
+        overview = {
+            "timestamp": datetime.now().isoformat(),
+            "btc_price": float(btc_data['close'].iloc[-1]) if btc_data is not None else None,
+            "treasury_10y": float(treasury_data['DGS10'].iloc[-1]) if treasury_data is not None else None,
+            "data_sources": ["yahoo_finance", "fred"]
+        }
+        
+        print(f"   ✓ Data Integration Success: {len(overview)} metrics")
+        print(f"   ✓ BTC Price: ${overview['btc_price']:,.2f}" if overview['btc_price'] else "   ⚠ BTC Price: Not available")
+        print(f"   ✓ 10Y Treasury: {overview['treasury_10y']:.2f}%" if overview['treasury_10y'] else "   ⚠ Treasury: Not available")
+        
+    except Exception as e:
+        print(f"   ✗ Data Integration Error: {e}")
 
 async def test_strand_integration():
     """Test strand framework integration"""
@@ -175,9 +170,6 @@ async def test_strand_integration():
             yahoo_client = YahooFinanceClient()
             btc_data = yahoo_client.download_data("BTC", start_date=start_date, end_date=end_date, save=False)
             
-            cboe_client = CBOEClient()
-            vix_data = cboe_client.download_volatility_data("VIX", save=False)
-            
             fred_client = FREDClient()
             treasury_data = None
             if fred_client.api_key:
@@ -187,9 +179,8 @@ async def test_strand_integration():
             overview = {
                 "timestamp": datetime.now().isoformat(),
                 "btc_price": float(btc_data['close'].iloc[-1]) if btc_data is not None else None,
-                "vix_level": float(vix_data['VIX_Close'].iloc[-1]) if vix_data is not None else None,
                 "treasury_10y": float(treasury_data['DGS10'].iloc[-1]) if treasury_data is not None else None,
-                "data_sources": ["yahoo_finance", "cboe", "fred"]
+                "data_sources": ["yahoo_finance", "fred"]
             }
             
             return overview
@@ -234,8 +225,8 @@ async def main():
         # Test comprehensive loader
         await test_a2a_comprehensive_loader()
         
-        # Test strand integration
-        await test_strand_integration()
+        # Test data integration
+        await test_data_integration()
         
         print("\n" + "=" * 60)
         print("✓ ALL TESTS COMPLETED SUCCESSFULLY")

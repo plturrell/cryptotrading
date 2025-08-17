@@ -13,7 +13,7 @@ from dataclasses import dataclass, asdict
 
 from .multi_language_indexer import index_multi_language_project
 from .enhanced_angle_queries import (
-    EnhancedAngleQueryEngine,
+    EnhancedAngleQueryEngine, 
     find_cap_entities,
     find_ui5_controllers,
     find_javascript_functions,
@@ -22,6 +22,7 @@ from .enhanced_angle_queries import (
     find_typescript_functions,
     analyze_project_architecture
 )
+from .code_quality_intelligence import CodeQualityIntelligence
 
 logger = logging.getLogger(__name__)
 
@@ -77,12 +78,18 @@ class GleanZeroBlindSpotsMCPTool:
             # Step 3: Query validation
             query_validation = await self._validate_queries(indexing_results["glean_facts"])
             
+            # Step 4: Architecture analysis
             logger.info("Architecture analysis completed")
             architecture_analysis = self._analyze_architecture(indexing_results["glean_facts"])
             
-            # Step 5: Calculate validation score
+            # Step 5: Advanced code quality analysis
+            logger.info("Running advanced code quality analysis...")
+            quality_intelligence = CodeQualityIntelligence(project_path)
+            quality_report = quality_intelligence.analyze_project_quality()
+            
+            # Step 6: Calculate validation score (enhanced with quality metrics)
             validation_score = self._calculate_validation_score(
-                blind_spot_analysis, query_validation, indexing_results
+                blind_spot_analysis, query_validation, indexing_results, quality_report
             )
             
             # Step 6: Generate recommendations
@@ -117,7 +124,46 @@ class GleanZeroBlindSpotsMCPTool:
             
             return {
                 "success": True,
-                "validation_result": asdict(result),
+                "validation_result": {
+                    **asdict(result),
+                    "total_facts": indexing_results.get("indexing_summary", {}).get("total_facts_generated", 0),
+                    "quality_analysis": {
+                        "maintainability_score": quality_report.maintainability_score,
+                        "technical_debt_score": quality_report.technical_debt_score,
+                        "code_quality_grade": quality_report.code_quality_grade,
+                        "avg_cyclomatic_complexity": quality_report.avg_cyclomatic_complexity,
+                        "duplication_percentage": quality_report.duplication_percentage,
+                        "documentation_coverage": quality_report.documentation_coverage,
+                        "high_complexity_functions": quality_report.high_complexity_functions,
+                        "total_duplicated_lines": quality_report.total_duplicated_lines
+                    },
+                    "language_coverage": {
+                        "python": {
+                            "files_indexed": indexing_results.get("language_distribution", {}).get("Python", 0),
+                            "facts_generated": indexing_results.get("language_breakdown", {}).get("Python", {}).get("facts", 0)
+                        },
+                        "typescript": {
+                            "files_indexed": indexing_results.get("language_distribution", {}).get("typescript", 0),
+                            "facts_generated": indexing_results.get("language_breakdown", {}).get("typescript", {}).get("facts", 0)
+                        },
+                        "javascript": {
+                            "files_indexed": indexing_results.get("language_distribution", {}).get("Javascript", 0),
+                            "facts_generated": indexing_results.get("language_breakdown", {}).get("Javascript", {}).get("facts", 0)
+                        },
+                        "cap": {
+                            "files_indexed": indexing_results.get("language_distribution", {}).get("CAP", 0),
+                            "facts_generated": indexing_results.get("language_breakdown", {}).get("CAP", {}).get("facts", 0)
+                        },
+                        "xml": {
+                            "files_indexed": indexing_results.get("language_distribution", {}).get("Xml", 0),
+                            "facts_generated": indexing_results.get("language_breakdown", {}).get("Xml", {}).get("facts", 0)
+                        },
+                        "json": {
+                            "files_indexed": indexing_results.get("language_distribution", {}).get("JSON", 0),
+                            "facts_generated": indexing_results.get("language_breakdown", {}).get("JSON", {}).get("facts", 0)
+                        }
+                    }
+                },
                 "summary": self._generate_summary(result),
                 "action_required": not is_production_ready,
                 "next_steps": recommendations if not is_production_ready else ["System is production ready"]
@@ -195,7 +241,8 @@ class GleanZeroBlindSpotsMCPTool:
     
     def _calculate_validation_score(self, blind_spot_analysis: BlindSpotAnalysis, 
                                    query_validation: Dict[str, Any], 
-                                   indexing_results: Dict[str, Any]) -> float:
+                                   indexing_results: Dict[str, Any],
+                                   quality_report: Any = None) -> float:
         """Calculate comprehensive validation score"""
         score = 0.0
         

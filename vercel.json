@@ -1,67 +1,54 @@
 {
-  "version": 2,
-  "buildCommand": "echo 'No build required'",
-  "outputDirectory": "webapp",
   "functions": {
     "api/mcp.py": {
-      "runtime": "@vercel/python@3.9.0"
+      "runtime": "python3.9",
+      "maxDuration": 30
     },
-    "api/mcts-calculate.ts": {
-      "maxDuration": 30,
-      "memory": 512,
-      "runtime": "@vercel/node@18.x"
+    "api/mcp-tools.py": {
+      "runtime": "python3.9",
+      "maxDuration": 60
     }
   },
-  "env": {
-    "MCTS_ITERATIONS": "1000",
-    "MCTS_EXPLORATION": "1.4",
-    "MCTS_SIM_DEPTH": "10",
-    "MCTS_TIMEOUT": "25",
-    "MCTS_MAX_MEMORY_MB": "400",
-    "MCTS_CACHE_TTL": "300",
-    "MCTS_PROGRESSIVE_WIDENING": "true",
-    "MCTS_RAVE": "true",
-    "MCTS_PARALLEL_SIMS": "4",
-    "OTEL_ENABLED": "false"
-  },
+  "rewrites": [
+    {
+      "source": "/mcp/(.*)",
+      "destination": "/api/mcp"
+    },
+    {
+      "source": "/mcp-tools/(.*)",
+      "destination": "/api/mcp-tools"
+    }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",
       "headers": [
         {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
         },
         {
-          "key": "X-Frame-Options",
-          "value": "DENY"
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
         },
         {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization, X-API-Key"
         }
       ]
     }
   ],
-  "rewrites": [
-    {
-      "source": "/api/mcp/(.*)",
-      "destination": "/api/mcp.py"
-    },
-    {
-      "source": "/mcts/:path*",
-      "destination": "/api/mcts-calculate"
-    },
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
+  "env": {
+    "MCP_ENVIRONMENT": "production",
+    "MCP_TRANSPORT": "http",
+    "MCP_REQUIRE_AUTH": "true",
+    "MCP_RATE_LIMIT_GLOBAL": "1000",
+    "MCP_STRICT_VALIDATION": "true",
+    "MCP_AUDIT_LOGGING": "true"
+  },
+  "build": {
+    "env": {
+      "PYTHON_VERSION": "3.9"
     }
-  ],
-  "redirects": [
-    {
-      "source": "/(.*)",
-      "destination": "/webapp/$1",
-      "permanent": false
-    }
-  ]
+  }
 }

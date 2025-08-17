@@ -120,6 +120,9 @@ class MCPServer:
         # Register standard MCP methods
         self._register_standard_methods()
         
+        # Initialize new MCP features
+        self._setup_advanced_features()
+        
         # Set up transport
         self.transport.set_message_handler(self._handle_message)
     
@@ -143,6 +146,14 @@ class MCPServer:
         self.protocol.register_handler("resources/read", self._handle_read_resource)
         self.protocol.register_handler("ping", self._handle_ping)
         self.protocol.register_handler("security/status", self._handle_security_status)
+        
+        # Register new MCP specification methods
+        self.protocol.register_handler("prompts/list", self._handle_list_prompts)
+        self.protocol.register_handler("prompts/get", self._handle_get_prompt)
+        self.protocol.register_handler("sampling/createMessage", self._handle_sampling_create_message)
+        self.protocol.register_handler("resources/subscribe", self._handle_resource_subscribe)
+        self.protocol.register_handler("resources/unsubscribe", self._handle_resource_unsubscribe)
+        self.protocol.register_handler("roots/list", self._handle_list_roots)
     
     async def _handle_message(self, message: str, headers: Optional[Dict[str, str]] = None):
         """Handle incoming message from transport.
@@ -195,8 +206,17 @@ class MCPServer:
                         parsed.id, MCPErrorCode.INVALID_PARAMS, f"Validation failed: {str(e)}"
                     )
                 
-                # Send response
+                # Send response with headers
                 if response:
+                    # Add security context headers to response if available
+                    if 'security_context' in locals() and hasattr(security_context, 'response_headers'):
+                        if hasattr(response, 'headers'):
+                            response.headers.update(security_context.response_headers)
+                        else:
+                            # Add headers to response dict if it's a dictionary
+                            if isinstance(response, dict):
+                                response['headers'] = security_context.response_headers
+                    
                     response_str = self.protocol.serialize_message(response)
                     await self.transport.send_message(response_str)
             else:
@@ -213,8 +233,9 @@ class MCPServer:
                 )
                 response_str = self.protocol.serialize_message(error_response)
                 await self.transport.send_message(response_str)
-            except:
-                pass  # Can't send error response
+            except Exception as transport_error:
+                logger.error(f"Failed to send error response: {transport_error}")
+                # Can't send error response, connection may be broken
     
     async def _handle_initialize(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Handle initialize request.
@@ -699,3 +720,145 @@ class MCPServer:
             "tools_count": len(self.tools),
             "resources_count": len(self.resources)
         }
+    
+    def _setup_advanced_features(self):
+        """Setup advanced MCP features"""
+        # Import advanced features
+        from .prompts import prompt_registry
+        from .sampling import sampling_manager
+        from .subscriptions import subscription_manager
+        from .progress import progress_manager
+        from .roots import root_manager
+        
+        # Store references
+        self.prompt_registry = prompt_registry
+        self.sampling_manager = sampling_manager
+        self.subscription_manager = subscription_manager
+        self.progress_manager = progress_manager
+        self.root_manager = root_manager
+        
+        # Set up notification handlers
+        self.subscription_manager.add_notification_handler(self._handle_resource_update)
+        self.progress_manager.add_notification_handler(self._handle_progress_update)
+        
+        # Enable advanced capabilities
+        self.capabilities.enable_prompts()
+        self.capabilities.enable_resources(subscribe=True, list_changed=True)
+        self.capabilities.add_experimental("sampling", {"enabled": True})
+        self.capabilities.add_experimental("progress", {"enabled": True})
+        self.capabilities.add_experimental("roots", {"enabled": True})
+    
+    async def _handle_list_prompts(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle prompts/list request"""
+        prompts = self.prompt_registry.list_prompts()
+        return {"prompts": prompts}
+    
+    async def _handle_get_prompt(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle prompts/get request"""
+        name = params.get("name")
+        arguments = params.get("arguments", {})
+        
+        if not name:
+            raise Exception("Missing required parameter: name")
+        
+        try:
+            messages = await self.prompt_registry.get_prompt_messages(name, arguments)
+            return {"messages": messages}
+        except ValueError as e:
+            raise Exception(str(e))
+    
+    async def _handle_sampling_create_message(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle sampling/createMessage request"""
+        try:
+            from .sampling import parse_sampling_request
+            request = parse_sampling_request(params)
+            response = await self.sampling_manager.create_message(request)
+            return response.to_dict()
+        except Exception as e:
+            raise Exception(f"Sampling failed: {str(e)}")
+    
+    async def _handle_resource_subscribe(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle resources/subscribe request"""
+        uri = params.get("uri")
+        if not uri:
+            raise Exception("Missing required parameter: uri")
+        
+        # Use client ID as subscriber (would be from auth context in real implementation)
+        subscriber_id = self.client_info.get("name", "unknown_client")
+        
+        try:
+            subscription = await self.subscription_manager.subscribe(uri, subscriber_id)
+            return subscription.to_dict()
+        except Exception as e:
+            raise Exception(f"Subscription failed: {str(e)}")
+    
+    async def _handle_resource_unsubscribe(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle resources/unsubscribe request"""
+        uri = params.get("uri")
+        if not uri:
+            raise Exception("Missing required parameter: uri")
+        
+        subscriber_id = self.client_info.get("name", "unknown_client")
+        
+        try:
+            await self.subscription_manager.unsubscribe(uri, subscriber_id)
+            return {"success": True}
+        except Exception as e:
+            raise Exception(f"Unsubscribe failed: {str(e)}")
+    
+    async def _handle_list_roots(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle roots/list request"""
+        roots = self.root_manager.list_roots()
+        return {"roots": roots}
+    
+    async def _handle_resource_update(self, update):
+        """Handle resource update notifications"""
+        # Send notification to client
+        notification = update.to_dict()
+        try:
+            response_str = self.protocol.serialize_message(notification)
+            await self.transport.send_message(response_str)
+        except Exception as e:
+            logger.error(f"Failed to send resource update notification: {e}")
+    
+    async def _handle_progress_update(self, update):
+        """Handle progress update notifications"""
+        # Send notification to client
+        notification = update.to_dict()
+        try:
+            response_str = self.protocol.serialize_message(notification)
+            await self.transport.send_message(response_str)
+        except Exception as e:
+            logger.error(f"Failed to send progress notification: {e}")
+    
+    def add_prompt(self, prompt):
+        """Add a prompt to the server"""
+        self.prompt_registry.register(prompt)
+        logger.info(f"Added prompt: {prompt.name}")
+    
+    def create_progress_tracker(self, total=None, description=None):
+        """Create a progress tracker for long-running operations"""
+        return self.progress_manager.create_tracker(total, description)
+    
+    async def subscribe_to_resource(self, uri: str):
+        """Subscribe to resource updates (for internal use)"""
+        subscriber_id = f"server_{self.name}"
+        return await self.subscription_manager.subscribe(uri, subscriber_id)
+    
+    def add_root_directory(self, path: str, name: str = None):
+        """Add a root directory for file access"""
+        import os
+        abs_path = os.path.abspath(path)
+        uri = f"file://{abs_path}"
+        self.root_manager.add_root(uri, name)
+        logger.info(f"Added root directory: {uri}")
+    
+    async def handle_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle MCP request directly (for testing/integration)"""
+        from .protocol import MCPRequest
+        mcp_request = MCPRequest(
+            method=request.get("method"),
+            params=request.get("params"),
+            id=request.get("id")
+        )
+        return await self.protocol.handle_request(mcp_request)

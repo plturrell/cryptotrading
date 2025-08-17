@@ -10,9 +10,9 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
 
-from ..database.client import get_db
-from ..database.models import A2AAgent, A2AConnection, A2AWorkflow, A2AWorkflowExecution, A2AMessage
-from ..database.cache import cache_manager, cache_result
+from ...data.database.client import get_db
+from ...data.database.models import A2AAgent, A2AConnection, A2AWorkflow, A2AWorkflowExecution, A2AMessage
+from ...data.database.cache import cache_manager, cache_result
 from ..security.auth import auth_manager, Permission, require_auth
 from ..security.validation import request_validator, ValidationSchemas
 

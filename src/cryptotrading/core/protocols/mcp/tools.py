@@ -6,6 +6,9 @@ from typing import Dict, Any, List, Optional, Callable, Union
 from dataclasses import dataclass, asdict
 import asyncio
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -106,196 +109,391 @@ class MCPTool:
 
 
 class CryptoTradingTools:
-    """Crypto trading specific tools for MCP server"""
+    """Crypto trading specific tools for MCP server - Real historical data integration"""
     
     @staticmethod
-    def get_portfolio_tool() -> MCPTool:
-        """Get portfolio information tool"""
+    def get_yahoo_finance_data_tool() -> MCPTool:
+        """Get Yahoo Finance crypto historical data tool"""
         return MCPTool(
-            name="get_portfolio",
-            description="Get current portfolio information including holdings and performance",
+            name="get_yahoo_finance_data",
+            description="Download historical cryptocurrency data from Yahoo Finance",
             parameters={
-                "include_history": {
+                "symbol": {
+                    "type": "string",
+                    "description": "Cryptocurrency symbol (e.g., BTC, ETH, BTC-USD)"
+                },
+                "start_date": {
+                    "type": "string",
+                    "description": "Start date (YYYY-MM-DD), defaults to 2 years ago",
+                    "default": None
+                },
+                "end_date": {
+                    "type": "string", 
+                    "description": "End date (YYYY-MM-DD), defaults to today",
+                    "default": None
+                },
+                "interval": {
+                    "type": "string",
+                    "description": "Data interval: 1d, 1h, 5m, etc.",
+                    "default": "1d"
+                },
+                "prepare_for_training": {
                     "type": "boolean",
-                    "description": "Whether to include historical performance data",
+                    "description": "Add technical indicators for ML training",
                     "default": False
                 }
             },
-            function=CryptoTradingTools._get_portfolio
+            function=CryptoTradingTools._get_yahoo_finance_data
         )
     
     @staticmethod
-    def get_market_data_tool() -> MCPTool:
-        """Get market data tool"""
+    def get_fred_economic_data_tool() -> MCPTool:
+        """Get FRED economic data tool"""
         return MCPTool(
-            name="get_market_data",
-            description="Get real-time market data for cryptocurrency pairs",
+            name="get_fred_economic_data",
+            description="Download economic indicators from Federal Reserve (FRED) database",
             parameters={
-                "symbol": {
+                "series_id": {
                     "type": "string",
-                    "description": "Cryptocurrency symbol (e.g., BTC-USD, ETH-USD)"
+                    "description": "FRED series ID (e.g., DGS10, WALCL, M2SL)"
                 },
-                "timeframe": {
+                "start_date": {
                     "type": "string",
-                    "description": "Timeframe for data (1m, 5m, 1h, 1d)",
-                    "default": "1h"
+                    "description": "Start date (YYYY-MM-DD), defaults to 2 years ago",
+                    "default": None
                 },
-                "limit": {
-                    "type": "integer",
-                    "description": "Number of data points to return",
-                    "default": 100
+                "end_date": {
+                    "type": "string",
+                    "description": "End date (YYYY-MM-DD), defaults to today", 
+                    "default": None
+                },
+                "frequency": {
+                    "type": "string",
+                    "description": "Data frequency: d, w, m, q, a",
+                    "default": None
                 }
             },
-            function=CryptoTradingTools._get_market_data
+            function=CryptoTradingTools._get_fred_economic_data
         )
     
     @staticmethod
-    def analyze_sentiment_tool() -> MCPTool:
-        """Analyze market sentiment tool"""
+    def get_crypto_relevant_indicators_tool() -> MCPTool:
+        """Get crypto-relevant economic indicators tool"""
         return MCPTool(
-            name="analyze_sentiment",
-            description="Analyze market sentiment for a cryptocurrency using AI",
+            name="get_crypto_relevant_indicators",
+            description="Download all crypto-relevant economic indicators from FRED",
             parameters={
-                "symbol": {
+                "start_date": {
                     "type": "string",
-                    "description": "Cryptocurrency symbol to analyze"
+                    "description": "Start date (YYYY-MM-DD), defaults to 2 years ago",
+                    "default": None
                 },
-                "sources": {
+                "end_date": {
+                    "type": "string",
+                    "description": "End date (YYYY-MM-DD), defaults to today",
+                    "default": None
+                },
+                "include_liquidity_metrics": {
+                    "type": "boolean", 
+                    "description": "Calculate derived liquidity metrics",
+                    "default": True
+                }
+            },
+            function=CryptoTradingTools._get_crypto_relevant_indicators
+        )
+    
+    @staticmethod
+    def get_comprehensive_trading_dataset_tool() -> MCPTool:
+        """Get comprehensive crypto trading dataset tool"""
+        return MCPTool(
+            name="get_comprehensive_trading_dataset",
+            description="Load complete dataset with crypto prices and economic indicators for trading analysis",
+            parameters={
+                "symbols": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "Data sources to analyze (news, social, technical)",
-                    "default": ["news", "social"]
+                    "description": "Crypto symbols to include",
+                    "default": ["BTC", "ETH", "BNB", "XRP", "ADA"]
+                },
+                "start_date": {
+                    "type": "string",
+                    "description": "Start date (YYYY-MM-DD), defaults to 2 years ago",
+                    "default": None
+                },
+                "end_date": {
+                    "type": "string",
+                    "description": "End date (YYYY-MM-DD), defaults to today",
+                    "default": None
+                },
+                "align_data": {
+                    "type": "boolean",
+                    "description": "Temporally align all data sources",
+                    "default": True
                 }
             },
-            function=CryptoTradingTools._analyze_sentiment
+            function=CryptoTradingTools._get_comprehensive_trading_dataset
         )
     
+    # Tool implementation methods - Real historical data integration
     @staticmethod
-    def execute_trade_tool() -> MCPTool:
-        """Execute trade tool"""
-        return MCPTool(
-            name="execute_trade",
-            description="Execute a cryptocurrency trade",
-            parameters={
-                "symbol": {
-                    "type": "string",
-                    "description": "Cryptocurrency pair to trade"
-                },
-                "side": {
-                    "type": "string",
-                    "description": "Trade side: buy or sell",
-                    "enum": ["buy", "sell"]
-                },
-                "amount": {
-                    "type": "number",
-                    "description": "Amount to trade"
-                },
-                "order_type": {
-                    "type": "string",
-                    "description": "Order type: market, limit, stop",
-                    "default": "market"
-                },
-                "price": {
-                    "type": "number",
-                    "description": "Price for limit orders (optional)"
+    async def _get_yahoo_finance_data(symbol: str, start_date: str = None, 
+                                    end_date: str = None, interval: str = "1d",
+                                    prepare_for_training: bool = False) -> Dict[str, Any]:
+        """Implementation for Yahoo Finance data tool"""
+        try:
+            from ....data.historical.yahoo_finance import YahooFinanceClient
+            
+            # Initialize Yahoo Finance client
+            yahoo_client = YahooFinanceClient()
+            
+            # Download data
+            df = yahoo_client.download_data(
+                symbol=symbol,
+                start_date=start_date,
+                end_date=end_date,
+                interval=interval,
+                save=True
+            )
+            
+            if df is None or df.empty:
+                return {
+                    "status": "error",
+                    "error": f"No data found for symbol {symbol}",
+                    "symbol": symbol
                 }
-            },
-            function=CryptoTradingTools._execute_trade
-        )
+            
+            # Prepare training data if requested
+            if prepare_for_training:
+                df = yahoo_client.prepare_training_data(df)
+            
+            # Return summary and data
+            return {
+                "status": "success",
+                "symbol": symbol,
+                "interval": interval,
+                "start_date": start_date,
+                "end_date": end_date,
+                "data_points": len(df),
+                "columns": list(df.columns),
+                "latest_price": float(df['close'].iloc[-1]) if 'close' in df.columns else None,
+                "date_range": {
+                    "start": df.index.min().isoformat(),
+                    "end": df.index.max().isoformat()
+                },
+                "with_indicators": prepare_for_training,
+                "sample_data": df.head(5).to_dict('records') if len(df) > 0 else []
+            }
+            
+        except Exception as e:
+            return {
+                "status": "error", 
+                "error": str(e),
+                "symbol": symbol
+            }
     
     @staticmethod
-    def get_risk_metrics_tool() -> MCPTool:
-        """Get risk metrics tool"""
-        return MCPTool(
-            name="get_risk_metrics",
-            description="Calculate risk metrics for portfolio or specific positions",
-            parameters={
-                "scope": {
-                    "type": "string",
-                    "description": "Scope of analysis: portfolio or symbol",
-                    "default": "portfolio"
-                },
-                "symbol": {
-                    "type": "string",
-                    "description": "Symbol for symbol-specific analysis (optional)"
-                },
-                "period": {
-                    "type": "string",
-                    "description": "Analysis period: 1d, 7d, 30d, 90d",
-                    "default": "30d"
+    async def _get_fred_economic_data(series_id: str, start_date: str = None,
+                                    end_date: str = None, frequency: str = None) -> Dict[str, Any]:
+        """Implementation for FRED economic data tool"""
+        try:
+            from ....data.historical.fred_client import FREDClient
+            
+            # Initialize FRED client
+            fred_client = FREDClient()
+            
+            # Download data
+            df = fred_client.get_series_data(
+                series_id=series_id,
+                start_date=start_date,
+                end_date=end_date,
+                frequency=frequency,
+                save=True
+            )
+            
+            if df is None or df.empty:
+                return {
+                    "status": "error",
+                    "error": f"No data found for FRED series {series_id}",
+                    "series_id": series_id
                 }
-            },
-            function=CryptoTradingTools._get_risk_metrics
-        )
-    
-    # Tool implementation methods
-    @staticmethod
-    async def _get_portfolio(include_history: bool = False) -> Dict[str, Any]:
-        """Implementation for get_portfolio tool"""
-        # This would integrate with the actual portfolio system
-        return {
-            "total_value_usd": 50000.00,
-            "holdings": [
-                {"symbol": "BTC", "amount": 1.5, "value_usd": 45000.00},
-                {"symbol": "ETH", "amount": 5.0, "value_usd": 10000.00}
-            ],
-            "performance_24h": 2.5,
-            "history_included": include_history
-        }
-    
-    @staticmethod
-    async def _get_market_data(symbol: str, timeframe: str = "1h", limit: int = 100) -> Dict[str, Any]:
-        """Implementation for get_market_data tool"""
-        # This would integrate with the actual market data system
-        return {
-            "symbol": symbol,
-            "timeframe": timeframe,
-            "data_points": limit,
-            "current_price": 30000.00,
-            "volume_24h": 1000000.00,
-            "change_24h": 1.5
-        }
+            
+            # Get series description if available
+            series_description = fred_client.crypto_relevant_series.get(
+                series_id, f"FRED Series {series_id}"
+            )
+            
+            return {
+                "status": "success",
+                "series_id": series_id,
+                "description": series_description,
+                "frequency": frequency,
+                "start_date": start_date,
+                "end_date": end_date,
+                "data_points": len(df),
+                "latest_value": float(df[series_id].iloc[-1]) if series_id in df.columns else None,
+                "date_range": {
+                    "start": df.index.min().isoformat(),
+                    "end": df.index.max().isoformat()
+                },
+                "sample_data": df.head(5).to_dict('records') if len(df) > 0 else []
+            }
+            
+        except Exception as e:
+            return {
+                "status": "error",
+                "error": str(e),
+                "series_id": series_id
+            }
     
     @staticmethod
-    async def _analyze_sentiment(symbol: str, sources: List[str] = None) -> Dict[str, Any]:
-        """Implementation for analyze_sentiment tool"""
-        sources = sources or ["news", "social"]
-        # This would integrate with the actual sentiment analysis system
-        return {
-            "symbol": symbol,
-            "sentiment_score": 0.65,
-            "sentiment_label": "bullish",
-            "sources_analyzed": sources,
-            "confidence": 0.8
-        }
+    async def _get_crypto_relevant_indicators(start_date: str = None, end_date: str = None,
+                                            include_liquidity_metrics: bool = True) -> Dict[str, Any]:
+        """Implementation for crypto-relevant economic indicators tool"""
+        try:
+            from ....data.historical.fred_client import FREDClient
+            
+            # Initialize FRED client
+            fred_client = FREDClient()
+            
+            # Download all crypto-relevant data
+            data_dict = fred_client.get_crypto_relevant_data(
+                start_date=start_date,
+                end_date=end_date,
+                save=True
+            )
+            
+            result = {
+                "status": "success",
+                "start_date": start_date,
+                "end_date": end_date,
+                "series_downloaded": len(data_dict),
+                "series_data": {}
+            }
+            
+            # Process each series
+            for series_id, df in data_dict.items():
+                if df is not None and not df.empty:
+                    result["series_data"][series_id] = {
+                        "description": fred_client.crypto_relevant_series.get(series_id, series_id),
+                        "data_points": len(df),
+                        "latest_value": float(df[series_id].iloc[-1]) if series_id in df.columns else None,
+                        "date_range": {
+                            "start": df.index.min().isoformat(),
+                            "end": df.index.max().isoformat()
+                        }
+                    }
+            
+            # Calculate liquidity metrics if requested
+            if include_liquidity_metrics:
+                liquidity_df = fred_client.get_liquidity_metrics(
+                    start_date=start_date,
+                    end_date=end_date,
+                    save=True
+                )
+                
+                if liquidity_df is not None and not liquidity_df.empty:
+                    result["liquidity_metrics"] = {
+                        "data_points": len(liquidity_df),
+                        "columns": list(liquidity_df.columns),
+                        "latest_values": liquidity_df.iloc[-1].to_dict() if len(liquidity_df) > 0 else {}
+                    }
+            
+            return result
+            
+        except Exception as e:
+            return {
+                "status": "error",
+                "error": str(e)
+            }
     
     @staticmethod
-    async def _execute_trade(symbol: str, side: str, amount: float, 
-                           order_type: str = "market", price: Optional[float] = None) -> Dict[str, Any]:
-        """Implementation for execute_trade tool"""
-        # This would integrate with the actual trading system
-        return {
-            "order_id": "12345",
-            "symbol": symbol,
-            "side": side,
-            "amount": amount,
-            "order_type": order_type,
-            "price": price,
-            "status": "filled",
-            "timestamp": "2024-01-01T12:00:00Z"
-        }
-    
-    @staticmethod
-    async def _get_risk_metrics(scope: str = "portfolio", symbol: Optional[str] = None, 
-                              period: str = "30d") -> Dict[str, Any]:
-        """Implementation for get_risk_metrics tool"""
-        # This would integrate with the actual risk management system
-        return {
-            "scope": scope,
-            "symbol": symbol,
-            "period": period,
-            "var_95": -5.2,
-            "sharpe_ratio": 1.8,
-            "max_drawdown": -15.5,
-            "volatility": 25.3
-        }
+    async def _get_comprehensive_trading_dataset(symbols: List[str] = None, start_date: str = None,
+                                               end_date: str = None, align_data: bool = True) -> Dict[str, Any]:
+        """Implementation for comprehensive trading dataset tool"""
+        try:
+            from ....data.historical.yahoo_finance import YahooFinanceClient
+            from ....data.historical.fred_client import FREDClient
+            
+            # Use default symbols if none provided
+            if symbols is None:
+                symbols = ["BTC", "ETH", "BNB", "XRP", "ADA"]
+            
+            # Initialize clients directly
+            yahoo_client = YahooFinanceClient()
+            fred_client = FREDClient()
+            
+            results = {
+                "status": "success",
+                "symbols": symbols,
+                "start_date": start_date,
+                "end_date": end_date,
+                "yahoo_data": {},
+                "fred_data": {},
+                "errors": []
+            }
+            
+            # Load Yahoo Finance data
+            logger.info(f"Loading Yahoo Finance data for {symbols}")
+            for symbol in symbols:
+                try:
+                    df = yahoo_client.download_data(
+                        symbol=symbol,
+                        start_date=start_date,
+                        end_date=end_date,
+                        save=True
+                    )
+                    if df is not None and not df.empty:
+                        results["yahoo_data"][symbol] = {
+                            "data_points": len(df),
+                            "latest_price": float(df['close'].iloc[-1]),
+                            "date_range": {
+                                "start": df.index.min().isoformat(),
+                                "end": df.index.max().isoformat()
+                            }
+                        }
+                    else:
+                        results["errors"].append(f"No Yahoo data for {symbol}")
+                except Exception as e:
+                    results["errors"].append(f"Yahoo error for {symbol}: {str(e)}")
+            
+            # Load FRED data (if API key available)
+            fred_series = ["DGS10", "T10Y2Y", "WALCL", "M2SL", "EFFR"]
+            logger.info(f"Loading FRED data for {fred_series}")
+            for series_id in fred_series:
+                try:
+                    df = fred_client.get_series_data(
+                        series_id=series_id,
+                        start_date=start_date,
+                        end_date=end_date,
+                        save=True
+                    )
+                    if df is not None and not df.empty:
+                        results["fred_data"][series_id] = {
+                            "data_points": len(df),
+                            "latest_value": float(df[series_id].iloc[-1]),
+                            "description": fred_client.crypto_relevant_series.get(series_id, series_id)
+                        }
+                    else:
+                        results["errors"].append(f"No FRED data for {series_id}")
+                except Exception as e:
+                    results["errors"].append(f"FRED error for {series_id}: {str(e)}")
+            
+            # Summary
+            results["summary"] = {
+                "yahoo_symbols_loaded": len(results["yahoo_data"]),
+                "fred_series_loaded": len(results["fred_data"]),
+                "total_errors": len(results["errors"])
+            }
+            
+            if not results["yahoo_data"] and not results["fred_data"]:
+                results["status"] = "error"
+                results["error"] = "No data could be loaded"
+            
+            return results
+                
+        except Exception as e:
+            return {
+                "status": "error",
+                "error": str(e),
+                "symbols": symbols or []
+            }

@@ -85,6 +85,9 @@ class DynamicResource(Resource):
         return str(result)
 
 
+# Alias for backward compatibility
+MCPResource = Resource
+
 class CryptoTradingResources:
     """Crypto trading specific resources for MCP server"""
     

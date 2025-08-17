@@ -12,6 +12,48 @@ sap.ui.define([
         
         onInit: function() {
             // Initialize controller
+            this._oEventBusManager = sap.ui.getCore().EventBusManager;
+            this._oWalletDataManager = sap.ui.getCore().getModel("wallet").getProperty("/");
+            
+            // Subscribe to EventBus events
+            this._setupEventHandlers();
+        },
+        
+        onExit: function() {
+            // Cleanup EventBus subscriptions
+            if (this._oEventBusManager) {
+                this._oEventBusManager.unsubscribeAll(this);
+            }
+        },
+        
+        _setupEventHandlers: function() {
+            // Subscribe to wallet connection events
+            this._oEventBusManager.subscribe(
+                this._oEventBusManager.CHANNELS.WALLET,
+                this._oEventBusManager.EVENTS.WALLET.CONNECTION_CHANGED,
+                this._onWalletConnectionChanged.bind(this),
+                this
+            );
+            
+            // Subscribe to UI notifications
+            this._oEventBusManager.subscribe(
+                this._oEventBusManager.CHANNELS.UI,
+                this._oEventBusManager.EVENTS.UI.NOTIFICATION,
+                this._onNotification.bind(this),
+                this
+            );
+        },
+        
+        _onWalletConnectionChanged: function(sChannel, sEvent, oData) {
+            if (oData.connected) {
+                MessageToast.show("Wallet connected: " + oData.address.substring(0, 8) + "...");
+            } else {
+                MessageToast.show("Wallet disconnected");
+            }
+        },
+        
+        _onNotification: function(sChannel, sEvent, oData) {
+            MessageToast.show(oData.message);
         },
         
         onTilePress: function(oEvent) {
@@ -37,7 +79,7 @@ sap.ui.define([
                     content: [
                         new Text({ text: "BTC price alert: $65,432" }),
                         new Text({ text: "New AI signal available" }),
-                        new Text({ text: "DEX opportunity detected" })
+                        new Text({ text: "ML model retrained successfully" })
                     ],
                     beginButton: new Button({
                         text: "Close",
@@ -68,20 +110,35 @@ sap.ui.define([
         },
         
         onConnectWallet: function() {
+            var that = this;
+            
             if (typeof window.ethereum !== 'undefined') {
+                // Get wallet data manager
+                var oWalletModel = sap.ui.getCore().getModel("wallet");
+                var oWalletDataManager = oWalletModel.getProperty("/");
+                
+                // Set connecting status
+                oWalletModel.setProperty("/status", "connecting");
+                
                 window.ethereum.request({ method: 'eth_requestAccounts' })
                     .then(function(accounts) {
                         if (accounts.length > 0) {
-                            var oModel = this.getView().getModel("app");
-                            oModel.setProperty("/wallet/connected", true);
-                            oModel.setProperty("/wallet/address", accounts[0]);
-                            MessageToast.show("Wallet connected successfully");
+                            // Use wallet data manager to connect
+                            var oWalletManager = that._getWalletDataManager();
+                            oWalletManager.connectWallet('metamask', accounts[0], 'mainnet', 1);
                             
-                            // Update wallet balance
-                            this._updateWalletBalance(accounts[0]);
+                            // Update balances
+                            that._updateWalletBalance(accounts[0]);
+                            
+                            // Legacy model update for backward compatibility
+                            var oAppModel = that.getView().getModel("app");
+                            oAppModel.setProperty("/wallet/connected", true);
+                            oAppModel.setProperty("/wallet/address", accounts[0]);
                         }
-                    }.bind(this))
+                    })
                     .catch(function(error) {
+                        var oWalletManager = that._getWalletDataManager();
+                        oWalletManager.setError(error.message);
                         MessageToast.show("Failed to connect wallet: " + error.message);
                     });
             } else {
@@ -89,14 +146,48 @@ sap.ui.define([
             }
         },
         
+        _getWalletDataManager: function() {
+            // Helper to get wallet data manager instance
+            // In a real implementation, this would access the manager instance
+            return {
+                connectWallet: function(provider, address, network, chainId) {
+                    var oWalletModel = sap.ui.getCore().getModel("wallet");
+                    oWalletModel.setProperty("/connection/connected", true);
+                    oWalletModel.setProperty("/connection/provider", provider);
+                    oWalletModel.setProperty("/connection/address", address);
+                    oWalletModel.setProperty("/connection/network", network);
+                    oWalletModel.setProperty("/connection/chainId", chainId);
+                    oWalletModel.setProperty("/status", "connected");
+                },
+                setError: function(error) {
+                    var oWalletModel = sap.ui.getCore().getModel("wallet");
+                    oWalletModel.setProperty("/error", { message: error });
+                    oWalletModel.setProperty("/status", "error");
+                }
+            };
+        },
+        
         _updateWalletBalance: function(address) {
+            var that = this;
+            
+            // Use modern data manager approach
             jQuery.ajax({
                 url: "/api/wallet/balance",
                 type: "POST",
                 contentType: "application/json",
                 data: JSON.stringify({ address: address }),
                 success: function(data) {
-                    var oModel = this.getView().getModel("app");
+                    // Update wallet model
+                    var oWalletModel = sap.ui.getCore().getModel("wallet");
+                    if (data && data.balances) {
+                        oWalletModel.setProperty("/balances", data.balances);
+                        
+                        // Publish balance updated event
+                        that._oEventBusManager.publishBalanceUpdated(data.balances);
+                    }
+                    
+                    // Keep legacy model update
+                    var oModel = that.getView().getModel("app");
                     if (data.balance) {
                         oModel.setProperty("/wallet/balance", data.balance.ETH);
                     }
@@ -110,6 +201,16 @@ sap.ui.define([
         onPortfolioPress: function() {
             var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
             oRouter.navTo("portfolio");
+        },
+        
+        onCodeAnalysisPress: function() {
+            var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+            oRouter.navTo("codeAnalysis");
+        },
+        
+        onTradingConsolePress: function() {
+            var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+            oRouter.navTo("tradingConsole");
         }
     });
 });

@@ -469,9 +469,9 @@ class MCPFioriIntegration:
         """Generate SAP Fiori manifest.json with MCP integration"""
         return {
             "sap.app": {
-                "id": "com.rex.crypto.trading",
+                "id": "com.cryptotrading.crypto.trading",
                 "type": "application",
-                "title": "рекс.com Crypto Trading",
+                "title": "cryptotrading.com Crypto Trading",
                 "description": "Enterprise crypto trading platform with MCP integration"
             },
             "sap.ui": {

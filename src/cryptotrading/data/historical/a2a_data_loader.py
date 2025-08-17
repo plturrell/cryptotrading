@@ -47,7 +47,8 @@ class A2AHistoricalDataLoader:
         self.fred_client = FREDClient(data_dir=str(self.data_dir / "fred"))
         
         # Create strand agent with data loading tools
-        self.agent = Agent(tools=self._create_tools(), model=model)
+        from ...core.agents.strands import StrandsAgent
+        self.agent = StrandsAgent(tools=self._create_tools(), model=model)
         
         # Default configurations
         self.default_crypto_symbols = ["BTC", "ETH", "BNB", "XRP", "ADA"]
@@ -165,27 +166,12 @@ class A2AHistoricalDataLoader:
                 logger.error(f"Data alignment failed: {e}")
                 return {"status": "error", "error": str(e)}
         
-        # Register strand tools
-        self.tools = [
-            ToolSpec(
-                name="load_yahoo_data",
-                description="Load Yahoo Finance crypto data",
-                parameters={"symbols": "List[str]", "period": "str"},
-                function=load_yahoo_data
-            ),
-            ToolSpec(
-                name="load_fred_data", 
-                description="Load FRED economic data",
-                parameters={"series": "List[str]"},
-                function=load_fred_data
-            ),
-            ToolSpec(
-                name="align_temporal_data",
-                description="Align data from multiple sources temporally",
-                parameters={"data_sources": "Dict[str, Any]", "frequency": "str"},
-                function=align_temporal_data
-            )
-        ]
+        # Register strand tools - Simple mapping for now
+        self.tools = {
+            "load_yahoo_data": load_yahoo_data,
+            "load_fred_data": load_fred_data,
+            "align_temporal_data": align_temporal_data
+        }
     
     async def load_comprehensive_data(self, request: DataLoadRequest) -> Dict[str, Any]:
         """
@@ -220,15 +206,6 @@ class A2AHistoricalDataLoader:
             prompt_parts.append(f"FRED series: {', '.join(series)}")
             tool_calls.append(f"load_fred_data({series}, '{request.start_date}', '{request.end_date}')")
         
-        if "cboe" in request.sources:
-            indices = request.cboe_indices or self.default_cboe_indices
-            prompt_parts.append(f"CBOE indices: {', '.join(indices)}")
-            tool_calls.append(f"load_cboe_data({indices})")
-        
-        if "defillama" in request.sources:
-            protocols = request.defillama_protocols or self.default_defillama_protocols
-            prompt_parts.append(f"DeFiLlama protocols: {', '.join(protocols)}")
-            tool_calls.append(f"load_defillama_data({protocols})")
         
         prompt_parts.extend([
             "",

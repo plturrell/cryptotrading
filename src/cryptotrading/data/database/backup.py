@@ -20,8 +20,8 @@ import tarfile
 import hashlib
 
 from .client import get_db
-from ..security.crypto import message_encryption
-from ..database.cache import cache_manager
+from ...infrastructure.security.crypto import message_encryption
+from .cache import cache_manager
 
 logger = logging.getLogger(__name__)
 

@@ -65,12 +65,27 @@
                 "settings": {
                     "annotations": ["annotation"],
                     "localUri": "localService/metadata.xml",
-                    "odataVersion": "4.0"
+                    "odataVersion": "4.0",
+                    "operationMode": "Server",
+                    "autoExpandSelect": true,
+                    "earlyRequests": true,
+                    "refreshAfterChange": false
                 }
             },
             "annotation": {
                 "uri": "localService/annotation.xml",
                 "type": "ODataAnnotation"
+            },
+            "offlineService": {
+                "uri": "/api/odata/v4/CryptoService/",
+                "type": "OData",
+                "settings": {
+                    "odataVersion": "4.0",
+                    "operationMode": "Client",
+                    "serviceUrlParams": {
+                        "sap-client": "100"
+                    }
+                }
             },
             "marketData": {
                 "uri": "/api/market/data",
@@ -129,7 +144,21 @@
                     "synchronizationMode": "None",
                     "operationMode": "Server",
                     "autoExpandSelect": true,
-                    "earlyRequests": true
+                    "earlyRequests": true,
+                    "refreshAfterChange": false,
+                    "updateGroupId": "$auto",
+                    "groupId": "$auto"
+                }
+            },
+            "offline": {
+                "dataSource": "offlineService",
+                "type": "sap.ui.model.odata.v4.ODataModel",
+                "settings": {
+                    "synchronizationMode": "None",
+                    "operationMode": "Client",
+                    "autoExpandSelect": false,
+                    "earlyRequests": false,
+                    "refreshAfterChange": true
                 }
             },
             "i18n": {

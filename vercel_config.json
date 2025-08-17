@@ -1,0 +1,69 @@
+{
+  "version": 2,
+  "name": "mcts-cryptotrading",
+  "regions": ["iad1"],
+  "env": {
+    "MCTS_ITERATIONS": "1000",
+    "MCTS_EXPLORATION": "1.4",
+    "MCTS_SIM_DEPTH": "10",
+    "MCTS_TIMEOUT": "25",
+    "MCTS_MAX_MEMORY_MB": "512",
+    "MCTS_CACHE_TTL": "300",
+    "MCTS_PROGRESSIVE_WIDENING": "true",
+    "MCTS_RAVE": "true",
+    "MCTS_PARALLEL_SIMS": "4",
+    "MCTS_SIMULATION_STRATEGY": "weighted_random",
+    "MCTS_MONITORING_ENABLED": "false",
+    "MCTS_SECURITY_LEVEL": "production",
+    "VERCEL_EDGE": "true"
+  },
+  "build": {
+    "env": {
+      "PYTHON_VERSION": "3.9"
+    }
+  },
+  "functions": {
+    "api/mcts-calculate.ts": {
+      "runtime": "edge",
+      "maxDuration": 30,
+      "memory": 1024
+    },
+    "api/mcts-python.py": {
+      "runtime": "python3.9",
+      "maxDuration": 30,
+      "memory": 1024,
+      "includeFiles": "src/**"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/mcts",
+      "destination": "/api/mcts-calculate"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        }
+      ]
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/mcts-health",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}

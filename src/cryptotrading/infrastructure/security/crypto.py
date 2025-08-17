@@ -156,8 +156,8 @@ class KeyManager:
     
     def _store_key_metadata(self, key_id: str, salt: bytes):
         """Store key metadata (salt) for derivation in database"""
-        from ..database.models import EncryptionKeyMetadata
-        from ..database.client import get_db
+        from ...data.database.models import EncryptionKeyMetadata
+        from ...data.database.client import get_db
         
         try:
             db = get_db()
@@ -183,8 +183,8 @@ class KeyManager:
     
     def _retrieve_key_metadata(self, key_id: str) -> Optional[bytes]:
         """Retrieve key metadata (salt) from database"""
-        from ..database.models import EncryptionKeyMetadata
-        from ..database.client import get_db
+        from ...data.database.models import EncryptionKeyMetadata
+        from ...data.database.client import get_db
         
         try:
             db = get_db()
@@ -203,8 +203,8 @@ class KeyManager:
     
     def _load_keys_from_storage(self):
         """Load existing keys from persistent storage"""
-        from ..database.models import EncryptionKeyMetadata
-        from ..database.client import get_db
+        from ...data.database.models import EncryptionKeyMetadata
+        from ...data.database.client import get_db
         
         try:
             db = get_db()

@@ -1,9 +1,9 @@
 """
-Perplexity AI client for rex.com - Real-time crypto intelligence
+Perplexity AI client for cryptotrading.com - Real-time crypto intelligence
 """
 
 import os
-import requests
+import httpx
 import json
 from typing import Dict, List, Optional
 from datetime import datetime
@@ -12,19 +12,21 @@ class PerplexityClient:
     def __init__(self):
         self.api_key = os.getenv('PERPLEXITY_API_KEY')
         self.base_url = "https://api.perplexity.ai"
-        self.headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
+        self.client = httpx.AsyncClient(
+            timeout=30.0,
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json"
+            }
+        )
     
-    def search_crypto_news(self, symbol: str) -> Dict[str, any]:
+    async def search_crypto_news(self, symbol: str) -> Dict[str, any]:
         """Search latest crypto news and sentiment"""
         query = f"Latest {symbol} cryptocurrency news price analysis sentiment today"
         
         try:
-            response = requests.post(
+            response = await self.client.post(
                 f"{self.base_url}/chat/completions",
-                headers=self.headers,
                 json={
                     "model": "pplx-7b-online",
                     "messages": [

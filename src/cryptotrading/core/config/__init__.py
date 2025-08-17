@@ -1,0 +1,41 @@
+"""
+Configuration package for cryptotrading
+Provides environment detection and configuration management
+"""
+
+from .environment import (
+    DeploymentEnvironment,
+    RuntimeEnvironment,
+    EnvironmentDetector,
+    FeatureFlags,
+    get_deployment_environment,
+    get_runtime_environment,
+    is_vercel,
+    is_local,
+    is_production,
+    is_serverless,
+    get_feature_flags
+)
+
+# Try to import production config if it exists
+try:
+    from .production_config import ProductionConfig
+except ImportError:
+    ProductionConfig = None
+
+__all__ = [
+    # Environment detection
+    'DeploymentEnvironment',
+    'RuntimeEnvironment',
+    'EnvironmentDetector',
+    'FeatureFlags',
+    'get_deployment_environment',
+    'get_runtime_environment',
+    'is_vercel',
+    'is_local',
+    'is_production',
+    'is_serverless',
+    'get_feature_flags',
+    # Config classes
+    'ProductionConfig',
+]

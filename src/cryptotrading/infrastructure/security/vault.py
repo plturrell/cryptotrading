@@ -29,12 +29,21 @@ class Secret:
 
 class VaultConfig:
     """Vault configuration"""
-    VAULT_URL = os.getenv("VAULT_URL", "http://localhost:8200")
+    VAULT_URL = os.getenv("VAULT_URL", "https://localhost:8200")  # Force HTTPS for security
     VAULT_TOKEN = os.getenv("VAULT_TOKEN")
+    
+    @classmethod
+    def validate_config(cls):
+        """Validate vault configuration for security"""
+        if not cls.VAULT_TOKEN:
+            raise ValueError("VAULT_TOKEN is required")
+        if cls.VAULT_URL.startswith("http://") and "localhost" not in cls.VAULT_URL:
+            raise ValueError("HTTPS is required for non-localhost vault connections")
+        return True
     VAULT_NAMESPACE = os.getenv("VAULT_NAMESPACE", "")
     KV_MOUNT_PATH = "secret"
-    SECRET_PREFIX = "reks/a2a"
-    LOCAL_VAULT_PATH = "/tmp/reks_vault"
+    SECRET_PREFIX = "cryptotrading/a2a"
+    LOCAL_VAULT_PATH = "/tmp/cryptotrading_vault"
 
 class VaultError(Exception):
     """Vault operation failed"""

@@ -11,10 +11,16 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 from dataclasses import dataclass, asdict
 
+from .thread_safe_orchestrator import ThreadSafeEnterpriseOrchestrator
 from .intelligent_code_manager import IntelligentCodeManager, CodeHealthMetrics
 from .automated_quality_monitor import AutomatedQualityMonitor
 from .proactive_issue_detector import ProactiveIssueDetector
 from .code_health_dashboard import CodeHealthDashboard
+from .database_adapter import CodeManagementDatabaseAdapter
+from .issue_lifecycle_manager import IssueLifecycleManager
+from .issue_backlog_tracker import IssueBacklogTracker
+from .seal_code_adapter import SEALCodeAdapter
+from .seal_workflow_engine import SEALWorkflowEngine
 
 logger = logging.getLogger(__name__)
 
@@ -29,168 +35,92 @@ class OrchestrationConfig:
     notification_enabled: bool = True
     max_auto_fixes_per_cycle: int = 10
 
-class EnterpriseCodeOrchestrator:
-    """Enterprise orchestrator for comprehensive code management"""
+class EnterpriseCodeOrchestrator(ThreadSafeEnterpriseOrchestrator):
+    """
+    Enterprise orchestrator for comprehensive code management
+    Now inherits from ThreadSafeEnterpriseOrchestrator for production-ready concurrency
+    """
     
-    def __init__(self, project_path: str, config: Optional[OrchestrationConfig] = None):
-        self.project_path = Path(project_path)
-        self.config = config or OrchestrationConfig()
+    def __init__(self, project_path: Path, config: OrchestrationConfig, 
+                 database_adapter: Optional[CodeManagementDatabaseAdapter] = None):
+        # Initialize thread-safe base class
+        super().__init__(project_path, config, database_adapter)
         
-        # Initialize all components
-        self.code_manager = IntelligentCodeManager(project_path)
-        self.quality_monitor = AutomatedQualityMonitor(project_path)
-        self.proactive_detector = ProactiveIssueDetector(project_path)
-        self.dashboard = CodeHealthDashboard(project_path, self.config.dashboard_port)
-        
-        # State tracking
-        self.is_running = False
+        # Legacy compatibility properties
         self.last_health_check = None
         self.last_quality_check = None
         self.last_proactive_scan = None
         self.total_fixes_applied = 0
         
-    async def start_enterprise_monitoring(self) -> None:
-        """Start the complete enterprise monitoring system"""
-        logger.info("🚀 Starting Enterprise Code Management System...")
+        # Subscribe to events for legacy compatibility
+        self.subscribe_to_event("health_check_completed", self._on_health_check)
+        self.subscribe_to_event("quality_check_completed", self._on_quality_check)
+        self.subscribe_to_event("proactive_scan_completed", self._on_proactive_scan)
         
-        self.is_running = True
+    def _on_health_check(self, event: Dict[str, Any]):
+        """Handle health check completed event"""
+        self.last_health_check = datetime.fromisoformat(event["timestamp"])
         
-        # Start all monitoring tasks concurrently
-        tasks = [
-            asyncio.create_task(self._continuous_health_monitoring()),
-            asyncio.create_task(self._quality_monitoring_loop()),
-            asyncio.create_task(self._proactive_scanning_loop()),
-            asyncio.create_task(self._dashboard_server()),
-            asyncio.create_task(self._orchestration_loop())
-        ]
+    def _on_quality_check(self, event: Dict[str, Any]):
+        """Handle quality check completed event"""
+        self.last_quality_check = datetime.fromisoformat(event["timestamp"])
+        if "auto_fixed" in event["data"]:
+            self.total_fixes_applied += event["data"]["auto_fixed"]
+            
+    def _on_proactive_scan(self, event: Dict[str, Any]):
+        """Handle proactive scan completed event"""
+        self.last_proactive_scan = datetime.fromisoformat(event["timestamp"])
         
-        try:
-            await asyncio.gather(*tasks)
-        except Exception as e:
-            logger.error("Error in enterprise monitoring: %s", e)
-            self.is_running = False
+    # Override parent method to maintain compatibility
+    @property 
+    def is_running(self):
+        """Legacy compatibility for is_running"""
+        return self.running
     
-    async def _continuous_health_monitoring(self) -> None:
-        """Continuous health monitoring loop"""
-        logger.info("🏥 Starting continuous health monitoring...")
+    # Legacy method stubs for compatibility
+    async def _automated_quality_monitoring(self) -> None:
+        """Delegates to parent's thread-safe implementation"""
+        await self._start_quality_monitoring()
         
-        while self.is_running:
+    async def _proactive_issue_detection(self) -> None:
+        """Delegates to parent's thread-safe implementation"""
+        await self._start_proactive_scanning()
+        
+    async def _lifecycle_management_loop(self) -> None:
+        """Delegates to parent's thread-safe implementation"""
+        await self._start_lifecycle_management()
+        
+    async def _seal_workflow_loop(self) -> None:
+        """Delegates to parent's thread-safe implementation"""
+        await self._start_seal_workflow()
+        
+    async def _start_dashboard(self) -> None:
+        """Delegates to parent's thread-safe implementation"""
+        await self._start_dashboard_server()
+        
+    async def _orchestration_loop(self) -> None:
+        """Orchestration coordination - uses parent's event system"""
+        logger.info("🎯 Starting orchestration coordination...")
+        
+        while self.running:
             try:
-                # Run comprehensive health check
-                health_metrics = await self.code_manager.comprehensive_health_check()
-                self.last_health_check = datetime.now()
-                
-                # Log health status
-                logger.info("Health check complete - Coverage: %.1f%%, Score: %.1f", 
-                           health_metrics.coverage_percentage, 
-                           health_metrics.technical_debt_score)
-                
-                # Check for critical health issues
-                await self._handle_critical_health_issues(health_metrics)
-                
-                # Wait for next cycle
                 await asyncio.sleep(self.config.continuous_monitoring_interval)
                 
-            except Exception as e:
-                logger.error("Error in health monitoring: %s", e)
-                await asyncio.sleep(60)
-    
-    async def _quality_monitoring_loop(self) -> None:
-        """Quality monitoring loop"""
-        logger.info("🔍 Starting quality monitoring loop...")
-        
-        while self.is_running:
-            try:
-                # Run quality checks
-                results = await self.quality_monitor.run_all_checks()
-                issues = self.quality_monitor.process_results(results)
-                
-                self.last_quality_check = datetime.now()
-                
-                # Auto-fix issues if enabled
-                if self.config.auto_fix_enabled and issues:
-                    fixed_issues = await self.quality_monitor.auto_fix_issues(issues[:self.config.max_auto_fixes_per_cycle])
-                    self.total_fixes_applied += len(fixed_issues)
-                    
-                    if fixed_issues:
-                        logger.info("Auto-fixed %d quality issues", len(fixed_issues))
-                
-                # Wait for next cycle
-                await asyncio.sleep(self.config.quality_check_interval)
-                
-            except Exception as e:
-                logger.error("Error in quality monitoring: %s", e)
-                await asyncio.sleep(60)
-    
-    async def _proactive_scanning_loop(self) -> None:
-        """Proactive issue scanning loop"""
-        logger.info("🔮 Starting proactive scanning loop...")
-        
-        while self.is_running:
-            try:
-                # Run proactive scan
-                issues = await self.proactive_detector.scan_project()
-                self.last_proactive_scan = datetime.now()
-                
-                # Auto-fix proactive issues if enabled
-                if self.config.auto_fix_enabled and issues:
-                    auto_fixable = [i for i in issues if i.auto_fixable]
-                    if auto_fixable:
-                        fixed_issues = await self.proactive_detector.auto_fix_issues(auto_fixable[:self.config.max_auto_fixes_per_cycle])
-                        self.total_fixes_applied += len(fixed_issues)
-                        
-                        if fixed_issues:
-                            logger.info("Auto-fixed %d proactive issues", len(fixed_issues))
-                
-                # Wait for next cycle
-                await asyncio.sleep(self.config.proactive_scan_interval)
-                
-            except Exception as e:
-                logger.error("Error in proactive scanning: %s", e)
-                await asyncio.sleep(60)
-    
-    async def _dashboard_server(self) -> None:
-        """Run the dashboard server"""
-        logger.info("📊 Starting dashboard server on port %d", self.config.dashboard_port)
-        
-        # Run dashboard in a separate thread to avoid blocking
-        import threading
-        
-        def run_dashboard():
-            self.dashboard.run(debug=False)
-        
-        dashboard_thread = threading.Thread(target=run_dashboard, daemon=True)
-        dashboard_thread.start()
-        
-        # Keep the task alive
-        while self.is_running:
-            await asyncio.sleep(10)
-    
-    async def _orchestration_loop(self) -> None:
-        """Main orchestration loop for coordination"""
-        logger.info("🎼 Starting orchestration loop...")
-        
-        while self.is_running:
-            try:
-                # Generate orchestration report
+                # Generate comprehensive report
                 report = await self._generate_orchestration_report()
                 
-                # Save orchestration state
+                # Save state
                 await self._save_orchestration_state(report)
                 
-                # Check for system-wide issues
+                # Check system health  
                 await self._check_system_health()
                 
-                # Coordinate between components
-                await self._coordinate_components()
-                
-                # Wait for next orchestration cycle
-                await asyncio.sleep(300)  # 5 minutes
+                logger.info("📊 Orchestration cycle completed")
                 
             except Exception as e:
                 logger.error("Error in orchestration loop: %s", e)
                 await asyncio.sleep(60)
-    
+                
     async def _handle_critical_health_issues(self, health_metrics: CodeHealthMetrics) -> None:
         """Handle critical health issues"""
         critical_threshold = 70.0  # Coverage below 70% is critical
@@ -247,11 +177,22 @@ class EnterpriseCodeOrchestrator:
         }
     
     async def _save_orchestration_state(self, report: Dict[str, Any]) -> None:
-        """Save orchestration state to file"""
+        """Save orchestration state to database and file"""
+        # Save to database if available
+        if self.database_adapter:
+            try:
+                await self.database_adapter.log_monitoring_event(
+                    event_type="orchestration_report",
+                    details=report
+                )
+            except Exception as e:
+                logger.error("Failed to save orchestration state to database: %s", e)
+        
+        # Fallback to file storage
         state_file = self.project_path / "data" / "orchestration_state.json"
         state_file.parent.mkdir(exist_ok=True)
         
-        with open(state_file, "w") as f:
+        with open(state_file, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2)
     
     async def _check_system_health(self) -> None:

@@ -50,9 +50,11 @@ from .validation import (
 from .middleware import (
     SecurityMiddleware,
     VercelSecurityMiddleware,
+    SecureMiddleware,
     SecurityContext,
     SecurityConfig,
-    create_security_middleware
+    create_security_middleware,
+    create_secure_middleware
 )
 
 __all__ = [
@@ -95,7 +97,9 @@ __all__ = [
     # Middleware
     'SecurityMiddleware',
     'VercelSecurityMiddleware',
+    'SecureMiddleware',
     'SecurityContext',
     'SecurityConfig',
-    'create_security_middleware'
+    'create_security_middleware',
+    'create_secure_middleware'
 ]

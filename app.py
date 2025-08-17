@@ -1,5 +1,5 @@
 """
-WSGI entry point for rex.com on GoDaddy hosting
+WSGI entry point for cryptotrading.com on GoDaddy hosting
 """
 
 import os
@@ -19,7 +19,11 @@ from flask_cors import CORS
 from flask_restx import Api, Resource
 from dotenv import load_dotenv
 
-# Import observability components
+# Import unified bootstrap
+from cryptotrading.core.bootstrap_unified import setup_flask_app
+from cryptotrading.core.config import is_vercel
+
+# Import observability components (fallback to legacy)
 try:
     from cryptotrading.infrastructure.monitoring.dashboard import register_observability_routes, create_dashboard_route
     from cryptotrading.infrastructure.monitoring.tracer import instrument_flask_app
@@ -47,8 +51,8 @@ class CustomJSONEncoder:
             return None
         return str(obj)
 
-# Check if running on Vercel
-IS_VERCEL = os.getenv('VERCEL') == '1'
+# Environment detection (use unified config)
+IS_VERCEL = is_vercel()
 
 # Load environment variables
 load_dotenv()
@@ -65,8 +69,19 @@ app = Flask(__name__,
            static_folder='webapp',
            template_folder='webapp')
 
-# Initialize observability
-if OBSERVABILITY_AVAILABLE:
+# Setup unified monitoring and storage
+bootstrap = setup_flask_app(app, "cryptotrading")
+monitor = bootstrap.get_monitor()
+storage = bootstrap.get_storage()
+feature_flags = bootstrap.get_feature_flags()
+
+monitor.log_info("Flask app starting", {
+    "is_vercel": IS_VERCEL,
+    "features": feature_flags.get_feature_flags()
+})
+
+# Initialize observability (legacy fallback)
+if OBSERVABILITY_AVAILABLE and feature_flags.use_full_monitoring:
     try:
         # Instrument Flask app for tracing
         instrument_flask_app(app)
@@ -75,24 +90,24 @@ if OBSERVABILITY_AVAILABLE:
         register_observability_routes(app)
         create_dashboard_route(app)
         
-        print("✅ Observability enabled: /observability/dashboard.html")
+        monitor.log_info("Full observability enabled", {"dashboard": "/observability/dashboard.html"})
     except Exception as e:
-        print(f"⚠️  Observability setup failed: {e}")
+        monitor.log_error("Observability setup failed", {"error": str(e)})
         OBSERVABILITY_AVAILABLE = False
 
-# CORS configuration for rex.com
+# CORS configuration for cryptotrading.com
 CORS(app, origins=[
-    'https://rex.com',
-    'https://www.rex.com',
-    'https://xn--e1afmkfd.com',  # Punycode for rex.com
-    'https://www.xn--e1afmkfd.com'
+    'https://cryptotrading.com',
+    'https://www.cryptotrading.com',
+    'https://app.cryptotrading.com',
+    'https://api.cryptotrading.com'
 ])
 
 # API configuration
 api = Api(
     app,
     version='1.0',
-    title='rex.com API',
+    title='cryptotrading.com API',
     description='Professional cryptocurrency trading platform API',
     doc='/api/'
 )
@@ -116,14 +131,9 @@ def webapp_files(filename):
 @app.route('/health')
 def health():
     """Health check endpoint"""
-    return {'status': 'healthy', 'platform': 'rex.com', 'version': '0.1.0'}
+    return {'status': 'healthy', 'platform': 'cryptotrading.com', 'version': '0.1.0'}
 
 # API endpoints
-@api.route('/api/trading/status')
-class TradingStatus(Resource):
-    def get(self):
-        """Get trading system status"""
-        return {'status': 'active', 'platform': 'rex.com'}
 
 @api.route('/api/market/data')
 class MarketData(Resource):
@@ -291,16 +301,148 @@ class CryptoNews(Resource):
         news = perplexity.search_crypto_news(symbol.upper())
         return news
 
-@api.route('/api/ai/signals/<string:symbol>')
-class TradingSignals(Resource):
+@api.route('/api/ml/predict/<string:symbol>')
+class MLPrediction(Resource):
     def get(self, symbol):
-        """Get AI trading signals via Perplexity"""
-        from cryptotrading.core.ml.perplexity import PerplexityClient
+        """Get ML price prediction for a cryptocurrency"""
+        from cryptotrading.core.ml.inference import inference_service, PredictionRequest
         
-        timeframe = '4h'  # Default timeframe
-        perplexity = PerplexityClient()
-        signals = perplexity.get_trading_signals(symbol.upper(), timeframe)
-        return signals
+        horizon = request.args.get('horizon', '24h')
+        model_type = request.args.get('model_type', None)
+        
+        # Run async prediction in sync context
+        import asyncio
+        
+        async def get_prediction():
+            req = PredictionRequest(
+                symbol=symbol.upper(),
+                horizon=horizon,
+                model_type=model_type
+            )
+            return await inference_service.get_prediction(req)
+        
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(get_prediction())
+            return result.dict()
+        except Exception as e:
+            return {'error': str(e)}, 500
+
+@api.route('/api/ml/predict/batch')
+class MLBatchPrediction(Resource):
+    def post(self):
+        """Get ML predictions for multiple cryptocurrencies"""
+        from cryptotrading.core.ml.inference import inference_service, BatchPredictionRequest
+        
+        data = request.get_json()
+        symbols = data.get('symbols', ['BTC', 'ETH'])
+        horizon = data.get('horizon', '24h')
+        model_type = data.get('model_type', None)
+        
+        # Run async prediction in sync context
+        import asyncio
+        
+        async def get_predictions():
+            req = BatchPredictionRequest(
+                symbols=[s.upper() for s in symbols],
+                horizon=horizon,
+                model_type=model_type
+            )
+            return await inference_service.get_batch_predictions(req)
+        
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            results = loop.run_until_complete(get_predictions())
+            return [r.dict() for r in results]
+        except Exception as e:
+            return {'error': str(e)}, 500
+
+@api.route('/api/ml/performance/<string:symbol>')
+class MLModelPerformance(Resource):
+    def get(self, symbol):
+        """Get ML model performance metrics"""
+        from cryptotrading.core.ml.inference import inference_service
+        
+        horizon = request.args.get('horizon', '24h')
+        
+        # Run async in sync context
+        import asyncio
+        
+        async def get_performance():
+            return await inference_service.get_model_performance(symbol.upper(), horizon)
+        
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(get_performance())
+            return result.dict()
+        except Exception as e:
+            return {'error': str(e)}, 500
+
+@api.route('/api/ml/train')
+class MLTraining(Resource):
+    def post(self):
+        """Trigger ML model training"""
+        from cryptotrading.core.ml.training import training_pipeline
+        
+        # Run training in background
+        import threading
+        import asyncio
+        
+        def train_models():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(training_pipeline.train_all_models())
+        
+        thread = threading.Thread(target=train_models)
+        thread.start()
+        
+        return {
+            'status': 'training_started',
+            'message': 'Model training initiated in background',
+            'symbols': training_pipeline.training_config['symbols'],
+            'model_types': training_pipeline.training_config['model_types']
+        }
+
+@api.route('/api/ml/features/<string:symbol>')
+class MLFeatures(Resource):
+    def get(self, symbol):
+        """Get ML features for a symbol"""
+        from cryptotrading.core.ml.feature_store import feature_store
+        
+        features = request.args.get('features', None)
+        if features:
+            features = features.split(',')
+        
+        # Run async in sync context
+        import asyncio
+        
+        async def get_features():
+            return await feature_store.compute_features(symbol.upper(), features)
+        
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            features_df = loop.run_until_complete(get_features())
+            
+            if features_df.empty:
+                return {'error': 'No features available'}, 404
+            
+            # Return last 100 rows as JSON
+            result = {
+                'symbol': symbol.upper(),
+                'features': features_df.tail(100).to_dict(orient='records'),
+                'feature_names': list(features_df.columns),
+                'total_features': len(features_df.columns),
+                'importance': feature_store.get_feature_importance()
+            }
+            
+            return result
+            
+        except Exception as e:
+            return {'error': str(e)}, 500
 
 @api.route('/api/wallet/balance')
 class WalletBalance(Resource):
@@ -366,44 +508,6 @@ class MarketOverview(Resource):
         overview = aggregator.get_market_overview(symbols)
         return overview
 
-@api.route('/api/market/dex/opportunities')
-class DexOpportunities(Resource):
-    def get(self):
-        """Get DEX trading opportunities"""
-        from cryptotrading.data.market_data import MarketDataAggregator
-        
-        min_liquidity = float(request.args.get('min_liquidity', 10000))
-        
-        aggregator = MarketDataAggregator()
-        opportunities = aggregator.get_dex_opportunities(min_liquidity)
-        return {"opportunities": opportunities, "count": len(opportunities)}
-
-@api.route('/api/market/dex/trending')
-class DexTrending(Resource):
-    def get(self):
-        """Get trending DEX pools"""
-        from cryptotrading.data.market_data import GeckoTerminalClient
-        
-        network = request.args.get('network', None)
-        
-        client = GeckoTerminalClient()
-        trending = client.get_trending_pools(network)
-        return trending
-
-@api.route('/api/market/dex/pool/<string:network>/<string:address>')
-class DexPool(Resource):
-    def get(self, network, address):
-        """Get specific DEX pool data"""
-        from cryptotrading.data.market_data import GeckoTerminalClient
-        
-        client = GeckoTerminalClient()
-        pool_data = client.get_pool_by_address(network, address)
-        volume_data = client.get_pool_volume(network, address)
-        
-        return {
-            "pool": pool_data,
-            "volume": volume_data
-        }
 
 @api.route('/api/market/historical/<string:symbol>')
 class HistoricalData(Resource):

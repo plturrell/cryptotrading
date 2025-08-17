@@ -13,6 +13,7 @@ from datetime import datetime
 from dataclasses import dataclass
 
 from .intelligent_code_manager import CodeIssue, IssueType, FixStatus
+from .database_adapter import CodeManagementDatabaseAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -28,10 +29,11 @@ class QualityCheck:
 class AutomatedQualityMonitor:
     """Automated code quality monitoring with real-time analysis"""
     
-    def __init__(self, project_path: str):
+    def __init__(self, project_path: str, database_adapter: Optional[CodeManagementDatabaseAdapter] = None):
         self.project_path = Path(project_path)
         self.quality_checks = self._setup_quality_checks()
         self.results_history = []
+        self.database_adapter = database_adapter
         
     def _setup_quality_checks(self) -> List[QualityCheck]:
         """Setup quality check configurations"""
@@ -100,7 +102,7 @@ class AutomatedQualityMonitor:
                            len(issues), len(fixed_issues))
                 
                 # Store results
-                self.store_results(results, issues, fixed_issues)
+                await self.store_results(results, issues, fixed_issues)
                 
                 # Wait for next cycle
                 await asyncio.sleep(interval_seconds)
@@ -385,7 +387,7 @@ class AutomatedQualityMonitor:
         
         return False
     
-    def store_results(self, results: Dict[str, Any], issues: List[CodeIssue], fixed_issues: List[CodeIssue]) -> None:
+    async def store_results(self, results: Dict[str, Any], issues: List[CodeIssue], fixed_issues: List[CodeIssue]) -> None:
         """Store monitoring results"""
         timestamp = datetime.now().isoformat()
         
@@ -403,11 +405,53 @@ class AutomatedQualityMonitor:
             summary["issues_by_tool"][tool] = summary["issues_by_tool"].get(tool, 0) + 1
             summary["issues_by_severity"][str(issue.severity)] = summary["issues_by_severity"].get(str(issue.severity), 0) + 1
         
-        # Store to file
+        # Store to database if available
+        if self.database_adapter:
+            try:
+                # Save all issues to database
+                for issue in issues:
+                    await self.database_adapter.save_issue(issue)
+                
+                # Log monitoring event
+                await self.database_adapter.log_monitoring_event(
+                    event_type="quality_check",
+                    details={
+                        "summary": summary,
+                        "tool_results": results
+                    }
+                )
+                
+                # Save quality metrics
+                await self.database_adapter.save_metric(
+                    metric_name="quality_issues_total",
+                    value=len(issues),
+                    metadata={"timestamp": timestamp, "tool_breakdown": summary["issues_by_tool"]}
+                )
+                
+                await self.database_adapter.save_metric(
+                    metric_name="quality_issues_fixed",
+                    value=len(fixed_issues),
+                    metadata={"timestamp": timestamp}
+                )
+                
+                logger.info("📊 Quality monitoring results stored to database")
+                
+            except Exception as e:
+                logger.error("Failed to store results to database: %s", e)
+                # Fallback to file storage
+                await self._store_to_file(results, issues, summary)
+        else:
+            # Fallback to file storage
+            await self._store_to_file(results, issues, summary)
+        
+        self.results_history.append(summary)
+    
+    async def _store_to_file(self, results: Dict[str, Any], issues: List[CodeIssue], summary: Dict[str, Any]) -> None:
+        """Fallback file storage for monitoring results"""
         results_file = self.project_path / "data" / "quality_monitoring_results.json"
         results_file.parent.mkdir(exist_ok=True)
         
-        with open(results_file, "w") as f:
+        with open(results_file, "w", encoding="utf-8") as f:
             json.dump({
                 "summary": summary,
                 "detailed_results": results,
@@ -425,8 +469,7 @@ class AutomatedQualityMonitor:
                 ]
             }, f, indent=2)
         
-        self.results_history.append(summary)
-        logger.info("📊 Quality monitoring results stored")
+        logger.info("📊 Quality monitoring results stored to file")
     
     def get_quality_summary(self) -> Dict[str, Any]:
         """Get current quality summary"""

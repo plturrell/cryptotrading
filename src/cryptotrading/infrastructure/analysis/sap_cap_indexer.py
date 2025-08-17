@@ -49,7 +49,7 @@ class SAPCAPIndexer:
     # CDS parsing patterns
     NAMESPACE_PATTERN = re.compile(r'namespace\s+([\w\.]+)\s*;')
     USING_PATTERN = re.compile(r'using\s+([\w\.]+)(?:\s+as\s+(\w+))?\s*;')
-    ENTITY_PATTERN = re.compile(r'entity\s+(\w+)\s*{([^}]+)}', re.MULTILINE | re.DOTALL)
+    ENTITY_PATTERN = re.compile(r'entity\s+(\w+)\s*(?::\s*\w+\s*)?{([^}]+)}', re.MULTILINE | re.DOTALL)
     SERVICE_PATTERN = re.compile(r'service\s+(\w+)\s*{([^}]+)}', re.MULTILINE | re.DOTALL)
     TYPE_PATTERN = re.compile(r'type\s+(\w+)\s*:\s*([^;]+);')
     ELEMENT_PATTERN = re.compile(r'(\w+)\s*:\s*([^;,}]+)[;,]?')

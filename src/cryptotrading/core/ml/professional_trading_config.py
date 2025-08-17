@@ -17,14 +17,6 @@ class MarketRegime(Enum):
     EUPHORIA = "euphoria"
 
 
-class TradingStrategy(Enum):
-    """Professional trading strategy types"""
-    MACRO_DRIVEN = "macro_driven"
-    VOLATILITY_ARBITRAGE = "volatility_arbitrage"
-    CROSS_ASSET_MOMENTUM = "cross_asset_momentum"
-    MEAN_REVERSION = "mean_reversion"
-    SECTOR_ROTATION = "sector_rotation"
-    CARRY_TRADE = "carry_trade"
 
 
 @dataclass
@@ -35,7 +27,7 @@ class IndicatorSet:
     symbols: List[str]
     weights: Dict[str, float]
     min_correlation: float
-    strategy_type: TradingStrategy
+    analysis_focus: str  # Changed from trading strategy to analysis focus
     institutional_reference: str
 
 

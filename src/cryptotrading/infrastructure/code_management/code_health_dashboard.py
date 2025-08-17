@@ -13,16 +13,18 @@ from dataclasses import asdict
 
 from .intelligent_code_manager import IntelligentCodeManager, CodeHealthMetrics
 from .automated_quality_monitor import AutomatedQualityMonitor
+from .database_adapter import CodeManagementDatabaseAdapter
 
 class CodeHealthDashboard:
     """Web dashboard for code health monitoring"""
     
-    def __init__(self, project_path: str, port: int = 5001):
+    def __init__(self, project_path: str, port: int = 5001, database_adapter: CodeManagementDatabaseAdapter = None):
         self.project_path = Path(project_path)
         self.port = port
         self.app = Flask(__name__, template_folder=str(self.project_path / "templates"))
-        self.code_manager = IntelligentCodeManager(project_path)
-        self.quality_monitor = AutomatedQualityMonitor(project_path)
+        self.database_adapter = database_adapter
+        self.code_manager = IntelligentCodeManager(project_path, database_adapter)
+        self.quality_monitor = AutomatedQualityMonitor(project_path, database_adapter)
         self.setup_routes()
         
     def setup_routes(self):
@@ -46,10 +48,19 @@ class CodeHealthDashboard:
         @self.app.route('/api/issues')
         def get_issues():
             """Get current issues"""
-            active_issues = [
-                issue for issue in self.code_manager.issues_db 
-                if issue.fix_status.value != "completed"
-            ]
+            if self.database_adapter:
+                # Get issues from database
+                try:
+                    active_issues = asyncio.run(self.database_adapter.get_issues(status_filter="pending"))
+                except Exception as e:
+                    print(f"Error getting issues from database: {e}")
+                    active_issues = []
+            else:
+                # Fallback to in-memory storage
+                active_issues = [
+                    issue for issue in self.code_manager.issues_db 
+                    if issue.fix_status.value != "completed"
+                ]
             
             return jsonify({
                 "total": len(active_issues),
@@ -93,7 +104,15 @@ class CodeHealthDashboard:
             issue_id = data.get('issue_id')
             
             # Find the issue
-            issue = next((i for i in self.code_manager.issues_db if i.id == issue_id), None)
+            if self.database_adapter:
+                try:
+                    issues = asyncio.run(self.database_adapter.get_issues())
+                    issue = next((i for i in issues if i.id == issue_id), None)
+                except Exception:
+                    issue = None
+            else:
+                issue = next((i for i in self.code_manager.issues_db if i.id == issue_id), None)
+                
             if not issue:
                 return jsonify({"error": "Issue not found"}), 404
             
@@ -163,7 +182,7 @@ class CodeHealthDashboard:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Health Dashboard - rex.com</title>
+    <title>Code Health Dashboard - cryptotrading.com</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -272,7 +291,7 @@ class CodeHealthDashboard:
 </head>
 <body>
     <div class="header">
-        <h1>🏥 Code Health Dashboard - rex.com</h1>
+        <h1>🏥 Code Health Dashboard - cryptotrading.com</h1>
     </div>
     
     <div class="dashboard">

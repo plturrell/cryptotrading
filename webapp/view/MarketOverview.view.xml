@@ -1,0 +1,354 @@
+<mvc:View
+    controllerName="com.рекс.cryptotrading.controller.MarketOverview"
+    displayBlock="true"
+    xmlns="sap.m"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:core="sap.ui.core"
+    xmlns:f="sap.f"
+    xmlns:tnt="sap.tnt"
+    xmlns:suite="sap.suite.ui.commons"
+    xmlns:layout="sap.ui.layout"
+    xmlns:viz="sap.viz.ui5.controls"
+    xmlns:comp="sap.ui.comp"
+    xmlns:smartfilterbar="sap.ui.comp.smartfilterbar"
+    xmlns:variants="sap.ui.comp.variants">
+    
+    <Shell id="shell" appWidthLimited="false">
+        <App id="app">
+            <pages>
+                <Page id="marketOverviewPage" 
+                      title="Market Overview"
+                      showNavButton="true"
+                      navButtonPress="onNavBack"
+                      enableScrolling="true"
+                      backgroundDesign="Solid">
+                    
+                    <!-- Professional SAP Header -->
+                    <customHeader>
+                        <tnt:ToolHeader>
+                            <Button icon="sap-icon://nav-back" 
+                                    type="Transparent" 
+                                    press="onNavBack"
+                                    tooltip="Navigate back to launchpad"
+                                    ariaLabelledBy="navBackLabel">
+                                <layoutData>
+                                    <OverflowToolbarLayoutData priority="NeverOverflow"/>
+                                </layoutData>
+                            </Button>
+                            <core:InvisibleText id="navBackLabel" text="Navigate back to launchpad"/>
+                            
+                            <Title text="Cryptocurrency Market Overview" level="H2"/>
+                            
+                            <variants:VariantManagement 
+                                id="variantManagement"
+                                showExecuteOnSelection="true"
+                                showShare="true"
+                                showSetAsDefault="true"
+                                class="sapUiMediumMarginBegin"/>
+                            
+                            <ToolbarSpacer/>
+                            
+                            <Button text="Refresh Data" 
+                                    type="Emphasized" 
+                                    icon="sap-icon://refresh"
+                                    press="onRefreshData"
+                                    tooltip="Refresh market data"/>
+                            
+                            <Button text="Add Watchlist" 
+                                    icon="sap-icon://add"
+                                    press="onAddWatchlist"
+                                    tooltip="Add to watchlist"/>
+                            
+                            <Button icon="sap-icon://settings" 
+                                    type="Transparent" 
+                                    press="onSettings"
+                                    tooltip="Market settings"/>
+                        </tnt:ToolHeader>
+                    </customHeader>
+                    
+                    <content>
+                        <!-- Market Summary KPIs -->
+                        <VBox class="sapUiMediumMargin">
+                            <Title text="Market Summary" level="H3" class="sapUiMediumMarginBottom"/>
+                            
+                            <layout:Grid 
+                                defaultSpan="XL2 L3 M4 S6" 
+                                class="sapUiMediumMarginBottom"
+                                containerQuery="true">
+                                
+                                <suite:NumericTile
+                                    header="Bitcoin (BTC)"
+                                    subheader="Market Leader"
+                                    value="{market>/btc/price}"
+                                    scale="USD"
+                                    valueColor="{path: 'market>/btc/change24h', formatter: '.formatPriceColor'}"
+                                    indicator="{path: 'market>/btc/change24h', formatter: '.formatIndicator'}"
+                                    size="M"
+                                    press="onCryptoPress"
+                                    tooltip="Bitcoin current price and 24h change">
+                                    <layoutData>
+                                        <layout:GridData span="XL2 L3 M4 S6"/>
+                                    </layoutData>
+                                </suite:NumericTile>
+                                
+                                <suite:NumericTile
+                                    header="Ethereum (ETH)"
+                                    subheader="Smart Contracts"
+                                    value="{market>/eth/price}"
+                                    scale="USD"
+                                    valueColor="{path: 'market>/eth/change24h', formatter: '.formatPriceColor'}"
+                                    indicator="{path: 'market>/eth/change24h', formatter: '.formatIndicator'}"
+                                    size="M"
+                                    press="onCryptoPress">
+                                    <layoutData>
+                                        <layout:GridData span="XL2 L3 M4 S6"/>
+                                    </layoutData>
+                                </suite:NumericTile>
+                                
+                                <suite:NumericTile
+                                    header="Market Cap"
+                                    subheader="Total crypto market"
+                                    value="{market>/totalMarketCap}"
+                                    scale="T USD"
+                                    valueColor="Neutral"
+                                    size="M">
+                                    <layoutData>
+                                        <layout:GridData span="XL2 L3 M4 S6"/>
+                                    </layoutData>
+                                </suite:NumericTile>
+                                
+                                <suite:NumericTile
+                                    header="24h Volume"
+                                    subheader="Trading volume"
+                                    value="{market>/volume24h}"
+                                    scale="B USD"
+                                    valueColor="Good"
+                                    size="M">
+                                    <layoutData>
+                                        <layout:GridData span="XL2 L3 M4 S6"/>
+                                    </layoutData>
+                                </suite:NumericTile>
+                                
+                                <suite:NumericTile
+                                    header="Fear & Greed"
+                                    subheader="Market sentiment"
+                                    value="{market>/fearGreedIndex}"
+                                    valueColor="{path: 'market>/fearGreedIndex', formatter: '.formatSentimentColor'}"
+                                    size="M">
+                                    <layoutData>
+                                        <layout:GridData span="XL2 L3 M4 S6"/>
+                                    </layoutData>
+                                </suite:NumericTile>
+                                
+                                <suite:NumericTile
+                                    header="BTC Dominance"
+                                    subheader="Market share"
+                                    value="{market>/btcDominance}"
+                                    scale="%"
+                                    valueColor="Neutral"
+                                    size="M">
+                                    <layoutData>
+                                        <layout:GridData span="XL2 L3 M4 S6"/>
+                                    </layoutData>
+                                </suite:NumericTile>
+                            </layout:Grid>
+                            
+                            <!-- Price Charts -->
+                            <Panel headerText="Price Charts" 
+                                   class="sapUiResponsiveMargin"
+                                   expandable="true"
+                                   expanded="true">
+                                <headerToolbar>
+                                    <Toolbar>
+                                        <Title text="Real-Time Price Charts" level="H4"/>
+                                        <ToolbarSpacer/>
+                                        <SegmentedButton selectedKey="1h">
+                                            <items>
+                                                <SegmentedButtonItem key="1h" text="1H"/>
+                                                <SegmentedButtonItem key="24h" text="24H"/>
+                                                <SegmentedButtonItem key="7d" text="7D"/>
+                                                <SegmentedButtonItem key="30d" text="30D"/>
+                                            </items>
+                                        </SegmentedButton>
+                                        <Button icon="sap-icon://full-screen" 
+                                                type="Transparent" 
+                                                press="onExpandChart"/>
+                                    </Toolbar>
+                                </headerToolbar>
+                                <content>
+                                    <layout:Grid defaultSpan="XL6 L6 M12 S12" containerQuery="true">
+                                        <viz:VizFrame 
+                                            id="btcChart"
+                                            vizType="line"
+                                            width="100%"
+                                            height="400px"
+                                            class="sapUiMediumMargin">
+                                            <viz:dataset>
+                                                <viz:FlattenedDataset data="{market>/btcPriceHistory}">
+                                                    <viz:dimensions>
+                                                        <viz:DimensionDefinition name="Time" value="{timestamp}"/>
+                                                    </viz:dimensions>
+                                                    <viz:measures>
+                                                        <viz:MeasureDefinition name="Price" value="{price}"/>
+                                                    </viz:measures>
+                                                </viz:FlattenedDataset>
+                                            </viz:dataset>
+                                            <viz:feeds>
+                                                <viz:FeedItem uid="valueAxis" type="Measure" values="Price"/>
+                                                <viz:FeedItem uid="categoryAxis" type="Dimension" values="Time"/>
+                                            </viz:feeds>
+                                            <layoutData>
+                                                <layout:GridData span="XL6 L6 M12 S12"/>
+                                            </layoutData>
+                                        </viz:VizFrame>
+                                        
+                                        <viz:VizFrame 
+                                            id="ethChart"
+                                            vizType="line"
+                                            width="100%"
+                                            height="400px"
+                                            class="sapUiMediumMargin">
+                                            <viz:dataset>
+                                                <viz:FlattenedDataset data="{market>/ethPriceHistory}">
+                                                    <viz:dimensions>
+                                                        <viz:DimensionDefinition name="Time" value="{timestamp}"/>
+                                                    </viz:dimensions>
+                                                    <viz:measures>
+                                                        <viz:MeasureDefinition name="Price" value="{price}"/>
+                                                    </viz:measures>
+                                                </viz:FlattenedDataset>
+                                            </viz:dataset>
+                                            <viz:feeds>
+                                                <viz:FeedItem uid="valueAxis" type="Measure" values="Price"/>
+                                                <viz:FeedItem uid="categoryAxis" type="Dimension" values="Time"/>
+                                            </viz:feeds>
+                                            <layoutData>
+                                                <layout:GridData span="XL6 L6 M12 S12"/>
+                                            </layoutData>
+                                        </viz:VizFrame>
+                                    </layout:Grid>
+                                </content>
+                            </Panel>
+                        </VBox>
+                        
+                        <!-- Top Cryptocurrencies Table -->
+                        <VBox class="sapUiMediumMargin">
+                            <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiMediumMarginBottom">
+                                <Title text="Top Cryptocurrencies" level="H3"/>
+                                <Button text="View All" 
+                                        icon="sap-icon://table-view"
+                                        press="onViewAllCryptos"/>
+                            </HBox>
+                            
+                            <smartfilterbar:SmartFilterBar 
+                                id="cryptoFilterBar"
+                                entitySet="Cryptocurrencies"
+                                persistencyKey="CryptoFilter"
+                                useToolbar="false"
+                                showFilterConfiguration="true"
+                                class="sapUiMediumMarginBottom"/>
+                            
+                            <Table id="cryptoTable"
+                                   items="{market>/topCryptos}"
+                                   mode="SingleSelect"
+                                   class="sapUiResponsiveMargin"
+                                   growing="true"
+                                   growingThreshold="50"
+                                   sticky="ColumnHeaders,HeaderToolbar">
+                                <headerToolbar>
+                                    <Toolbar>
+                                        <Title text="Market Data ({market>/topCryptos/length} coins)" level="H4"/>
+                                        <ToolbarSpacer/>
+                                        <Button icon="sap-icon://excel-attachment" 
+                                                type="Transparent" 
+                                                press="onExportMarketData"
+                                                tooltip="Export to Excel"/>
+                                        <Button icon="sap-icon://add-favorite" 
+                                                type="Transparent" 
+                                                press="onAddToWatchlist"
+                                                tooltip="Add to watchlist"/>
+                                    </Toolbar>
+                                </headerToolbar>
+                                <columns>
+                                    <Column width="3rem">
+                                        <Text text="Rank"/>
+                                    </Column>
+                                    <Column width="12rem" sortProperty="name">
+                                        <Text text="Name"/>
+                                    </Column>
+                                    <Column width="8rem" sortProperty="price">
+                                        <Text text="Price"/>
+                                    </Column>
+                                    <Column width="8rem" sortProperty="change24h">
+                                        <Text text="24h Change"/>
+                                    </Column>
+                                    <Column width="8rem" sortProperty="change7d">
+                                        <Text text="7d Change"/>
+                                    </Column>
+                                    <Column width="10rem" sortProperty="marketCap">
+                                        <Text text="Market Cap"/>
+                                    </Column>
+                                    <Column width="10rem" sortProperty="volume24h">
+                                        <Text text="24h Volume"/>
+                                    </Column>
+                                    <Column width="8rem">
+                                        <Text text="Actions"/>
+                                    </Column>
+                                </columns>
+                                
+                                <items>
+                                    <ColumnListItem press="onCryptoRowPress">
+                                        <cells>
+                                            <Text text="{rank}"/>
+                                            <HBox alignItems="Center">
+                                                <core:Icon src="{icon}" width="24px" height="24px" class="sapUiTinyMarginEnd"/>
+                                                <VBox>
+                                                    <Text text="{name}" class="sapMText"/>
+                                                    <Text text="{symbol}" class="sapMTextSmall"/>
+                                                </VBox>
+                                            </HBox>
+                                            <ObjectNumber 
+                                                number="{price}"
+                                                unit="USD"
+                                                state="None"/>
+                                            <ObjectNumber 
+                                                number="{change24h}"
+                                                unit="%"
+                                                state="{path: 'change24h', formatter: '.formatChangeState'}"/>
+                                            <ObjectNumber 
+                                                number="{change7d}"
+                                                unit="%"
+                                                state="{path: 'change7d', formatter: '.formatChangeState'}"/>
+                                            <ObjectNumber 
+                                                number="{marketCap}"
+                                                unit="USD"
+                                                state="None"/>
+                                            <ObjectNumber 
+                                                number="{volume24h}"
+                                                unit="USD"
+                                                state="None"/>
+                                            <HBox>
+                                                <Button icon="sap-icon://cart" 
+                                                        type="Transparent"
+                                                        press="onBuyCrypto"
+                                                        tooltip="Buy"/>
+                                                <Button icon="sap-icon://detail-view" 
+                                                        type="Transparent"
+                                                        press="onViewDetails"
+                                                        tooltip="View Details"/>
+                                                <Button icon="sap-icon://add-favorite" 
+                                                        type="Transparent"
+                                                        press="onAddToWatchlist"
+                                                        tooltip="Add to Watchlist"/>
+                                            </HBox>
+                                        </cells>
+                                    </ColumnListItem>
+                                </items>
+                            </Table>
+                        </VBox>
+                    </content>
+                </Page>
+            </pages>
+        </App>
+    </Shell>
+</mvc:View>

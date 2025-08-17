@@ -11,9 +11,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime, timedelta
 
-from ..database.client import get_db
-from ..database.models import A2AAgent, A2AConnection
-from ..database.cache import cache_manager
+from ...data.database.client import get_db
+from ...data.database.models import A2AAgent, A2AConnection
+from ...data.database.cache import cache_manager
 from ...core.protocols.a2a.a2a_protocol import A2A_CAPABILITIES, MessageType, AgentStatus
 
 logger = logging.getLogger(__name__)

@@ -1,5 +1,5 @@
 """
-Vercel Blob storage integration for rex.com
+Vercel Blob storage integration for cryptotrading.com
 Store trading data, analysis results, and model artifacts
 """
 

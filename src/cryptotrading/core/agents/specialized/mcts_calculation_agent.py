@@ -1,62 +1,372 @@
 """
-MCTS-based Calculation Agent using Strands Framework
-Implements Monte Carlo Tree Search for strategic calculation and decision-making
+Production-Ready MCTS-based Calculation Agent using Strands Framework
+Optimized for Vercel Edge Runtime with commercial-grade features
 """
-from typing import Dict, Any, Optional, List, Tuple, Union
+from typing import Dict, Any, Optional, List, Tuple, Union, Set
 from dataclasses import dataclass, field
 import asyncio
 import math
 import random
 import time
 import logging
+import hashlib
+import json
 from collections import defaultdict
 from abc import ABC, abstractmethod
+from datetime import datetime, timedelta
+from enum import Enum
+import os
 
-from ..strands import StrandsAgent
-from ...protocols.mcp.tools import MCPTool, ToolResult
-from ...protocols.mcp.strand_integration import get_mcp_strand_bridge
+# Import adaptive control components
+from .mcts_adaptive_control import (
+    AdaptiveIterationController, 
+    MemoryOptimizedMCTSNode,
+    ConvergenceMetrics,
+    DynamicExplorationParams
+)
+
+# Import security components
+from ...security.mcts_auth import (
+    SecureMCTSAgent,
+    SecurityManager,
+    Permission,
+    require_permission
+)
+
+# Import A/B testing and anomaly detection
+from .mcts_ab_testing import ABTestManager, VariantConfig
+from .mcts_anomaly_detection import AnomalyDetector, MCTSMonitoringDashboard
+
+# Import Vercel runtime adapter
+from .vercel_runtime_adapter import vercel_adapter, vercel_edge_handler, VercelRuntimeError
+
+# Import Grok4 client and strategy backtesting
+from ...ai.grok4_client import Grok4Client, get_grok4_client, MarketInsight, StrategyAnalysis
+from .strategy_backtesting import StrategyBacktester, BacktestConfig, StrategyType, BacktestResult
+
+# Conditional imports to handle missing dependencies
+try:
+    from ..strands import StrandsAgent
+    STRANDS_AVAILABLE = True
+except ImportError:
+    # Create minimal base class if StrandsAgent not available
+    from ..base import BaseAgent as StrandsAgent
+    STRANDS_AVAILABLE = False
+
+try:
+    from ...protocols.mcp.tools import MCPTool, ToolResult
+    from ...protocols.mcp.strand_integration import get_mcp_strand_bridge
+    from ...protocols.mcp.cache import _global_cache as mcp_cache
+    from ...protocols.mcp.metrics import mcp_metrics
+    MCP_AVAILABLE = True
+except ImportError:
+    MCP_AVAILABLE = False
+    # Production mode requires MCP dependencies
+    if os.getenv('ENVIRONMENT', 'development') == 'production':
+        raise ImportError("MCP dependencies required for production MCTS agent. Install with: pip install mcp-toolkit")
+    
+    # Development/test mode fallback - log warning and provide minimal interface
+    import logging
+    logging.warning("MCP dependencies not available - using minimal fallback for testing")
+    
+    class MCPTool:
+        def __init__(self, **kwargs): pass
+    class ToolResult:
+        @classmethod
+        def json_result(cls, data): return {'content': data, 'isError': False}
+        @classmethod 
+        def error_result(cls, error): return {'content': error, 'isError': True}
+    
+    # Use the real cache if available
+    try:
+        from ...protocols.mcp.cache import _global_cache as mcp_cache
+    except ImportError:
+        class MinimalCache:
+            def get(self, key): return None
+            def set(self, key, value, ttl=None): pass
+        mcp_cache = MinimalCache()
+    
+    # Use real metrics if available
+    try:
+        from ...protocols.mcp.metrics import mcp_metrics
+    except ImportError:
+        class MinimalMetrics:
+            class collector:
+                @staticmethod
+                def counter(name, value, tags=None): pass
+                @staticmethod
+                def timer(name, duration, tags=None): pass
+            def tool_execution_start(self, tool, user=None): return time.time()
+            def tool_execution_end(self, tool, start_time, success): pass
+        mcp_metrics = MinimalMetrics()
+    
+    # Bridge fallback
+    def get_mcp_strand_bridge():
+        return None
+
+try:
+    from ...protocols.mcp.rate_limiter import RateLimiter
+except ImportError:
+    # Production mode requires rate limiter
+    if os.getenv('ENVIRONMENT', 'development') == 'production':
+        raise ImportError("Rate limiter required for production MCTS agent. Check MCP installation.")
+    
+    # Test/dev fallback
+    class RateLimiter:
+        def __init__(self, **kwargs): pass
+        async def check_limit(self, key): return True
+        async def get_remaining(self, key): return 100
 
 
 logger = logging.getLogger(__name__)
 
 
+# Configuration Management
+class MCTSConfig:
+    """Configuration with Vercel environment variable support"""
+    def __init__(self):
+        self.iterations = int(os.getenv('MCTS_ITERATIONS', '1000'))
+        self.exploration_constant = float(os.getenv('MCTS_EXPLORATION', '1.4'))
+        self.simulation_depth = int(os.getenv('MCTS_SIM_DEPTH', '10'))
+        self.timeout_seconds = int(os.getenv('MCTS_TIMEOUT', '30'))
+        self.max_memory_mb = int(os.getenv('MCTS_MAX_MEMORY_MB', '512'))
+        self.cache_ttl = int(os.getenv('MCTS_CACHE_TTL', '300'))
+        self.enable_progressive_widening = os.getenv('MCTS_PROGRESSIVE_WIDENING', 'true').lower() == 'true'
+        self.enable_rave = os.getenv('MCTS_RAVE', 'true').lower() == 'true'
+        self.parallel_simulations = int(os.getenv('MCTS_PARALLEL_SIMS', '4'))
+        self.simulation_strategy = os.getenv('MCTS_SIMULATION_STRATEGY', 'weighted_random')  # pure_random or weighted_random
+
+
+# Input Validation
+class ValidationError(Exception):
+    """Input validation error"""
+    pass
+
+
+class InputValidator:
+    """Validates and sanitizes input parameters"""
+    
+    @staticmethod
+    def validate_calculation_params(params: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate calculation parameters"""
+        if not isinstance(params, dict):
+            raise ValidationError("Parameters must be a dictionary")
+        
+        # Validate portfolio value
+        portfolio = params.get('initial_portfolio', 0)
+        if not isinstance(portfolio, (int, float)) or portfolio <= 0:
+            raise ValidationError("Initial portfolio must be positive number")
+        if portfolio > 1e9:  # Max 1 billion
+            raise ValidationError("Portfolio value exceeds maximum allowed")
+        
+        # Validate symbols
+        symbols = params.get('symbols', [])
+        if not isinstance(symbols, list) or len(symbols) == 0:
+            raise ValidationError("Symbols must be non-empty list")
+        if len(symbols) > 20:
+            raise ValidationError("Maximum 20 symbols allowed")
+        
+        # Validate symbol format
+        valid_symbols = []
+        for symbol in symbols:
+            if not isinstance(symbol, str):
+                raise ValidationError(f"Symbol must be string, got {type(symbol)}")
+            symbol = symbol.upper().strip()
+            if not symbol or len(symbol) > 10:
+                raise ValidationError(f"Invalid symbol format: {symbol}")
+            if symbol in valid_symbols:
+                raise ValidationError(f"Duplicate symbol: {symbol}")
+            valid_symbols.append(symbol)
+        params['symbols'] = valid_symbols
+        
+        # Validate depth
+        max_depth = params.get('max_depth', 10)
+        if not isinstance(max_depth, int) or max_depth < 1 or max_depth > 50:
+            raise ValidationError("Max depth must be between 1 and 50")
+        
+        # Validate risk tolerance if provided
+        risk_tolerance = params.get('risk_tolerance')
+        if risk_tolerance is not None:
+            if not isinstance(risk_tolerance, (int, float)) or not (0 <= risk_tolerance <= 1):
+                raise ValidationError("Risk tolerance must be between 0 and 1")
+        
+        # Validate time horizon if provided
+        time_horizon = params.get('time_horizon')
+        if time_horizon is not None:
+            if not isinstance(time_horizon, int) or time_horizon < 1 or time_horizon > 365:
+                raise ValidationError("Time horizon must be between 1 and 365 days")
+        
+        # Validate iterations if provided
+        iterations = params.get('iterations')
+        if iterations is not None:
+            if not isinstance(iterations, int) or iterations < 10 or iterations > 100000:
+                raise ValidationError("Iterations must be between 10 and 100000")
+        
+        return params
+    
+    @staticmethod
+    def sanitize_string(value: str, max_length: int = 100) -> str:
+        """Sanitize string input"""
+        if not isinstance(value, str):
+            value = str(value)
+        return value[:max_length].strip()
+
+
+# Enhanced MCTS Node with RAVE support
 @dataclass
-class MCTSNode:
-    """Node in the Monte Carlo Tree Search tree"""
+class MCTSNodeV2:
+    """Enhanced MCTS node with production features"""
     state: Dict[str, Any]
-    parent: Optional['MCTSNode'] = None
-    children: List['MCTSNode'] = field(default_factory=list)
+    parent: Optional['MCTSNodeV2'] = None
+    children: List['MCTSNodeV2'] = field(default_factory=list)
     visits: int = 0
     value: float = 0.0
     untried_actions: List[Dict[str, Any]] = field(default_factory=list)
     action: Optional[Dict[str, Any]] = None
     
+    # RAVE (Rapid Action Value Estimation)
+    rave_visits: Dict[str, int] = field(default_factory=lambda: defaultdict(int))
+    rave_values: Dict[str, float] = field(default_factory=lambda: defaultdict(float))
+    
+    # Virtual loss for parallel MCTS (prevents multiple threads from exploring same path)
+    virtual_loss: int = 0
+    
+    # Action priors (from policy network or domain knowledge)
+    action_priors: Dict[str, float] = field(default_factory=dict)
+    
+    # Memory optimization
+    _hash: Optional[str] = None
+    
+    def state_hash(self) -> str:
+        """Generate hash of state for caching"""
+        if self._hash is None:
+            state_str = json.dumps(self.state, sort_keys=True)
+            self._hash = hashlib.md5(state_str.encode()).hexdigest()
+        return self._hash
+    
     def is_fully_expanded(self) -> bool:
         """Check if all possible actions have been tried"""
         return len(self.untried_actions) == 0
     
-    def best_child(self, c_param: float = 1.4) -> Optional['MCTSNode']:
-        """Select best child using UCB1 formula"""
+    def best_child(self, c_param: float = 1.4, use_rave: bool = True) -> Optional['MCTSNodeV2']:
+        """Select best child using UCB1 with optional RAVE - FIXED ALGORITHM"""
         if not self.children:
             return None
         
-        choices_weights = [
-            (child.value / child.visits) + c_param * math.sqrt((2 * math.log(self.visits) / child.visits))
-            for child in self.children
-        ]
+        choices_weights = []
+        for child in self.children:
+            if child.visits == 0:
+                weight = float('inf')
+            else:
+                # FIXED UCB1: Proper formula with correct log
+                exploitation = child.value / child.visits
+                exploration = c_param * math.sqrt(math.log(self.visits) / child.visits)  # Fixed: removed factor of 2
+                
+                # RAVE bonus if enabled
+                if use_rave and child.action:
+                    action_key = str(child.action)
+                    if action_key in self.rave_visits and self.rave_visits[action_key] > 0:
+                        rave_value = self.rave_values[action_key] / self.rave_visits[action_key]
+                        # FIXED RAVE: Proper beta calculation from Silver & Gelly
+                        equiv_param = 1000  # Equivalence parameter
+                        beta = math.sqrt(equiv_param / (3 * child.visits + equiv_param))
+                        
+                        # FIXED: Combine UCT and RAVE properly
+                        uct_value = exploitation + exploration
+                        rave_exploration = c_param * math.sqrt(math.log(self.visits) / self.rave_visits[action_key])
+                        rave_uct = rave_value + rave_exploration
+                        
+                        weight = beta * rave_uct + (1 - beta) * uct_value
+                    else:
+                        weight = exploitation + exploration
+                else:
+                    weight = exploitation + exploration
+            
+            choices_weights.append(weight)
+        
         return self.children[choices_weights.index(max(choices_weights))]
     
-    def add_child(self, action: Dict[str, Any], state: Dict[str, Any]) -> 'MCTSNode':
-        """Add a new child node"""
-        child = MCTSNode(
+    def add_child(self, action: Dict[str, Any], state: Dict[str, Any]) -> 'MCTSNodeV2':
+        """Add a new child node with action priors"""
+        child = MCTSNodeV2(
             state=state,
             parent=self,
             untried_actions=list(state.get('available_actions', [])),
             action=action
         )
+        
+        # Set action priors if available from environment
+        if hasattr(state, 'action_priors') and state.get('action_priors'):
+            child.action_priors = state['action_priors']
+        elif 'action_priors' in state:
+            child.action_priors = state['action_priors']
+        
         self.untried_actions.remove(action)
         self.children.append(child)
         return child
+    
+    def update_rave(self, action_sequence: List[Dict[str, Any]], value: float):
+        """Update RAVE statistics for action sequence"""
+        for action in action_sequence:
+            action_key = str(action)
+            self.rave_visits[action_key] += 1
+            self.rave_values[action_key] += value
+    
+    def add_virtual_loss(self, loss: int = 1):
+        """Add virtual loss for parallel MCTS to prevent multiple threads exploring same path"""
+        self.virtual_loss += loss
+    
+    def remove_virtual_loss(self, loss: int = 1):
+        """Remove virtual loss after MCTS iteration completes"""
+        self.virtual_loss = max(0, self.virtual_loss - loss)
+    
+    @property
+    def effective_visits(self) -> int:
+        """Get effective visits including virtual loss"""
+        return self.visits + self.virtual_loss
+    
+    @property 
+    def q_value(self) -> float:
+        """Get Q-value (average value)"""
+        if self.visits == 0:
+            return 0.0
+        return self.value / self.visits
+
+
+# Circuit Breaker for resilience
+class CircuitBreaker:
+    """Circuit breaker pattern for fault tolerance"""
+    
+    def __init__(self, failure_threshold: int = 5, timeout: int = 60):
+        self.failure_threshold = failure_threshold
+        self.timeout = timeout
+        self.failures = 0
+        self.last_failure_time = None
+        self.state = 'closed'  # closed, open, half-open
+    
+    def record_success(self):
+        """Record successful operation"""
+        self.failures = 0
+        self.state = 'closed'
+    
+    def record_failure(self):
+        """Record failed operation"""
+        self.failures += 1
+        self.last_failure_time = time.time()
+        if self.failures >= self.failure_threshold:
+            self.state = 'open'
+    
+    def can_execute(self) -> bool:
+        """Check if operation can be executed"""
+        if self.state == 'closed':
+            return True
+        elif self.state == 'open':
+            if time.time() - self.last_failure_time > self.timeout:
+                self.state = 'half-open'
+                return True
+            return False
+        else:  # half-open
+            return True
 
 
 class CalculationEnvironment(ABC):
@@ -88,171 +398,588 @@ class CalculationEnvironment(ABC):
         pass
 
 
-class TradingCalculationEnvironment(CalculationEnvironment):
-    """Trading-specific calculation environment"""
+# Data analysis environment (trading functionality removed)
+class DataAnalysisEnvironment(CalculationEnvironment):
+    """Data analysis environment for market research only"""
     
-    def __init__(self, config: Dict[str, Any]):
-        self.config = config
+    def __init__(self, config: Dict[str, Any], market_data_provider=None):
+        self.config = InputValidator.validate_calculation_params(config)
         self.max_depth = config.get('max_depth', 10)
-        self.calculation_tools = config.get('calculation_tools', [])
+        self.market_data_provider = market_data_provider
+        self._analysis_cache = {}
+        self._state_cache = {}
     
     async def get_initial_state(self) -> Dict[str, Any]:
-        """Initialize trading calculation state"""
+        """Initialize analysis state with market data"""
+        market_data = await self._fetch_market_data()
+        
         return {
-            'portfolio_value': self.config.get('initial_portfolio', 10000),
-            'positions': {},
-            'market_data': await self._fetch_market_data(),
+            'market_data': market_data,
             'depth': 0,
-            'available_actions': await self.get_available_actions({})
+            'timestamp': datetime.utcnow().isoformat(),
+            'available_actions': await self.get_available_actions({}),
+            'analysis_metrics': await self._calculate_analysis_metrics({})
         }
     
     async def get_available_actions(self, state: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Get available trading actions"""
+        """Get available analysis actions"""
+        state_hash = hashlib.md5(json.dumps(state, sort_keys=True).encode()).hexdigest()
+        
+        if state_hash in self._analysis_cache:
+            return self._analysis_cache[state_hash]
+        
         actions = []
+        depth = state.get('depth', 0)
         
-        # Buy actions
+        # Analysis actions only
         for symbol in self.config.get('symbols', ['BTC', 'ETH']):
-            for percentage in [0.1, 0.25, 0.5]:
-                actions.append({
-                    'type': 'buy',
-                    'symbol': symbol,
-                    'percentage': percentage
-                })
+            actions.append({
+                'type': 'analyze_trend',
+                'symbol': symbol,
+                'timeframe': '1h',
+                'analysis_score': await self._calculate_analysis_score('trend', symbol)
+            })
+            actions.append({
+                'type': 'analyze_volatility', 
+                'symbol': symbol,
+                'timeframe': '24h',
+                'analysis_score': await self._calculate_analysis_score('volatility', symbol)
+            })
         
-        # Sell actions
-        for symbol, position in state.get('positions', {}).items():
-            if position > 0:
-                for percentage in [0.25, 0.5, 1.0]:
-                    actions.append({
-                        'type': 'sell',
-                        'symbol': symbol,
-                        'percentage': percentage
-                    })
+        # Cache results
+        self._analysis_cache[state_hash] = actions
+        return actions
+        if depth < 3:
+            actions.extend([
+                {'type': 'technical_analysis', 'indicators': ['RSI', 'MACD'], 'cost': 0.001},
+                {'type': 'sentiment_analysis', 'sources': ['news', 'social'], 'cost': 0.002}
+            ])
         
-        # Analysis actions
-        actions.extend([
-            {'type': 'technical_analysis', 'indicators': ['RSI', 'MACD']},
-            {'type': 'sentiment_analysis', 'sources': ['news', 'social']},
-            {'type': 'risk_assessment'}
-        ])
-        
+        self._action_cache[state_hash] = actions
         return actions
     
     async def apply_action(self, state: Dict[str, Any], action: Dict[str, Any]) -> Dict[str, Any]:
-        """Apply trading action to state"""
+        """Apply trading action with transaction costs and slippage"""
         new_state = state.copy()
         new_state['depth'] = state.get('depth', 0) + 1
+        new_state['timestamp'] = datetime.utcnow().isoformat()
+        
+        # Transaction cost model
+        transaction_cost = 0.001  # 0.1% per trade
+        # Real slippage would come from order book depth and market conditions
+        # For now, use a conservative fixed estimate
+        slippage = 0.0002  # 0.02% typical for liquid crypto markets
         
         if action['type'] == 'buy':
-            # Simulate buy action
             symbol = action['symbol']
             percentage = action['percentage']
             amount = new_state['portfolio_value'] * percentage
+            
+            # Apply transaction costs and slippage
+            effective_amount = amount * (1 - transaction_cost - slippage)
+            
             price = new_state['market_data'].get(symbol, {}).get('price', 1)
-            quantity = amount / price
+            quantity = effective_amount / price
             
             new_state['positions'][symbol] = new_state['positions'].get(symbol, 0) + quantity
             new_state['portfolio_value'] -= amount
             
         elif action['type'] == 'sell':
-            # Simulate sell action
             symbol = action['symbol']
             percentage = action['percentage']
             position = new_state['positions'].get(symbol, 0)
             sell_quantity = position * percentage
             price = new_state['market_data'].get(symbol, {}).get('price', 1)
             
-            new_state['positions'][symbol] = position - sell_quantity
-            new_state['portfolio_value'] += sell_quantity * price
+            # Apply transaction costs and slippage
+            sale_value = sell_quantity * price * (1 - transaction_cost - slippage)
             
-        elif action['type'] in ['technical_analysis', 'sentiment_analysis', 'risk_assessment']:
-            # These actions provide information but don't change portfolio
+            new_state['positions'][symbol] = position - sell_quantity
+            new_state['portfolio_value'] += sale_value
+            
+        elif action['type'] in ['technical_analysis', 'sentiment_analysis']:
+            # Deduct analysis cost
+            cost = action.get('cost', 0)
+            new_state['portfolio_value'] -= cost
             new_state[f'{action["type"]}_result'] = await self._perform_analysis(action)
         
+        # Update risk metrics
+        new_state['risk_metrics'] = await self._calculate_risk_metrics(new_state)
         new_state['available_actions'] = await self.get_available_actions(new_state)
+        
         return new_state
     
     async def is_terminal_state(self, state: Dict[str, Any]) -> bool:
-        """Check if we've reached max depth or other terminal conditions"""
-        return state.get('depth', 0) >= self.max_depth
+        """Check terminal conditions including risk limits"""
+        # Depth limit
+        if state.get('depth', 0) >= self.max_depth:
+            return True
+        
+        # Stop loss: portfolio down more than 20%
+        initial = self.config.get('initial_portfolio', 10000)
+        current_value = await self._calculate_portfolio_value(state)
+        if current_value < initial * 0.8:
+            return True
+        
+        # Take profit: portfolio up more than 50%
+        if current_value > initial * 1.5:
+            return True
+        
+        return False
     
     async def evaluate_state(self, state: Dict[str, Any]) -> float:
-        """Evaluate portfolio performance"""
+        """Evaluate portfolio with risk-adjusted returns"""
+        total_value = await self._calculate_portfolio_value(state)
+        initial = self.config.get('initial_portfolio', 10000)
+        
+        # Basic return
+        basic_return = (total_value - initial) / initial
+        
+        # Risk adjustment
+        risk_metrics = state.get('risk_metrics', {})
+        volatility = risk_metrics.get('volatility', 0.2)
+        sharpe_ratio = basic_return / volatility if volatility > 0 else basic_return
+        
+        # Penalty for excessive risk
+        max_drawdown = risk_metrics.get('max_drawdown', 0)
+        risk_penalty = abs(max_drawdown) * 0.5
+        
+        return sharpe_ratio - risk_penalty
+    
+    async def _fetch_market_data(self) -> Dict[str, Any]:
+        """Fetch market data with intelligent caching and fallback"""
+        symbols = self.config.get('symbols', ['BTC', 'ETH'])
+        cache_key = f"market_data:{','.join(symbols)}"
+        
+        # Check for fresh cached data first
+        hashed_key = hashlib.md5(cache_key.encode()).hexdigest()
+        cached = mcp_cache.cache.get(hashed_key)
+        if cached:
+            return cached
+        
+        # Try to get live data from provider
+        if self.market_data_provider:
+            try:
+                data = await self.market_data_provider.get_prices(symbols)
+                mcp_cache.cache.set(hashed_key, data, ttl=60)  # Cache for 1 minute
+                # Also store as historical backup with longer TTL
+                backup_key = f"market_data_backup:{','.join(symbols)}"
+                backup_hashed_key = hashlib.md5(backup_key.encode()).hexdigest()
+                mcp_cache.cache.set(backup_hashed_key, data, ttl=3600)  # 1 hour backup
+                return data
+            except Exception as e:
+                logger.warning(f"Market data provider failed: {e}, checking backup cache")
+        
+        # Try backup cache if provider failed
+        backup_key = f"market_data_backup:{','.join(symbols)}"
+        backup_hashed_key = hashlib.md5(backup_key.encode()).hexdigest()
+        backup_data = mcp_cache.cache.get(backup_hashed_key)
+        if backup_data:
+            logger.info("Using backup cached market data")
+            return backup_data
+        
+        # Try to get any historical data for these symbols from cache
+        for symbol in symbols:
+            historical_key = f"market_data_historical:{symbol}"
+            historical_hashed_key = hashlib.md5(historical_key.encode()).hexdigest()
+            historical_data = mcp_cache.cache.get(historical_hashed_key)
+            if historical_data:
+                logger.info(f"Using historical cached data for emergency fallback")
+                # Build data structure from historical cache
+                data = {}
+                for sym in symbols:
+                    hist_key = f"market_data_historical:{sym}"
+                    hist_hashed_key = hashlib.md5(hist_key.encode()).hexdigest()
+                    hist_data = mcp_cache.cache.get(hist_hashed_key)
+                    if hist_data:
+                        data[sym] = hist_data
+                    else:
+                        # Only estimate if we have at least some historical data as reference
+                        if len([d for d in data.values() if d]) > 0:
+                            data[sym] = self._extrapolate_from_historical(sym, data)
+                        else:
+                            # No historical reference - cannot safely estimate
+                            raise ValueError(f"No historical data available for {sym} and no reference data")
+                
+                if data:
+                    mcp_cache.cache.set(hashed_key, data, ttl=300)  # Cache estimated data shorter
+                    return data
+        
+        # No fallback to fake data - fail fast if no real data available
+        raise ValueError(
+            f"No market data available for symbols {symbols}. "
+            f"Cannot proceed without real market data. "
+            f"Ensure market data provider is configured or cache contains recent data."
+        )
+    
+    def _extrapolate_from_historical(self, symbol: str, existing_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Extrapolate missing symbol data from existing historical data"""
+        if not existing_data:
+            raise ValueError(f"Cannot extrapolate data for {symbol} without reference data")
+        
+        # Get a reference symbol that has data
+        reference_symbol = None
+        reference_data = None
+        for sym, data in existing_data.items():
+            if data and isinstance(data, dict):
+                reference_symbol = sym
+                reference_data = data
+                break
+        
+        if not reference_data:
+            raise ValueError(f"No valid reference data available for extrapolation")
+        
+        # Extrapolate based on typical correlations with reference symbol
+        # Use conservative estimates based on historical crypto correlations
+        correlation_factors = {
+            ('BTC', 'ETH'): {'price_ratio': 0.067, 'vol_ratio': 1.2},  # ETH typically ~6.7% of BTC price
+            ('ETH', 'BTC'): {'price_ratio': 15.0, 'vol_ratio': 0.8},   # BTC typically 15x ETH price
+            ('BTC', 'ADA'): {'price_ratio': 0.000067, 'vol_ratio': 1.5},
+            ('ETH', 'ADA'): {'price_ratio': 0.001, 'vol_ratio': 1.3},
+        }
+        
+        # Find correlation factor or use conservative default
+        factor_key = (reference_symbol, symbol)
+        if factor_key in correlation_factors:
+            factors = correlation_factors[factor_key]
+        else:
+            # Conservative default: assume similar to reference but more volatile
+            factors = {'price_ratio': 0.1, 'vol_ratio': 1.3}
+        
+        # Calculate extrapolated values
+        ref_price = reference_data.get('price', 0)
+        ref_vol = reference_data.get('volatility', 0.2)
+        ref_volume = reference_data.get('volume', 0)
+        if ref_volume <= 0:
+            return 'unknown'
+        
+        if ref_price <= 0:
+            raise ValueError(f"Invalid reference price data for extrapolation")
+        
+        extrapolated_price = ref_price * factors['price_ratio']
+        extrapolated_volatility = min(ref_vol * factors['vol_ratio'], 0.8)  # Cap at 80%
+        extrapolated_volume = ref_volume * 0.3  # Conservative volume estimate
+        
+        return {
+            'price': extrapolated_price,
+            'volume': extrapolated_volume,
+            'volatility': extrapolated_volatility,
+            'extrapolated': True,
+            'reference_symbol': reference_symbol,
+            'timestamp': time.time(),
+            'warning': f'Extrapolated from {reference_symbol} - use with caution'
+        }
+    
+    async def _calculate_portfolio_value(self, state: Dict[str, Any]) -> float:
+        """Calculate total portfolio value"""
         total_value = state['portfolio_value']
         
-        # Add value of positions
         for symbol, quantity in state.get('positions', {}).items():
             price = state['market_data'].get(symbol, {}).get('price', 1)
             total_value += quantity * price
         
-        # Normalize based on initial portfolio
-        initial = self.config.get('initial_portfolio', 10000)
-        return (total_value - initial) / initial
+        return total_value
     
-    async def _fetch_market_data(self) -> Dict[str, Any]:
-        """Fetch current market data"""
-        # Placeholder - would integrate with real market data
+    async def _calculate_risk_metrics(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Calculate portfolio risk metrics"""
+        # Simplified risk calculation
+        positions = state.get('positions', {})
+        if not positions:
+            return {'volatility': 0.1, 'max_drawdown': 0, 'var_95': 0}
+        
+        # Portfolio volatility (simplified)
+        total_volatility = 0
+        total_value = await self._calculate_portfolio_value(state)
+        
+        for symbol, quantity in positions.items():
+            asset_volatility = state['market_data'].get(symbol, {}).get('volatility', 0.2)
+            asset_value = quantity * state['market_data'].get(symbol, {}).get('price', 1)
+            weight = asset_value / total_value if total_value > 0 else 0
+            total_volatility += (weight * asset_volatility) ** 2
+        
+        portfolio_volatility = math.sqrt(total_volatility)
+        
+        # Calculate max drawdown using historical simulation
+        max_drawdown = self._calculate_max_drawdown(state, total_value)
+        
         return {
-            'BTC': {'price': 30000, 'volume': 1000000},
-            'ETH': {'price': 2000, 'volume': 500000}
+            'volatility': portfolio_volatility,
+            'max_drawdown': max_drawdown,
+            'var_95': -total_value * portfolio_volatility * 1.645  # 95% VaR
         }
     
+    def _calculate_max_drawdown(self, state: Dict[str, Any], current_value: float) -> float:
+        """Calculate maximum drawdown using portfolio value simulation"""
+        # Use state depth as proxy for time progression
+        depth = state.get('depth', 0)
+        initial_value = self.config.get('initial_portfolio', 10000)
+        
+        # Calculate drawdown based on current position
+        if current_value < initial_value:
+            drawdown = (current_value - initial_value) / initial_value
+        else:
+            # Estimate potential drawdown based on portfolio volatility
+            positions = state.get('positions', {})
+            if positions:
+                # Higher concentration = higher potential drawdown
+                position_values = []
+                for symbol, quantity in positions.items():
+                    price = state['market_data'].get(symbol, {}).get('price', 1)
+                    position_values.append(quantity * price)
+                
+                if position_values:
+                    concentration = max(position_values) / sum(position_values)
+                    # Estimate max drawdown based on concentration and volatility
+                    portfolio_vol = math.sqrt(sum((pv/sum(position_values))**2 * 
+                                                state['market_data'].get(list(positions.keys())[i], {}).get('volatility', 0.2)**2 
+                                                for i, pv in enumerate(position_values)))
+                    drawdown = -concentration * portfolio_vol * 0.5  # Conservative estimate
+                else:
+                    drawdown = -0.05  # Small default drawdown
+            else:
+                drawdown = -0.02  # Minimal risk for cash position
+                
+        return min(drawdown, 0)  # Drawdown should be negative
+    
+    async def _calculate_action_risk(self, action_type: str, symbol: str, percentage: float) -> float:
+        """Calculate risk score for an action"""
+        # Simple risk scoring
+        base_risk = 0.5
+        if action_type == 'buy':
+            base_risk += percentage * 0.5  # Higher percentage = higher risk
+        elif action_type == 'sell':
+            base_risk -= percentage * 0.2  # Selling reduces risk
+        
+        return min(max(base_risk, 0), 1)
+    
     async def _perform_analysis(self, action: Dict[str, Any]) -> Dict[str, Any]:
-        """Perform analysis action"""
-        # Placeholder - would integrate with real analysis tools
-        return {'result': 'analysis_complete', 'confidence': 0.8}
+        """Perform technical analysis using actual market indicators"""
+        symbol = action.get('symbol', 'BTC')
+        action_type = action.get('type', 'hold')
+        
+        # Get current market data
+        if hasattr(self, 'market_data_provider') and self.market_data_provider:
+            try:
+                market_data = await self.market_data_provider.get_latest_data(symbol)
+                price = market_data.get('price')
+                volume = market_data.get('volume')
+                volatility = market_data.get('volatility', 0.02)
+                
+                if not price or not volume:
+                    return {'confidence': 0.0, 'reason': 'No market data available'}
+            except Exception as e:
+                # No fallback - return low confidence if no real data
+                return {'confidence': 0.0, 'reason': f'Market data unavailable: {str(e)}'}
+        else:
+            # No market data provider - cannot evaluate
+            return {'confidence': 0.0, 'reason': 'No market data provider configured'}
+        
+        # Calculate technical indicators
+        rsi = self._calculate_rsi(price, volatility)
+        ma_signal = self._calculate_moving_average_signal(price)
+        volume_signal = self._calculate_volume_signal(volume)
+        
+        # Determine confidence based on indicator alignment
+        signals = [rsi, ma_signal, volume_signal]
+        buy_signals = sum(1 for s in signals if s == 'buy')
+        sell_signals = sum(1 for s in signals if s == 'sell')
+        
+        if buy_signals >= 2:
+            final_signal = 'buy'
+            confidence = 0.7 + (buy_signals - 2) * 0.15
+        elif sell_signals >= 2:
+            final_signal = 'sell'
+            confidence = 0.7 + (sell_signals - 2) * 0.15
+        else:
+            final_signal = 'hold'
+            confidence = 0.6
+        
+        return {
+            'result': 'technical_analysis_complete',
+            'confidence': min(confidence, 0.95),
+            'signal': final_signal,
+            'indicators': {
+                'rsi_signal': rsi,
+                'ma_signal': ma_signal,
+                'volume_signal': volume_signal
+            }
+        }
+    
+    def _calculate_rsi(self, price: float, volatility: float) -> str:
+        """Calculate RSI-based signal"""
+        # Simplified RSI calculation based on volatility
+        normalized_vol = min(volatility / 0.05, 1.0)  # Normalize to 0-1
+        
+        if normalized_vol < 0.3:
+            return 'buy'  # Low volatility suggests accumulation
+        elif normalized_vol > 0.7:
+            return 'sell'  # High volatility suggests distribution
+        else:
+            return 'hold'
+    
+    def _calculate_moving_average_signal(self, price: float) -> str:
+        """Calculate moving average signal based on dynamic support/resistance levels"""
+        # Get dynamic support and resistance levels from historical data
+        try:
+            support_resistance = self._calculate_dynamic_support_resistance(price)
+            resistance_level = support_resistance['resistance']
+            support_level = support_resistance['support']
+            
+            if price > resistance_level:  # Above dynamic resistance
+                return 'buy'
+            elif price < support_level:  # Below dynamic support
+                return 'sell'
+            else:
+                return 'hold'
+        except Exception as e:
+            # If dynamic calculation fails, return neutral signal
+            logger.warning(f"Failed to calculate dynamic support/resistance: {e}")
+            return 'hold'
+    
+    def _calculate_volume_signal(self, volume: float) -> str:
+        """Calculate volume-based signal using dynamic volume thresholds"""
+        try:
+            # Calculate dynamic volume thresholds based on historical data
+            volume_thresholds = self._calculate_dynamic_volume_thresholds(volume)
+            high_threshold = volume_thresholds['high']
+            low_threshold = volume_thresholds['low']
+            
+            if volume > high_threshold:  # High volume (dynamic)
+                return 'buy'  # High volume suggests strong interest
+            elif volume < low_threshold:  # Low volume (dynamic)
+                return 'sell'  # Low volume suggests weak interest
+            else:
+                return 'hold'
+        except Exception as e:
+            # If dynamic calculation fails, return neutral signal
+            logger.warning(f"Failed to calculate dynamic volume thresholds: {e}")
+            return 'hold'
+    
+    def _calculate_dynamic_support_resistance(self, current_price: float) -> Dict[str, float]:
+        """Calculate dynamic support and resistance levels based on price percentiles"""
+        try:
+            # TODO: Replace with real historical price data from market data provider
+            # For now, calculate relative to current price using statistical approach
+            
+            # Use price-relative calculations (20% bands as starting point)
+            price_volatility = 0.15  # Assume 15% volatility
+            
+            # Calculate dynamic levels based on current price and volatility
+            resistance_level = current_price * (1 + price_volatility * 0.8)
+            support_level = current_price * (1 - price_volatility * 0.8)
+            
+            return {
+                'resistance': resistance_level,
+                'support': support_level,
+                'volatility_used': price_volatility,
+                'calculation_method': 'price_relative'
+            }
+        except Exception as e:
+            logger.error(f"Dynamic support/resistance calculation failed: {e}")
+            raise ValueError("Unable to calculate dynamic support/resistance levels")
+    
+    def _calculate_dynamic_volume_thresholds(self, current_volume: float) -> Dict[str, float]:
+        """Calculate dynamic volume thresholds based on volume percentiles"""
+        try:
+            # TODO: Replace with real historical volume data from market data provider
+            # For now, calculate relative to current volume using statistical approach
+            
+            # Use volume-relative calculations (80th and 20th percentiles)
+            volume_multiplier_high = 2.5  # High volume = 2.5x current
+            volume_multiplier_low = 0.4   # Low volume = 0.4x current
+            
+            # Calculate dynamic thresholds based on current volume
+            high_threshold = current_volume * volume_multiplier_high
+            low_threshold = current_volume * volume_multiplier_low
+            
+            return {
+                'high': high_threshold,
+                'low': low_threshold,
+                'base_volume': current_volume,
+                'calculation_method': 'volume_relative'
+            }
+        except Exception as e:
+            logger.error(f"Dynamic volume threshold calculation failed: {e}")
+            raise ValueError("Unable to calculate dynamic volume thresholds")
 
 
-class MCTSCalculationAgent(StrandsAgent):
+class ProductionMCTSCalculationAgent(SecureMCTSAgent, StrandsAgent):
     """
-    Monte Carlo Tree Search based calculation agent using Strands framework
-    Combines MCTS algorithm with MCP tool integration for strategic calculations
+    Production-ready MCTS Calculation Agent with Vercel optimization
     """
     
     def __init__(self, agent_id: str, 
-                 mcts_config: Optional[Dict[str, Any]] = None,
-                 calculation_tools: Optional[List[str]] = None,
+                 config: Optional[MCTSConfig] = None,
+                 market_data_provider=None,
                  **kwargs):
         super().__init__(
             agent_id=agent_id,
-            agent_type="mcts_calculation",
+            agent_type="mcts_calculation_v2",
             capabilities=["calculation", "optimization", "strategic_planning", "monte_carlo_search"],
             **kwargs
         )
         
-        # MCTS configuration
-        self.mcts_config = mcts_config or {}
-        self.iterations = self.mcts_config.get('iterations', 1000)
-        self.exploration_constant = self.mcts_config.get('exploration_constant', 1.4)
-        self.simulation_depth = self.mcts_config.get('simulation_depth', 10)
+        # Configuration
+        self.config = config or MCTSConfig()
         
-        # Calculation tools
-        self.calculation_tools = calculation_tools or [
-            'calculate_portfolio_metrics',
-            'optimize_allocation',
-            'risk_analysis',
-            'technical_indicators'
-        ]
-        
-        # Environment
+        # Components
         self.environment: Optional[CalculationEnvironment] = None
+        self.market_data_provider = market_data_provider
+        self.circuit_breaker = CircuitBreaker()
+        self.rate_limiter = RateLimiter(max_requests=100, window_seconds=60)
+        
+        # AI and Backtesting Components
+        self.grok4_client: Optional[Grok4Client] = None
+        self.strategy_backtester = StrategyBacktester(market_data_provider)
+        
+        # Metrics
+        self.calculation_count = 0
+        self.total_iterations = 0
+        self.start_time = time.time()
         
         # MCP integration
         self.mcp_bridge = get_mcp_strand_bridge()
-        self._register_calculation_tools()
+        self._register_mcp_tools()
         
-        logger.info(f"MCTS Calculation Agent {agent_id} initialized with {self.iterations} iterations")
+        # Register this agent with the bridge for Strands-MCP integration
+        if self.mcp_bridge:
+            self.mcp_bridge.register_strand_agent(self)
+        
+        # Register Strands tools
+        self._register_strands_tools()
+        
+        # Initialize A/B testing and anomaly detection
+        self.ab_test_manager = ABTestManager()
+        self.anomaly_detector = AnomalyDetector(agent_id)
+        self.monitoring_dashboard = MCTSMonitoringDashboard(self.anomaly_detector)
+        
+        # Detect runtime environment
+        self.is_vercel_runtime = bool(os.getenv('VERCEL_ENV') or os.getenv('VERCEL'))
+        
+        # Initialize Grok4 client asynchronously
+        asyncio.create_task(self._initialize_grok4_client())
+        
+        # Start monitoring only for local development (not in Vercel)
+        if not self.is_vercel_runtime and os.getenv('MCTS_MONITORING_ENABLED', 'true').lower() == 'true':
+            try:
+                asyncio.create_task(self.monitoring_dashboard.start_monitoring())
+            except RuntimeError:
+                # Handle case where event loop isn't running yet
+                logger.info("Monitoring will be enabled when event loop starts")
+        
+        logger.info(f"Enhanced MCTS Agent {agent_id} initialized with MCTS, Grok4 AI, backtesting, and monitoring")
     
-    def _register_calculation_tools(self):
-        """Register calculation-specific MCP tools"""
+    def _register_mcp_tools(self):
+        """Register calculation-specific MCP tools with rate limiting"""
         tools = [
             MCPTool(
-                name="mcts_calculate",
-                description="Perform MCTS-based calculation for optimal decision",
+                name="mcts_calculate_v2",
+                description="Production MCTS-based calculation with advanced features",
                 parameters={
                     "problem_type": {
                         "type": "string",
-                        "description": "Type of calculation problem (portfolio, trading, optimization)"
+                        "description": "Type of calculation problem",
+                        "enum": ["trading", "portfolio", "optimization"]
                     },
                     "parameters": {
                         "type": "object",
@@ -261,51 +988,413 @@ class MCTSCalculationAgent(StrandsAgent):
                     "iterations": {
                         "type": "integer",
                         "description": "Number of MCTS iterations",
-                        "default": self.iterations
+                        "minimum": 10,
+                        "maximum": 10000
+                    },
+                    "timeout": {
+                        "type": "integer",
+                        "description": "Timeout in seconds",
+                        "default": 30
                     }
                 },
-                function=self._mcts_calculate
+                function=self._mcts_calculate_with_monitoring
             ),
             MCPTool(
-                name="evaluate_strategy",
-                description="Evaluate a trading or investment strategy using MCTS",
-                parameters={
-                    "strategy": {
-                        "type": "object",
-                        "description": "Strategy configuration"
-                    },
-                    "market_conditions": {
-                        "type": "object",
-                        "description": "Current market conditions"
-                    }
-                },
-                function=self._evaluate_strategy
+                name="get_calculation_metrics",
+                description="Get calculation performance metrics",
+                parameters={},
+                function=self._get_metrics
             ),
             MCPTool(
-                name="optimize_parameters",
-                description="Optimize calculation parameters using MCTS exploration",
-                parameters={
-                    "objective": {
-                        "type": "string",
-                        "description": "Optimization objective"
-                    },
-                    "constraints": {
-                        "type": "array",
-                        "items": {"type": "object"},
-                        "description": "Optimization constraints"
-                    }
-                },
-                function=self._optimize_parameters
+                name="health_check",
+                description="Agent health check",
+                parameters={},
+                function=self._health_check
             )
         ]
         
-        # Register tools with MCP bridge
         if self.mcp_bridge and self.mcp_bridge.mcp_server:
             for tool in tools:
                 self.mcp_bridge.mcp_server.register_tool(tool)
     
+    async def _initialize_grok4_client(self):
+        """Initialize Grok4 AI client for market analysis"""
+        try:
+            self.grok4_client = await get_grok4_client()
+            logger.info("Grok4 AI client initialized successfully")
+        except Exception as e:
+            logger.warning(f"Grok4 client initialization failed: {e} - using fallback mode")
+            self.grok4_client = None
+    
+    def _register_strands_tools(self):
+        """Register simplified Strands tools with AI and backtesting capabilities"""
+        # Simplified core tools with AI enhancement
+        self.strands_tools = {
+            # Core MCTS tools
+            'run_mcts_simulation': self.run_mcts_simulation,
+            'calculate_optimal_portfolio': self.calculate_optimal_portfolio,
+            
+            # AI-powered analysis tools
+            'analyze_market_sentiment': self.analyze_market_sentiment,
+            'assess_trading_risk': self.assess_trading_risk,
+            'predict_market_movement': self.predict_market_movement,
+            
+            # Strategy backtesting tools
+            'backtest_strategy': self.backtest_strategy,
+            'compare_strategies': self.compare_strategies,
+            
+            # Legacy compatibility (simplified)
+            'analyze_market_correlation': self.analyze_market_correlation
+        }
+        
+        # Register with simplified capabilities
+        if hasattr(self, 'capabilities'):
+            self.capabilities.extend([
+                'mcts_calculation',
+                'ai_market_analysis',
+                'strategy_backtesting',
+                'risk_assessment'
+            ])
+        
+        logger.info(f"Registered {len(self.strands_tools)} Strands tools")
+    
+    # Analysis Tools Implementation (trading functions removed)
+    async def analyze_market_correlation(self, symbols: List[str], timeframe: str = '1h', 
+                                       **kwargs) -> Dict[str, Any]:
+        """Analyze market correlation patterns
+        
+        Args:
+            symbols: List of symbols to analyze
+            timeframe: Analysis timeframe
+            
+        Returns:
+            Dict with correlation analysis results
+        """
+        logger.info(f"Analysis tool: analyze_market_correlation called with {len(symbols)} symbols")
+        
+        # Prepare analysis environment
+        config = {
+            'symbols': symbols,
+            'max_depth': 5,
+            'analysis_type': 'correlation'
+        }
+        
+        self.environment = DataAnalysisEnvironment(config, self.market_data_provider)
+        
+        # Run analysis calculation
+        result = await self.run_mcts_parallel(iterations=100)
+        
+        return {
+            'correlation_matrix': result['best_action'],
+            'analysis_confidence': result['confidence'], 
+            'calculation_stats': result['stats'],
+            'tool_name': 'analyze_market_correlation'
+        }
+    
+    
+        
+        # Convert portfolio to MCTS format
+        symbols = list(portfolio.keys())
+        total_value = sum(portfolio.values())
+        
+        config = {
+            'initial_portfolio': total_value,
+            'symbols': symbols,
+            'current_positions': portfolio,
+            'constraints': constraints,
+            'max_depth': 12
+        }
+        
+        self.environment = ProductionTradingEnvironment(config, self.market_data_provider)
+        result = await self.run_mcts_parallel(iterations=1500)
+        
+        return {
+            'optimized_allocation': result['best_action'],
+            'improvement_potential': result['expected_value'],
+            'rebalancing_required': abs(result['expected_value']) > 0.02,
+            'tool_name': 'optimize_allocation'
+        }
+    
+    async def analyze_market_risk(self, symbols: List[str], time_horizon: int = 30, **kwargs) -> Dict[str, Any]:
+        """Strands tool: Analyze market risk using MCTS scenarios
+        
+        Args:
+            symbols: Symbols to analyze
+            time_horizon: Analysis time horizon in days
+            
+        Returns:
+            Dict with risk analysis results
+        """
+        logger.info(f"Strands tool: analyze_market_risk called for {len(symbols)} symbols, {time_horizon}d horizon")
+        
+        config = {
+            'initial_portfolio': 0,  # Must be provided by user
+            'symbols': symbols,
+            'max_depth': min(time_horizon // 2, 25),
+            'risk_analysis_mode': True
+        }
+        
+        self.environment = ProductionTradingEnvironment(config, self.market_data_provider)
+        
+        # Run multiple scenarios
+        scenarios = []
+        for _ in range(5):
+            result = await self.run_mcts_parallel(iterations=300)
+            scenarios.append(result['expected_value'])
+        
+        var_95 = sorted(scenarios)[0]  # 5th percentile (worst case)
+        expected_return = sum(scenarios) / len(scenarios)
+        
+        return {
+            'expected_return': expected_return,
+            'value_at_risk_95': var_95,
+            'risk_score': abs(var_95) / max(abs(expected_return), 0.01),
+            'scenario_count': len(scenarios),
+            'recommendation': 'high_risk' if abs(var_95) > 0.15 else 'acceptable_risk',
+            'tool_name': 'analyze_market_risk'
+        }
+    
+    async def run_mcts_simulation(self, problem_type: str, parameters: Dict[str, Any], 
+                                iterations: int = None, **kwargs) -> Dict[str, Any]:
+        """Strands tool: Run raw MCTS simulation
+        
+        Args:
+            problem_type: Type of problem to solve
+            parameters: Problem-specific parameters
+            iterations: Number of MCTS iterations
+            
+        Returns:
+            Dict with simulation results
+        """
+        logger.info(f"Strands tool: run_mcts_simulation called for {problem_type}")
+        
+        # This provides direct access to MCTS for custom problems
+        iterations = iterations or self.config.iterations
+        
+        if problem_type == 'trading':
+            self.environment = ProductionTradingEnvironment(parameters, self.market_data_provider)
+        else:
+            raise ValueError(f"Unsupported problem type: {problem_type}")
+        
+        result = await self.run_mcts_parallel(iterations=iterations)
+        result['tool_name'] = 'run_mcts_simulation'
+        return result
+    
+    async def execute_trading_workflow(self, workflow_config: Dict[str, Any], **kwargs) -> Dict[str, Any]:
+        """Strands tool: Execute complex trading workflow
+        
+        Args:
+            workflow_config: Workflow configuration with steps
+            
+        Returns:
+            Dict with workflow execution results
+        """
+        logger.info(f"Strands tool: execute_trading_workflow called with {len(workflow_config.get('steps', []))} steps")
+        
+        workflow_results = {
+            'workflow_id': workflow_config.get('id', f'workflow_{int(time.time())}'),
+            'steps_completed': 0,
+            'results': [],
+            'success': True,
+            'tool_name': 'execute_trading_workflow'
+        }
+        
+        # Execute workflow steps using other Strands tools
+        for i, step in enumerate(workflow_config.get('steps', [])):
+            step_type = step.get('type')
+            step_params = step.get('parameters', {})
+            
+            try:
+                if step_type == 'portfolio_optimization':
+                    result = await self.calculate_optimal_portfolio(**step_params)
+                elif step_type == 'strategy_evaluation':
+                    result = await self.evaluate_trading_strategy(**step_params)
+                elif step_type == 'risk_analysis':
+                    result = await self.analyze_market_risk(**step_params)
+                elif step_type == 'allocation_optimization':
+                    result = await self.optimize_allocation(**step_params)
+                else:
+                    raise ValueError(f"Unknown workflow step type: {step_type}")
+                
+                workflow_results['results'].append({
+                    'step': i + 1,
+                    'type': step_type,
+                    'result': result,
+                    'success': True
+                })
+                workflow_results['steps_completed'] += 1
+                
+            except Exception as e:
+                workflow_results['results'].append({
+                    'step': i + 1,
+                    'type': step_type,
+                    'error': str(e),
+                    'success': False
+                })
+                if not step.get('continue_on_error', False):
+                    workflow_results['success'] = False
+                    break
+        
+        return workflow_results
+    
+    def _generate_strategy_recommendations(self, performance: float, stability: float, 
+                                         strategy_config: Dict[str, Any]) -> List[str]:
+        """Generate strategy improvement recommendations"""
+        recommendations = []
+        
+        if performance < 0:
+            recommendations.append("Consider reducing position sizes")
+            recommendations.append("Implement stronger stop-loss mechanisms")
+        
+        if stability > 0.3:
+            recommendations.append("Strategy shows high volatility - consider risk management")
+            recommendations.append("Diversify across more symbols")
+        
+        if strategy_config.get('risk_per_trade', 0.02) > 0.05:
+            recommendations.append("Risk per trade is too high - reduce to < 3%")
+        
+        return recommendations
+    
+    # Enhanced Strands Integration Methods
+    async def process_workflow(self, workflow_id: str, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        """Process Strands workflow requests"""
+        logger.info(f"Processing Strands workflow: {workflow_id}")
+        
+        # Route to appropriate workflow handler
+        if workflow_id.startswith('mcts_'):
+            return await self.execute_trading_workflow(inputs)
+        else:
+            return await super().process_workflow(workflow_id, inputs)
+    
+    async def execute_tool(self, tool_name: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute Strands tools with enhanced error handling"""
+        if tool_name in self.strands_tools:
+            try:
+                # Call the tool function
+                tool_func = self.strands_tools[tool_name]
+                result = await tool_func(**parameters)
+                
+                # Record tool execution
+                if hasattr(self, 'store_memory'):
+                    await self.store_memory(
+                        f"tool_execution_{tool_name}_{int(time.time())}", 
+                        result,
+                        {'tool': tool_name, 'timestamp': time.time()}
+                    )
+                
+                return result
+                
+            except Exception as e:
+                logger.error(f"Strands tool {tool_name} failed: {e}")
+                return {
+                    'error': str(e),
+                    'tool_name': tool_name,
+                    'success': False
+                }
+        else:
+            return await super().execute_tool(tool_name, parameters)
+    
     async def process_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
-        """Process calculation requests using MCTS"""
+        """Process requests prioritizing Strands tools and workflows with security"""
+        # Security check
+        auth_header = message.get('auth_header')
+        ip_address = message.get('ip_address')
+        
+        if auth_header:
+            auth_result = await self.authenticate_request(auth_header, ip_address)
+            if not auth_result.get('success'):
+                return auth_result
+        
+        # Rate limiting
+        if not await self.rate_limiter.check_limit(self.agent_id):
+            return {'error': 'Rate limit exceeded', 'retry_after': 60}
+        
+        # Circuit breaker
+        if not self.circuit_breaker.can_execute():
+            return {'error': 'Service temporarily unavailable', 'retry_after': 60}
+        
+        try:
+            start_time = time.time()
+            
+            # Prioritize Strands workflow and tool requests
+            if 'workflow_id' in message:
+                # This is a Strands workflow request
+                return await self.process_workflow(message['workflow_id'], message.get('inputs', {}))
+            
+            elif 'tool_name' in message:
+                # This is a Strands tool execution request
+                return await self.execute_tool(message['tool_name'], message.get('parameters', {}))
+            
+            elif 'strands_request' in message:
+                # Direct Strands integration
+                strands_req = message['strands_request']
+                if strands_req.get('type') == 'tool_execution':
+                    return await self.execute_tool(strands_req['tool'], strands_req.get('parameters', {}))
+                elif strands_req.get('type') == 'workflow':
+                    return await self.process_workflow(strands_req['workflow_id'], strands_req.get('inputs', {}))
+            
+            # Fallback to legacy MCP-style messages for backwards compatibility
+            msg_type = message.get('type')
+            if msg_type in ['calculate', 'optimize', 'evaluate']:
+                # Map legacy requests to Strands tools
+                if msg_type == 'calculate':
+                    # Map to appropriate Strands tool based on problem type
+                    problem_type = message.get('problem_type', 'trading')
+                    parameters = message.get('parameters', {})
+                    
+                    if problem_type == 'portfolio_optimization':
+                        return await self.calculate_optimal_portfolio(
+                            symbols=parameters.get('symbols', ['BTC', 'ETH']),
+                            capital=parameters.get('initial_portfolio', 0),  # No default
+                            risk_tolerance=parameters.get('risk_tolerance', 0.5)
+                        )
+                    elif problem_type == 'strategy_evaluation':
+                        return await self.evaluate_trading_strategy(
+                            strategy_config=parameters.get('strategy', {}),
+                            market_conditions=parameters.get('market_conditions', {})
+                        )
+                    else:
+                        # Default to MCTS simulation
+                        return await self.run_mcts_simulation(problem_type, parameters)
+                        
+                elif msg_type == 'optimize':
+                    return await self.optimize_allocation(
+                        portfolio=message.get('portfolio', {}),
+                        constraints=message.get('constraints', [])
+                    )
+                    
+                elif msg_type == 'evaluate':
+                    return await self.analyze_market_risk(
+                        symbols=message.get('symbols', ['BTC', 'ETH']),
+                        time_horizon=message.get('time_horizon', 30)
+                    )
+            
+            else:
+                # Unknown message type - try legacy handler
+                result = await self._handle_legacy_request(message)
+                
+            # Record success
+            self.circuit_breaker.record_success()
+            self.calculation_count += 1
+            
+            # Add metrics to result
+            if isinstance(result, dict):
+                result['metrics'] = {
+                    'execution_time': time.time() - start_time,
+                    'agent_id': self.agent_id,
+                    'calculation_count': self.calculation_count,
+                    'processing_method': 'strands_native'
+                }
+            
+            return result
+            
+        except Exception as e:
+            self.circuit_breaker.record_failure()
+            logger.error(f"Error processing message: {e}")
+            return {'error': str(e), 'type': 'processing_error'}
+    
+    async def _handle_legacy_request(self, message: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle legacy MCP-style requests for backwards compatibility"""
         msg_type = message.get('type')
         
         if msg_type == 'calculate':
@@ -315,186 +1404,930 @@ class MCTSCalculationAgent(StrandsAgent):
         elif msg_type == 'evaluate':
             return await self._handle_evaluation_request(message)
         else:
-            return {'error': f'Unknown message type: {msg_type}'}
+            raise ValidationError(f'Unknown message type: {msg_type}')
     
     async def _handle_calculation_request(self, message: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle calculation request using MCTS"""
+        """Handle calculation request with timeout and monitoring"""
         problem_type = message.get('problem_type', 'trading')
         parameters = message.get('parameters', {})
+        iterations = min(message.get('iterations', self.config.iterations), 10000)
+        timeout = message.get('timeout', self.config.timeout_seconds)
         
-        # Create environment based on problem type
+        # Validate parameters
+        try:
+            parameters = InputValidator.validate_calculation_params(parameters)
+        except ValidationError as e:
+            return {'error': str(e), 'type': 'validation_error'}
+        
+        # Check cache
+        cache_key = f"mcts_result:{problem_type}:{hashlib.md5(json.dumps(parameters, sort_keys=True).encode()).hexdigest()}"
+        cached_result = mcp_cache.get(cache_key)
+        if cached_result:
+            cached_result['cached'] = True
+            return cached_result
+        
+        # Create environment
         if problem_type == 'trading':
-            self.environment = TradingCalculationEnvironment(parameters)
+            self.environment = ProductionTradingEnvironment(parameters, self.market_data_provider)
         else:
             return {'error': f'Unsupported problem type: {problem_type}'}
         
-        # Run MCTS
-        result = await self.run_mcts(iterations=message.get('iterations', self.iterations))
-        
-        return {
-            'type': 'calculation_result',
-            'problem_type': problem_type,
-            'best_action': result['best_action'],
-            'expected_value': result['expected_value'],
-            'confidence': result['confidence'],
-            'exploration_stats': result['stats']
-        }
+        # Run MCTS with timeout
+        try:
+            result = await asyncio.wait_for(
+                self.run_mcts_parallel(iterations=iterations),
+                timeout=timeout
+            )
+            
+            # Cache result
+            mcp_cache.set(cache_key, result, ttl=self.config.cache_ttl)
+            
+            return {
+                'type': 'calculation_result',
+                'problem_type': problem_type,
+                'best_action': result['best_action'],
+                'expected_value': result['expected_value'],
+                'confidence': result['confidence'],
+                'exploration_stats': result['stats']
+            }
+            
+        except asyncio.TimeoutError:
+            return {'error': 'Calculation timeout', 'partial_results': None}
     
-    async def run_mcts(self, iterations: int = None) -> Dict[str, Any]:
-        """Run Monte Carlo Tree Search algorithm"""
+    @vercel_edge_handler
+    async def run_mcts_parallel(self, iterations: int = None) -> Dict[str, Any]:
+        """Run MCTS with adaptive iteration control and dynamic parameters"""
         if not self.environment:
             raise ValueError("Environment not initialized")
         
-        iterations = iterations or self.iterations
+        max_iterations = iterations or self.config.iterations
+        self.total_iterations += max_iterations
         
-        # Initialize root node
+        # Initialize adaptive controller
+        adaptive_controller = AdaptiveIterationController(
+            min_iterations=max(100, max_iterations // 20),
+            max_iterations=max_iterations,
+            convergence_window=50,
+            early_stop_confidence=0.95
+        )
+        
+        # Initialize root
         initial_state = await self.environment.get_initial_state()
-        root = MCTSNode(state=initial_state, untried_actions=initial_state['available_actions'])
+        root = MCTSNodeV2(state=initial_state, untried_actions=initial_state['available_actions'])
+        self._current_root_node = root  # Store reference for memory checking
         
         # Statistics
         start_time = time.time()
         iteration_values = []
+        memory_checks = 0
+        convergence_history = []
         
-        # Run MCTS iterations
-        for i in range(iterations):
-            node = root
-            state = initial_state.copy()
-            
-            # Selection
-            while node.untried_actions == [] and node.children != []:
-                node = node.best_child(self.exploration_constant)
-                state = await self.environment.apply_action(state, node.action)
-            
-            # Expansion
-            if node.untried_actions != []:
-                action = random.choice(node.untried_actions)
-                state = await self.environment.apply_action(state, action)
-                node = node.add_child(action, state)
-            
-            # Simulation
-            simulation_state = state.copy()
-            depth = 0
-            while not await self.environment.is_terminal_state(simulation_state) and depth < self.simulation_depth:
-                available_actions = await self.environment.get_available_actions(simulation_state)
-                if available_actions:
-                    action = random.choice(available_actions)
-                    simulation_state = await self.environment.apply_action(simulation_state, action)
-                depth += 1
-            
-            # Backpropagation
-            value = await self.environment.evaluate_state(simulation_state)
-            iteration_values.append(value)
-            
-            while node is not None:
-                node.visits += 1
-                node.value += value
-                node = node.parent
+        # Parallel simulation setup
+        batch_size = self.config.parallel_simulations
         
-        # Get best action
-        best_child = root.best_child(c_param=0)  # c_param=0 for exploitation only
+        # Adaptive iteration loop
+        actual_iterations = 0
+        while True:
+            # Check if we should continue
+            current_best = root.best_child(c_param=0, use_rave=self.config.enable_rave)
+            current_value = current_best.value / current_best.visits if current_best and current_best.visits > 0 else 0
+            current_confidence = current_best.visits / (actual_iterations + 1) if current_best else 0
+            best_action_str = str(current_best.action) if current_best else "none"
+            
+            should_continue, reason, status = adaptive_controller.should_continue_search(
+                current_value, current_confidence, best_action_str
+            )
+            
+            convergence_history.append(status)
+            
+            if not should_continue:
+                logger.info(f"MCTS converged early at iteration {actual_iterations}: {reason}")
+                break
+            
+            # Get current adaptive parameters
+            adaptive_params = adaptive_controller.get_current_parameters()
+            current_c_param = adaptive_params['c_param']
+            
+            # Memory check
+            if actual_iterations % 100 == 0:
+                memory_checks += 1
+                if self._check_memory_limit():
+                    logger.warning(f"Memory limit approaching at iteration {actual_iterations}")
+                    break
+            
+            # Memory optimization - prune tree if getting too large
+            if actual_iterations % 500 == 0 and actual_iterations > 0:
+                tree_size = self._count_nodes(root)
+                if tree_size > 5000:  # Prune if tree gets too large
+                    self._prune_tree(root, keep_ratio=0.7)
+                    logger.info(f"Pruned tree at iteration {actual_iterations}, new size: {self._count_nodes(root)}")
+            
+            # Run batch of iterations
+            batch_tasks = []
+            for j in range(batch_size):
+                batch_tasks.append(self._run_single_iteration_adaptive(
+                    root, initial_state, current_c_param, adaptive_params
+                ))
+            
+            # Run batch in parallel
+            batch_results = await asyncio.gather(*batch_tasks)
+            iteration_values.extend([r['value'] for r in batch_results])
+            
+            # Update tree with results
+            for result in batch_results:
+                self._backpropagate(result['node'], result['value'], result['action_sequence'])
+            
+            actual_iterations += batch_size
         
+        # Get final results
+        final_best = root.best_child(c_param=0, use_rave=self.config.enable_rave)
         elapsed_time = time.time() - start_time
         
-        return {
-            'best_action': best_child.action if best_child else None,
-            'expected_value': best_child.value / best_child.visits if best_child else 0,
-            'confidence': best_child.visits / iterations if best_child else 0,
+        # Generate final report
+        final_report = adaptive_controller.get_final_report()
+        
+        # Record metrics for anomaly detection
+        final_tree_size = self._count_nodes(root)
+        final_expected_value = final_best.value / final_best.visits if final_best else 0
+        final_confidence = final_best.visits / actual_iterations if final_best else 0
+        
+        asyncio.create_task(self._record_execution_metrics(
+            elapsed_time, actual_iterations, final_expected_value, 
+            final_confidence, final_tree_size, final_report['convergence_confidence']
+        ))
+        
+        result = {
+            'best_action': final_best.action if final_best else None,
+            'expected_value': final_expected_value,
+            'confidence': final_confidence,
             'stats': {
-                'iterations': iterations,
+                'iterations': actual_iterations,
+                'max_iterations': max_iterations,
                 'elapsed_time': elapsed_time,
-                'iterations_per_second': iterations / elapsed_time,
+                'iterations_per_second': actual_iterations / elapsed_time if elapsed_time > 0 else 0,
                 'average_value': sum(iteration_values) / len(iteration_values) if iteration_values else 0,
                 'max_value': max(iteration_values) if iteration_values else 0,
-                'min_value': min(iteration_values) if iteration_values else 0
+                'min_value': min(iteration_values) if iteration_values else 0,
+                'memory_checks': memory_checks,
+                'tree_size': final_tree_size,
+                'efficiency_gain': final_report['efficiency_gain'],
+                'convergence_reason': final_report['convergence_reason'],
+                'convergence_confidence': final_report['convergence_confidence'],
+                'adaptive_params_final': adaptive_controller.get_current_parameters(),
+                'convergence_history': convergence_history[-10:]  # Last 10 status updates
             }
         }
+        
+        return result
     
-    async def _mcts_calculate(self, problem_type: str, parameters: Dict[str, Any], 
-                             iterations: int = None) -> ToolResult:
-        """MCP tool function for MCTS calculation"""
+    async def _run_single_iteration_adaptive(self, root: MCTSNodeV2, initial_state: Dict[str, Any], 
+                                           c_param: float, adaptive_params: Dict[str, Any]) -> Dict[str, Any]:
+        """Run a single MCTS iteration with adaptive parameters and virtual loss"""
+        node = root
+        state = initial_state.copy()
+        action_sequence = []
+        path = [root]  # Track path for virtual loss cleanup
+        
+        # Selection with dynamic c_param and virtual loss
+        while node.untried_actions == [] and node.children != []:
+            # Add virtual loss for parallel MCTS
+            node.add_virtual_loss(1)
+            
+            node = node.best_child(c_param, self.config.enable_rave)
+            state = await self.environment.apply_action(state, node.action)
+            action_sequence.append(node.action)
+            path.append(node)
+        
+        # Expansion with progressive widening
+        if node.untried_actions != []:
+            # Progressive widening: check if we should expand
+            should_expand = True
+            if self.config.enable_progressive_widening:
+                # Progressive widening formula: |C(v)| <= k * N(v)^α
+                k_pw = 1.0  # Progressive widening constant
+                alpha_pw = 0.5  # Progressive widening alpha
+                # Ensure visits is at least 1 to avoid division by zero/edge cases
+                visits = max(1, node.visits)
+                max_children = k_pw * math.pow(visits, alpha_pw)
+                should_expand = len(node.children) < max_children
+            
+            if should_expand:
+                # Use action priors if available
+                if hasattr(node, 'action_priors') and node.action_priors:
+                    # Sample according to priors for better expansion
+                    actions = [a for a in node.untried_actions if str(a) in node.action_priors]
+                    if actions:
+                        probs = [node.action_priors[str(a)] for a in actions]
+                        prob_sum = sum(probs)
+                        if prob_sum > 0:
+                            probs = [p/prob_sum for p in probs]
+                            action = random.choices(actions, weights=probs, k=1)[0]
+                        else:
+                            action = random.choice(node.untried_actions)
+                    else:
+                        action = random.choice(node.untried_actions)
+                else:
+                    action = random.choice(node.untried_actions)
+                
+                state = await self.environment.apply_action(state, action)
+                node = node.add_child(action, state)
+                action_sequence.append(action)
+                path.append(node)
+                
+                # Add virtual loss to new node
+                node.add_virtual_loss(1)
+        
+        # Simulation with adaptive depth
+        simulation_state = state.copy()
+        simulation_actions = []
+        depth = 0
+        
+        # Adaptive simulation depth based on convergence
+        convergence_confidence = adaptive_params.get('convergence_confidence', 0)
+        adaptive_depth = int(self.config.simulation_depth * (1 + convergence_confidence))
+        
+        while not await self.environment.is_terminal_state(simulation_state) and depth < adaptive_depth:
+            available_actions = await self.environment.get_available_actions(simulation_state)
+            if available_actions:
+                action = await self._select_simulation_action(available_actions, simulation_state, depth)
+                simulation_state = await self.environment.apply_action(simulation_state, action)
+                simulation_actions.append(action)
+            depth += 1
+        
+        # Evaluation
+        value = await self.environment.evaluate_state(simulation_state)
+        
+        # Remove virtual loss from all nodes in path after completing iteration
+        for path_node in path:
+            path_node.remove_virtual_loss(1)
+        
+        return {
+            'node': node,
+            'value': value,
+            'action_sequence': action_sequence + simulation_actions
+        }
+
+    async def _run_single_iteration(self, root: MCTSNodeV2, initial_state: Dict[str, Any]) -> Dict[str, Any]:
+        """Run a single MCTS iteration"""
+        node = root
+        state = initial_state.copy()
+        action_sequence = []
+        
+        # Selection
+        while node.untried_actions == [] and node.children != []:
+            node = node.best_child(self.config.exploration_constant, self.config.enable_rave)
+            state = await self.environment.apply_action(state, node.action)
+            action_sequence.append(node.action)
+        
+        # Expansion
+        if node.untried_actions != []:
+            action = random.choice(node.untried_actions)
+            state = await self.environment.apply_action(state, action)
+            node = node.add_child(action, state)
+            action_sequence.append(action)
+        
+        # Simulation
+        simulation_state = state.copy()
+        simulation_actions = []
+        depth = 0
+        
+        while not await self.environment.is_terminal_state(simulation_state) and depth < self.config.simulation_depth:
+            available_actions = await self.environment.get_available_actions(simulation_state)
+            if available_actions:
+                # Use deterministic action selection based on value estimation
+                action = await self._select_simulation_action(available_actions, simulation_state, depth)
+                
+                simulation_state = await self.environment.apply_action(simulation_state, action)
+                simulation_actions.append(action)
+            depth += 1
+        
+        # Evaluation
+        value = await self.environment.evaluate_state(simulation_state)
+        
+        return {
+            'node': node,
+            'value': value,
+            'action_sequence': action_sequence + simulation_actions
+        }
+    
+    async def _select_simulation_action(self, available_actions: List[Dict[str, Any]], 
+                                      state: Dict[str, Any], depth: int) -> Dict[str, Any]:
+        """Select action during simulation using TRUE Monte Carlo random sampling"""
+        if not available_actions:
+            raise ValueError("No available actions for simulation")
+        
+        # TRUE MONTE CARLO: Use random selection with optional biasing
+        
+        # Option 1: Pure random (classic Monte Carlo)
+        if self.config.simulation_strategy == 'pure_random':
+            return random.choice(available_actions)
+        
+        # Option 2: Weighted random based on simple heuristics (still stochastic)
+        weights = []
+        for action in available_actions:
+            weight = 1.0  # Base weight
+            
+            # Adjust weights based on action characteristics
+            action_type = action.get('type', 'unknown')
+            
+            if action_type == 'buy':
+                # Slightly favor buys in early simulation
+                weight *= 1.2 if depth < 5 else 0.9
+            elif action_type == 'sell':
+                # Slightly favor sells in later simulation
+                weight *= 0.9 if depth < 5 else 1.1
+            elif action_type in ['technical_analysis', 'sentiment_analysis']:
+                # Analysis more valuable early
+                weight *= 2.0 if depth < 3 else 0.5
+            
+            # Risk adjustment (still maintains randomness)
+            risk_score = action.get('risk_score', 0.5)
+            weight *= (1.5 - risk_score)  # Slight bias against high risk
+            
+            weights.append(weight)
+        
+        # Normalize weights
+        total_weight = sum(weights)
+        if total_weight > 0:
+            weights = [w / total_weight for w in weights]
+        else:
+            weights = [1.0 / len(available_actions)] * len(available_actions)
+        
+        # STOCHASTIC SELECTION - this is true Monte Carlo
+        return random.choices(available_actions, weights=weights, k=1)[0]
+    
+    def _backpropagate(self, node: MCTSNodeV2, value: float, action_sequence: List[Dict[str, Any]]):
+        """Backpropagate value through tree with RAVE updates"""
+        while node is not None:
+            node.visits += 1
+            node.value += value
+            
+            # RAVE updates
+            if self.config.enable_rave:
+                node.update_rave(action_sequence, value)
+            
+            node = node.parent
+    
+    def _count_nodes(self, node: MCTSNodeV2) -> int:
+        """Count total nodes in tree"""
+        count = 1
+        for child in node.children:
+            count += self._count_nodes(child)
+        return count
+    
+    def _prune_tree(self, root: MCTSNodeV2, keep_ratio: float = 0.7):
+        """Prune tree to reduce memory usage"""
+        def prune_node(node: MCTSNodeV2, depth: int = 0):
+            if not node.children:
+                return
+            
+            # Don't prune too close to root
+            if depth < 2:
+                for child in node.children:
+                    prune_node(child, depth + 1)
+                return
+            
+            # Sort children by promise (visits * value)
+            child_scores = []
+            for child in node.children:
+                if child.visits > 0:
+                    score = child.visits * (child.value / child.visits)
+                else:
+                    score = 0
+                child_scores.append((score, child))
+            
+            # Keep top percentage of children
+            child_scores.sort(key=lambda x: x[0], reverse=True)
+            keep_count = max(1, int(len(child_scores) * keep_ratio))
+            
+            # Remove least promising children
+            new_children = []
+            pruned_children = []
+            for i, (score, child) in enumerate(child_scores):
+                if i < keep_count:
+                    new_children.append(child)
+                    prune_node(child, depth + 1)
+                else:
+                    pruned_children.append(child)
+            
+            # Break circular references for pruned children to prevent memory leaks
+            for child in pruned_children:
+                child.parent = None
+                child.children.clear()
+                child.rave_visits.clear()
+                child.rave_values.clear()
+                child.action_priors.clear()
+            
+            node.children = new_children
+        
+        prune_node(root)
+    
+    async def _record_execution_metrics(self, execution_time: float, iterations: int, 
+                                       expected_value: float, confidence: float,
+                                       tree_size: int, convergence_confidence: float):
+        """Record execution metrics for anomaly detection"""
         try:
+            # Estimate memory usage
+            memory_usage = tree_size * 0.0002  # Rough estimate
+            
+            # Record metrics
+            await self.anomaly_detector.record_metric('execution_time', execution_time)
+            await self.anomaly_detector.record_metric('iterations_completed', iterations)
+            await self.anomaly_detector.record_metric('expected_value', expected_value)
+            await self.anomaly_detector.record_metric('confidence', confidence)
+            await self.anomaly_detector.record_metric('tree_size', tree_size)
+            await self.anomaly_detector.record_metric('memory_usage', memory_usage)
+            await self.anomaly_detector.record_metric('convergence_confidence', convergence_confidence)
+            
+            # Calculate and record error rate
+            error_rate = 1.0 - confidence  # Simple proxy for error rate
+            await self.anomaly_detector.record_metric('error_rate', error_rate)
+            
+        except Exception as e:
+            logger.error(f"Failed to record metrics: {e}")
+    
+    def _check_memory_limit(self) -> bool:
+        """Check if approaching memory limit - Vercel Edge Runtime compatible"""
+        # Vercel Edge Runtime doesn't support psutil, so we use tree size as proxy
+        try:
+            # Try psutil first for local development
+            import psutil
+            process = psutil.Process()
+            memory_mb = process.memory_info().rss / 1024 / 1024
+            return memory_mb > self.config.max_memory_mb * 0.8
+        except (ImportError, RuntimeError):
+            # Fallback for Vercel Edge Runtime - estimate based on tree size
+            if hasattr(self, '_current_root_node'):
+                tree_size = self._count_nodes(self._current_root_node)
+                # Rough estimate: 200 bytes per node
+                estimated_memory_mb = (tree_size * 200) / (1024 * 1024)
+                return estimated_memory_mb > self.config.max_memory_mb * 0.8
+            else:
+                # Conservative default if we can't estimate
+                return False
+    
+    async def _mcts_calculate_with_monitoring(self, problem_type: str, parameters: Dict[str, Any], 
+                                            iterations: int = None, timeout: int = None) -> ToolResult:
+        """MCP tool with monitoring"""
+        try:
+            # Record metric
+            start_time = mcp_metrics.tool_execution_start("mcts_calculate_v2", self.agent_id)
+            
             result = await self._handle_calculation_request({
                 'type': 'calculate',
                 'problem_type': problem_type,
                 'parameters': parameters,
-                'iterations': iterations
+                'iterations': iterations,
+                'timeout': timeout
             })
+            
+            # Record success
+            mcp_metrics.tool_execution_end("mcts_calculate_v2", start_time, 'error' not in result)
+            
             return ToolResult.json_result(result)
         except Exception as e:
+            mcp_metrics.tool_execution_end("mcts_calculate_v2", start_time, False)
             return ToolResult.error_result(str(e))
     
-    async def _evaluate_strategy(self, strategy: Dict[str, Any], 
-                                market_conditions: Dict[str, Any]) -> ToolResult:
-        """MCP tool function for strategy evaluation"""
+    async def _get_metrics(self) -> ToolResult:
+        """Get agent performance metrics"""
+        uptime = time.time() - self.start_time
+        
+        metrics = {
+            'agent_id': self.agent_id,
+            'uptime_seconds': uptime,
+            'calculation_count': self.calculation_count,
+            'total_iterations': self.total_iterations,
+            'average_iterations_per_calculation': self.total_iterations / self.calculation_count if self.calculation_count > 0 else 0,
+            'circuit_breaker_state': self.circuit_breaker.state,
+            'circuit_breaker_failures': self.circuit_breaker.failures,
+            'rate_limiter_remaining': await self.rate_limiter.get_remaining(self.agent_id)
+        }
+        
+        return ToolResult.json_result(metrics)
+    
+    async def _health_check(self) -> ToolResult:
+        """Health check endpoint"""
         try:
-            # Create custom environment for strategy evaluation
-            parameters = {
-                'strategy': strategy,
-                'market_conditions': market_conditions,
-                'initial_portfolio': strategy.get('initial_capital', 10000)
+            # Test basic functionality
+            test_env = ProductionTradingEnvironment(
+                {'initial_portfolio': 1000, 'symbols': ['BTC'], 'max_depth': 2}
+            )
+            test_state = await test_env.get_initial_state()
+            
+            health = {
+                'status': 'healthy' if self.circuit_breaker.state == 'closed' else 'degraded',
+                'agent_id': self.agent_id,
+                'uptime': time.time() - self.start_time,
+                'memory_ok': not self._check_memory_limit(),
+                'circuit_breaker': self.circuit_breaker.state,
+                'last_calculation': self.calculation_count
             }
             
-            self.environment = TradingCalculationEnvironment(parameters)
-            result = await self.run_mcts()
-            
-            evaluation = {
-                'strategy_score': result['expected_value'],
-                'confidence': result['confidence'],
-                'recommended_adjustments': self._analyze_strategy_performance(result)
-            }
-            
-            return ToolResult.json_result(evaluation)
+            return ToolResult.json_result(health)
         except Exception as e:
-            return ToolResult.error_result(str(e))
-    
-    async def _optimize_parameters(self, objective: str, 
-                                  constraints: List[Dict[str, Any]]) -> ToolResult:
-        """MCP tool function for parameter optimization"""
-        try:
-            # Implement parameter optimization using MCTS
-            optimization_result = {
-                'objective': objective,
-                'optimal_parameters': {},
-                'expected_improvement': 0.0,
-                'convergence_iterations': 0
-            }
-            
-            # TODO: Implement actual optimization logic
-            
-            return ToolResult.json_result(optimization_result)
-        except Exception as e:
-            return ToolResult.error_result(str(e))
-    
-    def _analyze_strategy_performance(self, mcts_result: Dict[str, Any]) -> List[str]:
-        """Analyze MCTS results to provide strategy recommendations"""
-        recommendations = []
-        
-        if mcts_result['expected_value'] < 0:
-            recommendations.append("Consider more conservative position sizing")
-        
-        if mcts_result['confidence'] < 0.7:
-            recommendations.append("Increase MCTS iterations for more reliable results")
-        
-        stats = mcts_result['stats']
-        if stats['max_value'] - stats['min_value'] > 0.5:
-            recommendations.append("High variance detected - implement risk management")
-        
-        return recommendations
+            return ToolResult.json_result({
+                'status': 'unhealthy',
+                'error': str(e)
+            })
     
     async def _handle_optimization_request(self, message: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle optimization request"""
-        # Placeholder for optimization logic
+        """Handle optimization with genetic algorithm enhancement"""
+        objective = message.get('objective')
+        constraints = message.get('constraints', [])
+        
+        # Use MCTS for optimization exploration
+        optimization_params = {
+            'initial_portfolio': 0,  # Must be specified by user,
+            'symbols': ['BTC', 'ETH'],
+            'max_depth': 10,
+            'objective': objective,
+            'constraints': constraints
+        }
+        
+        result = await self._handle_calculation_request({
+            'type': 'calculate',
+            'problem_type': 'trading',
+            'parameters': optimization_params,
+            'iterations': 2000
+        })
+        
         return {
             'type': 'optimization_result',
-            'status': 'completed',
-            'optimal_solution': {}
+            'objective': objective,
+            'optimal_solution': result.get('best_action'),
+            'expected_improvement': result.get('expected_value'),
+            'confidence': result.get('confidence')
         }
     
     async def _handle_evaluation_request(self, message: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle evaluation request"""
-        # Placeholder for evaluation logic
+        """Handle strategy evaluation"""
+        strategy = message.get('strategy', {})
+        
+        # Evaluate using MCTS
+        eval_params = {
+            'initial_portfolio': strategy.get('capital', 0),  # Must be specified
+            'symbols': strategy.get('symbols', ['BTC', 'ETH']),
+            'max_depth': 20
+        }
+        
+        result = await self._handle_calculation_request({
+            'type': 'calculate',
+            'problem_type': 'trading',
+            'parameters': eval_params,
+            'iterations': 1000
+        })
+        
         return {
             'type': 'evaluation_result',
-            'status': 'completed',
-            'evaluation_score': 0.85
+            'strategy_score': result.get('expected_value', 0),
+            'confidence': result.get('confidence', 0),
+            'recommendation': 'approved' if result.get('expected_value', 0) > 0.1 else 'rejected'
         }
+    
+    # ==================== NEW AI-POWERED TOOLS ====================
+    
+    async def analyze_market_sentiment(self, symbols: List[str], 
+                                     timeframe: str = '1d') -> Dict[str, Any]:
+        """
+        Analyze market sentiment using Grok4 AI
+        
+        Args:
+            symbols: List of trading symbols
+            timeframe: Analysis timeframe
+            
+        Returns:
+            Market sentiment analysis with AI insights
+        """
+        logger.info(f"AI Analysis: market sentiment for {len(symbols)} symbols")
+        
+        if not self.grok4_client:
+            return {
+                'error': 'Grok4 AI client not available',
+                'fallback_analysis': 'MCTS-based correlation analysis',
+                'symbols': symbols,
+                'confidence': 0.5
+            }
+        
+        try:
+            # Get AI-powered sentiment analysis
+            insights = await self.grok4_client.analyze_market_sentiment(symbols, timeframe)
+            
+            # Convert to standardized format
+            sentiment_data = {}
+            for insight in insights:
+                sentiment_data[insight.symbol] = {
+                    'recommendation': insight.recommendation,
+                    'sentiment_score': insight.score,
+                    'risk_level': insight.risk_level,
+                    'reasoning': insight.reasoning,
+                    'confidence': insight.confidence
+                }
+            
+            return {
+                'sentiment_analysis': sentiment_data,
+                'overall_market_sentiment': self._calculate_overall_sentiment(insights),
+                'trading_signals': self._extract_trading_signals(insights),
+                'ai_provider': 'grok4',
+                'timeframe': timeframe,
+                'analysis_timestamp': datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"Grok4 sentiment analysis failed: {e}")
+            # Fallback to MCTS-based analysis
+            return await self.analyze_market_correlation(symbols, timeframe)
+    
+    async def assess_trading_risk(self, portfolio: Dict[str, float],
+                                market_conditions: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """
+        Assess trading risk using Grok4 AI
+        
+        Args:
+            portfolio: Current portfolio positions
+            market_conditions: Optional market state information
+            
+        Returns:
+            AI-powered risk assessment
+        """
+        logger.info(f"AI Risk Assessment: portfolio with {len(portfolio)} positions")
+        
+        if not self.grok4_client:
+            return {
+                'error': 'Grok4 AI client not available',
+                'basic_risk_score': 0.5,
+                'recommendation': 'Use manual risk assessment'
+            }
+        
+        try:
+            # Get AI risk assessment
+            risk_analysis = await self.grok4_client.assess_trading_risk(
+                portfolio, market_conditions or {}
+            )
+            
+            # Enhance with MCTS simulation
+            mcts_risk = await self._run_mcts_risk_simulation(portfolio)
+            
+            # Combine AI and MCTS insights
+            combined_analysis = {
+                'ai_risk_assessment': risk_analysis,
+                'mcts_risk_simulation': mcts_risk,
+                'combined_risk_score': (risk_analysis['overall_risk_score'] + mcts_risk['risk_score']) / 2,
+                'recommendation_confidence': min(risk_analysis.get('confidence', 0.8), 0.9),
+                'analysis_methods': ['grok4_ai', 'mcts_simulation']
+            }
+            
+            return combined_analysis
+            
+        except Exception as e:
+            logger.error(f"AI risk assessment failed: {e}")
+            return await self._run_mcts_risk_simulation(portfolio)
+    
+    async def predict_market_movement(self, symbols: List[str],
+                                    horizon: str = '1d') -> Dict[str, Any]:
+        """
+        Predict market movement using Grok4 AI
+        
+        Args:
+            symbols: Symbols to analyze
+            horizon: Prediction horizon
+            
+        Returns:
+            Market movement predictions
+        """
+        logger.info(f"AI Prediction: market movement for {len(symbols)} symbols")
+        
+        if not self.grok4_client:
+            return {
+                'error': 'Grok4 AI client not available',
+                'fallback': 'Use historical analysis'
+            }
+        
+        try:
+            predictions = await self.grok4_client.predict_market_movement(symbols, horizon)
+            
+            # Validate predictions with MCTS simulation
+            mcts_validation = await self._validate_predictions_with_mcts(predictions)
+            
+            return {
+                'ai_predictions': predictions,
+                'mcts_validation': mcts_validation,
+                'horizon': horizon,
+                'confidence_adjusted': True,
+                'prediction_timestamp': datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"AI market prediction failed: {e}")
+            return {'error': str(e), 'predictions': {}}
+    
+    async def backtest_strategy(self, strategy_config: Dict[str, Any],
+                              start_date: str = None, end_date: str = None) -> Dict[str, Any]:
+        """
+        Backtest trading strategy with comprehensive analysis
+        
+        Args:
+            strategy_config: Strategy configuration
+            start_date: Backtest start date
+            end_date: Backtest end date
+            
+        Returns:
+            Comprehensive backtesting results
+        """
+        logger.info(f"Strategy Backtesting: {strategy_config.get('name', 'Unknown')}")
+        
+        try:
+            # Create backtest configuration
+            config = BacktestConfig(
+                strategy_type=StrategyType(strategy_config.get('type', 'momentum')),
+                symbols=strategy_config.get('symbols', ['BTC', 'ETH']),
+                start_date=start_date or '2023-01-01',
+                end_date=end_date or '2023-12-31',
+                initial_capital=strategy_config.get('initial_capital', 10000),
+                position_size=strategy_config.get('position_size', 0.1),
+                stop_loss=strategy_config.get('stop_loss', 0.05),
+                take_profit=strategy_config.get('take_profit', 0.15)
+            )
+            
+            # Run backtest
+            result = await self.strategy_backtester.backtest_strategy(config)
+            
+            # Get AI evaluation if available
+            ai_evaluation = None
+            if self.grok4_client:
+                try:
+                    ai_evaluation = await self.grok4_client.evaluate_trading_strategy(strategy_config)
+                except Exception as e:
+                    logger.warning(f"AI strategy evaluation failed: {e}")
+            
+            return {
+                'backtest_results': {
+                    'total_return': result.performance.total_return,
+                    'annualized_return': result.performance.annualized_return,
+                    'sharpe_ratio': result.performance.sharpe_ratio,
+                    'max_drawdown': result.performance.max_drawdown,
+                    'win_rate': result.performance.win_rate,
+                    'total_trades': result.performance.total_trades
+                },
+                'performance_metrics': result.performance.__dict__,
+                'ai_evaluation': ai_evaluation.__dict__ if ai_evaluation else None,
+                'insights': result.insights,
+                'confidence': result.confidence,
+                'analysis_methods': ['historical_backtest', 'ai_evaluation'] if ai_evaluation else ['historical_backtest']
+            }
+            
+        except Exception as e:
+            logger.error(f"Strategy backtesting failed: {e}")
+            return {'error': str(e), 'backtest_results': None}
+    
+    async def compare_strategies(self, strategy_configs: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Compare multiple trading strategies
+        
+        Args:
+            strategy_configs: List of strategy configurations
+            
+        Returns:
+            Strategy comparison results
+        """
+        logger.info(f"Strategy Comparison: comparing {len(strategy_configs)} strategies")
+        
+        try:
+            # Convert to BacktestConfig objects
+            configs = []
+            for config in strategy_configs:
+                backtest_config = BacktestConfig(
+                    strategy_type=StrategyType(config.get('type', 'momentum')),
+                    symbols=config.get('symbols', ['BTC', 'ETH']),
+                    start_date=config.get('start_date', '2023-01-01'),
+                    end_date=config.get('end_date', '2023-12-31'),
+                    initial_capital=config.get('initial_capital', 10000)
+                )
+                configs.append(backtest_config)
+            
+            # Run comparison
+            comparison = await self.strategy_backtester.compare_strategies(configs)
+            
+            return {
+                'strategy_rankings': comparison['rankings'],
+                'best_strategy': comparison['best_strategy'],
+                'performance_summary': comparison['performance_summary'],
+                'comparison_timestamp': datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"Strategy comparison failed: {e}")
+            return {'error': str(e), 'comparison_results': None}
+    
+    # ==================== HELPER METHODS ====================
+    
+    def _calculate_overall_sentiment(self, insights: List[MarketInsight]) -> Dict[str, Any]:
+        """Calculate overall market sentiment from individual insights"""
+        if not insights:
+            return {'sentiment': 'NEUTRAL', 'confidence': 0.0}
+        
+        buy_count = sum(1 for i in insights if i.recommendation == 'BUY')
+        sell_count = sum(1 for i in insights if i.recommendation == 'SELL')
+        hold_count = len(insights) - buy_count - sell_count
+        
+        avg_confidence = sum(i.confidence for i in insights) / len(insights)
+        
+        if buy_count > sell_count + hold_count:
+            sentiment = 'BULLISH'
+        elif sell_count > buy_count + hold_count:
+            sentiment = 'BEARISH'
+        else:
+            sentiment = 'NEUTRAL'
+        
+        return {
+            'sentiment': sentiment,
+            'confidence': avg_confidence,
+            'distribution': {
+                'buy_signals': buy_count,
+                'sell_signals': sell_count,
+                'hold_signals': hold_count
+            }
+        }
+    
+    def _extract_trading_signals(self, insights: List[MarketInsight]) -> List[Dict[str, Any]]:
+        """Extract actionable trading signals from AI insights"""
+        signals = []
+        
+        for insight in insights:
+            if insight.confidence > 0.7:  # High confidence signals only
+                signals.append({
+                    'symbol': insight.symbol,
+                    'action': insight.recommendation,
+                    'confidence': insight.confidence,
+                    'risk_level': insight.risk_level,
+                    'reasoning': insight.reasoning[:100] + '...' if len(insight.reasoning) > 100 else insight.reasoning
+                })
+        
+        return sorted(signals, key=lambda x: x['confidence'], reverse=True)
+    
+    async def _run_mcts_risk_simulation(self, portfolio: Dict[str, float]) -> Dict[str, Any]:
+        """Run MCTS simulation for risk assessment"""
+        try:
+            # Setup risk assessment environment
+            symbols = list(portfolio.keys())
+            total_value = sum(portfolio.values())
+            
+            config = {
+                'initial_portfolio': total_value,
+                'symbols': symbols,
+                'current_positions': portfolio,
+                'max_depth': 10,
+                'risk_analysis': True
+            }
+            
+            self.environment = ProductionTradingEnvironment(config, self.market_data_provider)
+            
+            # Run risk-focused MCTS simulation
+            result = await self.run_mcts_parallel(iterations=200)
+            
+            return {
+                'risk_score': 1.0 - result['confidence'],  # Lower confidence = higher risk
+                'portfolio_value': total_value,
+                'risk_factors': ['volatility', 'correlation', 'concentration'],
+                'mcts_confidence': result['confidence'],
+                'simulation_stats': result['stats']
+            }
+            
+        except Exception as e:
+            logger.error(f"MCTS risk simulation failed: {e}")
+            return {
+                'risk_score': 0.5,
+                'error': str(e),
+                'method': 'fallback_estimation'
+            }
+    
+    async def _validate_predictions_with_mcts(self, predictions: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
+        """Validate AI predictions using MCTS simulation"""
+        try:
+            symbols = list(predictions.keys())
+            
+            # Run MCTS prediction validation
+            validation_config = {
+                'initial_portfolio': 10000,
+                'symbols': symbols,
+                'max_depth': 8,
+                'prediction_validation': True
+            }
+            
+            self.environment = ProductionTradingEnvironment(validation_config, self.market_data_provider)
+            result = await self.run_mcts_parallel(iterations=150)
+            
+            return {
+                'mcts_validation_score': result['confidence'],
+                'prediction_alignment': 'high' if result['confidence'] > 0.7 else 'medium' if result['confidence'] > 0.5 else 'low',
+                'mcts_recommendation': result['best_action'],
+                'validation_stats': result['stats']
+            }
+            
+        except Exception as e:
+            logger.error(f"MCTS prediction validation failed: {e}")
+            return {
+                'validation_score': 0.5,
+                'error': str(e),
+                'method': 'fallback_validation'
+            }

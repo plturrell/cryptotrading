@@ -44,63 +44,6 @@ logger = logging.getLogger(__name__)
 
 # ===== CRYPTO TRADING TOOLS =====
 
-class PortfolioTool:
-    """Segregated portfolio management tool"""
-    
-    def __init__(self):
-        self.name = "get_portfolio"
-        self.description = "Get current cryptocurrency portfolio for authenticated agent"
-        self.resource_type = ResourceType.PORTFOLIO_DATA
-    
-    @require_agent_auth(ResourceType.PORTFOLIO_DATA)
-    async def execute(self, parameters: Dict[str, Any], agent_context: AgentContext = None) -> Dict[str, Any]:
-        """Get portfolio data with tenant isolation"""
-        try:
-            segregation_manager = get_segregation_manager()
-            
-            # Ensure tenant isolation
-            tenant_id = parameters.get("tenant_id", agent_context.tenant_id)
-            if tenant_id != agent_context.tenant_id:
-                return {"error": "Cross-tenant access denied", "code": "CROSS_TENANT_ACCESS"}
-            
-            # Check quotas
-            if not segregation_manager.check_resource_quota(agent_context, "requests_per_hour"):
-                return {"error": "Request quota exceeded", "code": "QUOTA_EXCEEDED"}
-            
-            # Get tenant-specific portfolio data
-            portfolio_data = await self._get_tenant_portfolio(agent_context)
-            
-            segregation_manager.consume_resource(agent_context, "requests_per_hour")
-            
-            return {
-                "success": True,
-                "portfolio": portfolio_data,
-                "tenant_id": agent_context.tenant_id,
-                "agent_id": agent_context.agent_id,
-                "timestamp": datetime.utcnow().isoformat()
-            }
-            
-        except Exception as e:
-            logger.error("Portfolio access failed for agent %s: %s", agent_context.agent_id, e)
-            return {"error": str(e), "code": "EXECUTION_FAILED"}
-    
-    async def _get_tenant_portfolio(self, agent_context: AgentContext) -> Dict[str, Any]:
-        """Get portfolio data scoped to tenant from real database"""
-        try:
-            # TODO: Connect to real tenant-specific portfolio database
-            # This should query actual portfolio data from database/API
-            return {
-                "error": "Real portfolio database integration required",
-                "status": "not_implemented",
-                "tenant_id": agent_context.tenant_id
-            }
-        except Exception as e:
-            logger.error("Portfolio database query failed for tenant %s: %s", agent_context.tenant_id, e)
-            return {
-                "error": str(e),
-                "status": "database_error",
-                "tenant_id": agent_context.tenant_id
-            }
 
 class MarketDataTool:
     """Segregated market data tool"""
@@ -215,12 +158,20 @@ class TradingOperationsTool:
     async def _execute_trading_operation(self, operation: str, parameters: Dict[str, Any], agent_context: AgentContext) -> Dict[str, Any]:
         """Execute trading operation scoped to tenant"""
         if operation == "place_order":
+            # Require real trading parameters - no defaults for price
+            symbol = parameters.get("symbol")
+            amount = parameters.get("amount")
+            price = parameters.get("price")
+            
+            if not symbol or not amount or not price:
+                raise ValueError("place_order requires symbol, amount, and price - no defaults provided")
+            
             return {
                 "order_id": f"order_{agent_context.tenant_id}_{int(time.time())}",
                 "status": "pending",
-                "symbol": parameters.get("symbol", "BTC"),
-                "amount": parameters.get("amount", 0.1),
-                "price": parameters.get("price", 45000.0)
+                "symbol": symbol,
+                "amount": amount,
+                "price": price
             }
         elif operation == "cancel_order":
             return {

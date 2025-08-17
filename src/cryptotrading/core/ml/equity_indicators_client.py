@@ -28,7 +28,7 @@ class EquityIndicatorsClient:
         
         # Currency & Volatility
         'DX-Y.NYB': {'name': 'US Dollar Index', 'correlation': -0.35, 'category': 'currency'},
-        '^VIX': {'name': 'CBOE Volatility Index', 'correlation': 0.49, 'category': 'volatility'},
+        '^VIX': {'name': 'CBOE Volatility Index (via Yahoo Finance)', 'correlation': 0.49, 'category': 'volatility'},
         
         # Bond Markets
         '^TNX': {'name': '10-Year Treasury Yield', 'correlation': -0.25, 'category': 'bonds'},
