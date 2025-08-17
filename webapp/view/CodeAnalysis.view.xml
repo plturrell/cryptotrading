@@ -389,7 +389,7 @@
                         
                         <!-- Blind Spots and Issues -->
                         <VBox class="sapUiMediumMargin">
-                            <Title text="Blind Spots & Issues" level="H3" class="sapUiMediumMarginBottom"/>
+                            <Title text="Blind Spots &amp; Issues" level="H3" class="sapUiMediumMarginBottom"/>
                             
                             <Table id="blindSpotsTable"
                                    items="{blindSpots>/}"

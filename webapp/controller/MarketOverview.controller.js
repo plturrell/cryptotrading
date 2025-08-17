@@ -92,7 +92,7 @@ sap.ui.define([
                 xrp: { price: 0, change24h: 0 }
             });
             this.getView().setModel(oLocalMarketModel, "localMarket");
-        }
+        },
         
         _loadMarketData: function() {
             // Trigger market data refresh via EventBus

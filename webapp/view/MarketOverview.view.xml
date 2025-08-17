@@ -130,7 +130,7 @@
                                 </suite:NumericTile>
                                 
                                 <suite:NumericTile
-                                    header="Fear & Greed"
+                                    header="Fear &amp; Greed"
                                     subheader="Market sentiment"
                                     value="{market>/fearGreedIndex}"
                                     valueColor="{path: 'market>/fearGreedIndex', formatter: '.formatSentimentColor'}"

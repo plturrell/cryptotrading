@@ -56,5 +56,359 @@ sap.ui.define([
             }
         },
         
-        /**\n         * Update market data for multiple symbols\n         * @param {Object} oMarketData - Market data object\n         */\n        updateMarketData: function(oMarketData) {\n            var oCurrentData = this.getProperty("/symbols") || {};\n            var oUpdatedData = Object.assign({}, oCurrentData);\n            \n            // Process each symbol\n            var that = this;
-            Object.keys(oMarketData).forEach(function(sSymbol) {\n                var oSymbolData = oMarketData[sSymbol];\n                var oOldData = oUpdatedData[sSymbol] || {};\n                \n                // Validate symbol data\n                if (this._validateSymbolData(sSymbol, oSymbolData)) {\n                    oUpdatedData[sSymbol] = this._processSymbolData(oSymbolData, oOldData);\n                    \n                    // Fire price change event if price changed\n                    if (oOldData.price && oOldData.price !== oSymbolData.price) {\n                        this._oEventBusManager.publishPriceChanged(\n                            sSymbol, oOldData.price, oSymbolData.price\n                        );\n                    }\n                }\n            });\n            \n            // Update the model\n            this.setProperty("/symbols", oUpdatedData);\n            this.setProperty("/lastUpdate", new Date().toISOString());\n            \n            // Calculate and update market statistics\n            this._updateMarketStatistics(oUpdatedData);\n            \n            // Publish market data updated event\n            this._oEventBusManager.publishMarketDataUpdated(oUpdatedData);\n        },\n        \n        /**\n         * Update single symbol data\n         * @param {string} sSymbol - Symbol to update\n         * @param {Object} oSymbolData - Symbol data\n         */\n        updateSymbol: function(sSymbol, oSymbolData) {\n            var sPath = "/symbols/" + sSymbol;\n            var oOldData = this.getProperty(sPath) || {};\n            \n            if (this._validateSymbolData(sSymbol, oSymbolData)) {\n                var oProcessedData = this._processSymbolData(oSymbolData, oOldData);\n                this.updateObject(sPath, oProcessedData);\n                \n                // Fire price change event\n                if (oOldData.price && oOldData.price !== oSymbolData.price) {\n                    this._oEventBusManager.publishPriceChanged(\n                        sSymbol, oOldData.price, oSymbolData.price\n                    );\n                }\n            }\n        },\n        \n        /**\n         * Get symbol data\n         * @param {string} sSymbol - Symbol to get\n         * @returns {Object} Symbol data\n         */\n        getSymbolData: function(sSymbol) {\n            return this.getProperty("/symbols/" + sSymbol) || {};\n        },\n        \n        /**\n         * Get all symbols\n         * @returns {Array} Array of symbol names\n         */\n        getSymbols: function() {\n            var oSymbols = this.getProperty("/symbols") || {};\n            return Object.keys(oSymbols);\n        },\n        \n        /**\n         * Get market statistics\n         * @returns {Object} Market statistics\n         */\n        getMarketStatistics: function() {\n            return this.getProperty("/statistics") || {};\n        },\n        \n        /**\n         * Add symbol to watchlist\n         * @param {string} sSymbol - Symbol to add\n         */\n        addToWatchlist: function(sSymbol) {\n            this.addToArray("/watchlist", sSymbol);\n        },\n        \n        /**\n         * Remove symbol from watchlist\n         * @param {string} sSymbol - Symbol to remove\n         */\n        removeFromWatchlist: function(sSymbol) {\n            this.removeFromArray("/watchlist", (item) => item === sSymbol);\n        },\n        \n        /**\n         * Set connection status\n         * @param {boolean} bConnected - Connection status\n         */\n        setConnectionStatus: function(bConnected) {\n            this.setProperty("/connectionStatus", bConnected);\n            this._oEventBusManager.publish(\n                this._oEventBusManager.CHANNELS.MARKET,\n                this._oEventBusManager.EVENTS.MARKET.CONNECTION_STATUS,\n                { connected: bConnected }\n            );\n        },\n        \n        /**\n         * Set loading state\n         * @param {boolean} bLoading - Loading state\n         */\n        setLoading: function(bLoading) {\n            this.setProperty("/loading", bLoading);\n        },\n        \n        /**\n         * Set error state\n         * @param {Object|string} vError - Error object or message\n         */\n        setError: function(vError) {\n            var oError = typeof vError === 'string' ? { message: vError } : vError;\n            this.setProperty("/error", oError);\n            \n            if (oError) {\n                this._oEventBusManager.publish(\n                    this._oEventBusManager.CHANNELS.MARKET,\n                    this._oEventBusManager.EVENTS.MARKET.ERROR_OCCURRED,\n                    { error: oError }\n                );\n            }\n        },\n        \n        /**\n         * Refresh market data\n         */\n        refreshMarketData: function() {\n            this.setLoading(true);\n            this.setError(null);\n            \n            // Fire refresh requested event\n            this._oEventBusManager.publish(\n                this._oEventBusManager.CHANNELS.MARKET,\n                this._oEventBusManager.EVENTS.MARKET.REFRESH_REQUESTED,\n                { timestamp: new Date().toISOString() }\n            );\n            \n            // Actual refresh logic would be handled by the component\n            // This is just the data model management\n        },\n        \n        /**\n         * Get formatted price\n         * @param {string} sSymbol - Symbol\n         * @returns {string} Formatted price\n         */\n        getFormattedPrice: function(sSymbol) {\n            var oSymbolData = this.getSymbolData(sSymbol);\n            if (!oSymbolData.price) return "N/A";\n            \n            return new Intl.NumberFormat('en-US', {\n                style: 'currency',\n                currency: 'USD',\n                minimumFractionDigits: 2,\n                maximumFractionDigits: oSymbolData.price > 1 ? 2 : 6\n            }).format(oSymbolData.price);\n        },\n        \n        /**\n         * Get price change indicator\n         * @param {string} sSymbol - Symbol\n         * @returns {string} Indicator (Up, Down, Neutral)\n         */\n        getPriceIndicator: function(sSymbol) {\n            var oSymbolData = this.getSymbolData(sSymbol);\n            var nChange = oSymbolData.change24h || 0;\n            \n            if (nChange > 0) return "Up";\n            if (nChange < 0) return "Down";\n            return "Neutral";\n        },\n        \n        /**\n         * Initialize market data structure\n         * @private\n         */\n        _getInitialMarketData: function() {\n            return {\n                symbols: {},\n                statistics: {\n                    totalMarketCap: 0,\n                    totalVolume24h: 0,\n                    activeSymbols: 0,\n                    gainers: [],\n                    losers: []\n                },\n                watchlist: ["BTC", "ETH", "BNB", "SOL", "XRP"],\n                connectionStatus: false,\n                loading: false,\n                error: null,\n                lastUpdate: null\n            };\n        },\n        \n        /**\n         * Process symbol data with calculations\n         * @private\n         */\n        _processSymbolData: function(oNewData, oOldData) {\n            var oProcessed = Object.assign({}, oNewData);\n            \n            // Calculate additional fields\n            if (oProcessed.price && oOldData.price) {\n                oProcessed.priceChange = oProcessed.price - oOldData.price;\n                oProcessed.priceChangePercent = \n                    ((oProcessed.price - oOldData.price) / oOldData.price * 100).toFixed(2);\n            }\n            \n            // Add timestamp\n            oProcessed.lastUpdate = new Date().toISOString();\n            \n            // Preserve price history (last 24 hours)\n            oProcessed.priceHistory = oOldData.priceHistory || [];\n            if (oProcessed.price) {\n                oProcessed.priceHistory.push({\n                    price: oProcessed.price,\n                    timestamp: new Date().toISOString()\n                });\n                \n                // Keep only last 24 hours (assuming 5-minute intervals)\n                if (oProcessed.priceHistory.length > 288) {\n                    oProcessed.priceHistory = oProcessed.priceHistory.slice(-288);\n                }\n            }\n            \n            return oProcessed;\n        },\n        \n        /**\n         * Update market statistics\n         * @private\n         */\n        _updateMarketStatistics: function(oSymbolsData) {\n            var aSymbols = Object.values(oSymbolsData);\n            \n            var oStatistics = {\n                totalMarketCap: aSymbols.reduce((sum, symbol) => \n                    sum + (symbol.marketCap || 0), 0),\n                totalVolume24h: aSymbols.reduce((sum, symbol) => \n                    sum + (symbol.volume24h || 0), 0),\n                activeSymbols: aSymbols.length,\n                gainers: aSymbols\n                    .filter(symbol => (symbol.change24h || 0) > 0)\n                    .sort((a, b) => (b.change24h || 0) - (a.change24h || 0))\n                    .slice(0, 5),\n                losers: aSymbols\n                    .filter(symbol => (symbol.change24h || 0) < 0)\n                    .sort((a, b) => (a.change24h || 0) - (b.change24h || 0))\n                    .slice(0, 5)\n            };\n            \n            this.updateObject("/statistics", oStatistics);\n        },\n        \n        /**\n         * Initialize validation schema\n         * @private\n         */\n        _initializeValidationSchema: function() {\n            this._oValidationSchema = {\n                symbols: {\n                    type: 'object',\n                    required: false\n                }\n            };\n            \n            this._oSymbolSchema = {\n                price: { type: 'number', required: true },\n                change24h: { type: 'number', required: false },\n                volume24h: { type: 'number', required: false },\n                marketCap: { type: 'number', required: false },\n                high24h: { type: 'number', required: false },\n                low24h: { type: 'number', required: false }\n            };\n        },\n        \n        /**\n         * Validate symbol data\n         * @private\n         */\n        _validateSymbolData: function(sSymbol, oData) {\n            if (!sSymbol || typeof sSymbol !== 'string') {\n                console.error("Invalid symbol:", sSymbol);\n                return false;\n            }\n            \n            if (!oData || typeof oData !== 'object') {\n                console.error("Invalid symbol data for", sSymbol);\n                return false;\n            }\n            \n            // Validate required fields\n            if (typeof oData.price !== 'number' || oData.price <= 0) {\n                console.error("Invalid price for", sSymbol, oData.price);\n                return false;\n            }\n            \n            return true;\n        },\n        \n        /**\n         * Setup event handlers\n         * @private\n         */\n        _setupEventHandlers: function() {\n            // Listen for system events that might affect market data\n            this._oEventBusManager.subscribe(\n                this._oEventBusManager.CHANNELS.SYSTEM,\n                this._oEventBusManager.EVENTS.SYSTEM.ERROR_GLOBAL,\n                this._onSystemError.bind(this),\n                this\n            );\n        },\n        \n        /**\n         * Handle system errors\n         * @private\n         */\n        _onSystemError: function(sChannel, sEvent, oData) {\n            if (oData.component === 'market') {\n                this.setError(oData.error);\n                this.setLoading(false);\n            }\n        },\n        \n        /**\n         * Cleanup\n         */\n        destroy: function() {\n            this.stopAutoRefresh();\n            \n            if (this._oEventBusManager) {\n                this._oEventBusManager.destroy();\n            }\n            \n            DataManager.prototype.destroy.apply(this, arguments);\n        }\n    });\n});
+        /**
+         * Update market data for multiple symbols
+         * @param {Object} oMarketData - Market data object
+         */
+        updateMarketData: function(oMarketData) {
+            var oCurrentData = this.getProperty("/symbols") || {};
+            var oUpdatedData = Object.assign({}, oCurrentData);
+            
+            // Process each symbol
+            var that = this;
+            Object.keys(oMarketData).forEach(function(sSymbol) {
+                var oSymbolData = oMarketData[sSymbol];
+                var oOldData = oUpdatedData[sSymbol] || {};
+                
+                // Validate symbol data
+                if (this._validateSymbolData(sSymbol, oSymbolData)) {
+                    oUpdatedData[sSymbol] = this._processSymbolData(oSymbolData, oOldData);
+                    
+                    // Fire price change event if price changed
+                    if (oOldData.price && oOldData.price !== oSymbolData.price) {
+                        this._oEventBusManager.publishPriceChanged(
+                            sSymbol, oOldData.price, oSymbolData.price
+                        );
+                    }
+                }
+            });
+            
+            // Update the model
+            this.setProperty("/symbols", oUpdatedData);
+            this.setProperty("/lastUpdate", new Date().toISOString());
+            
+            // Calculate and update market statistics
+            this._updateMarketStatistics(oUpdatedData);
+            
+            // Publish market data updated event
+            this._oEventBusManager.publishMarketDataUpdated(oUpdatedData);
+        },
+        
+        /**
+         * Update single symbol data
+         * @param {string} sSymbol - Symbol to update
+         * @param {Object} oSymbolData - Symbol data
+         */
+        updateSymbol: function(sSymbol, oSymbolData) {
+            var sPath = "/symbols/" + sSymbol;
+            var oOldData = this.getProperty(sPath) || {};
+            
+            if (this._validateSymbolData(sSymbol, oSymbolData)) {
+                var oProcessedData = this._processSymbolData(oSymbolData, oOldData);
+                this.updateObject(sPath, oProcessedData);
+                
+                // Fire price change event
+                if (oOldData.price && oOldData.price !== oSymbolData.price) {
+                    this._oEventBusManager.publishPriceChanged(
+                        sSymbol, oOldData.price, oSymbolData.price
+                    );
+                }
+            }
+        },
+        
+        /**
+         * Get symbol data
+         * @param {string} sSymbol - Symbol to get
+         * @returns {Object} Symbol data
+         */
+        getSymbolData: function(sSymbol) {
+            return this.getProperty("/symbols/" + sSymbol) || {};
+        },
+        
+        /**
+         * Get all symbols
+         * @returns {Array} Array of symbol names
+         */
+        getSymbols: function() {
+            var oSymbols = this.getProperty("/symbols") || {};
+            return Object.keys(oSymbols);
+        },
+        
+        /**
+         * Get market statistics
+         * @returns {Object} Market statistics
+         */
+        getMarketStatistics: function() {
+            return this.getProperty("/statistics") || {};
+        },
+        
+        /**
+         * Add symbol to watchlist
+         * @param {string} sSymbol - Symbol to add
+         */
+        addToWatchlist: function(sSymbol) {
+            this.addToArray("/watchlist", sSymbol);
+        },
+        
+        /**
+         * Remove symbol from watchlist
+         * @param {string} sSymbol - Symbol to remove
+         */
+        removeFromWatchlist: function(sSymbol) {
+            this.removeFromArray("/watchlist", (item) => item === sSymbol);
+        },
+        
+        /**
+         * Set connection status
+         * @param {boolean} bConnected - Connection status
+         */
+        setConnectionStatus: function(bConnected) {
+            this.setProperty("/connectionStatus", bConnected);
+            this._oEventBusManager.publish(
+                this._oEventBusManager.CHANNELS.MARKET,
+                this._oEventBusManager.EVENTS.MARKET.CONNECTION_STATUS,
+                { connected: bConnected }
+            );
+        },
+        
+        /**
+         * Set loading state
+         * @param {boolean} bLoading - Loading state
+         */
+        setLoading: function(bLoading) {
+            this.setProperty("/loading", bLoading);
+        },
+        
+        /**
+         * Set error state
+         * @param {Object|string} vError - Error object or message
+         */
+        setError: function(vError) {
+            var oError = typeof vError === 'string' ? { message: vError } : vError;
+            this.setProperty("/error", oError);
+            
+            if (oError) {
+                this._oEventBusManager.publish(
+                    this._oEventBusManager.CHANNELS.MARKET,
+                    this._oEventBusManager.EVENTS.MARKET.ERROR_OCCURRED,
+                    { error: oError }
+                );
+            }
+        },
+        
+        /**
+         * Refresh market data
+         */
+        refreshMarketData: function() {
+            this.setLoading(true);
+            this.setError(null);
+            
+            // Fire refresh requested event
+            this._oEventBusManager.publish(
+                this._oEventBusManager.CHANNELS.MARKET,
+                this._oEventBusManager.EVENTS.MARKET.REFRESH_REQUESTED,
+                { timestamp: new Date().toISOString() }
+            );
+            
+            // Actual refresh logic would be handled by the component
+            // This is just the data model management
+        },
+        
+        /**
+         * Get formatted price
+         * @param {string} sSymbol - Symbol
+         * @returns {string} Formatted price
+         */
+        getFormattedPrice: function(sSymbol) {
+            var oSymbolData = this.getSymbolData(sSymbol);
+            if (!oSymbolData.price) return "N/A";
+            
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: oSymbolData.price > 1 ? 2 : 6
+            }).format(oSymbolData.price);
+        },
+        
+        /**
+         * Get price change indicator
+         * @param {string} sSymbol - Symbol
+         * @returns {string} Indicator (Up, Down, Neutral)
+         */
+        getPriceIndicator: function(sSymbol) {
+            var oSymbolData = this.getSymbolData(sSymbol);
+            var nChange = oSymbolData.change24h || 0;
+            
+            if (nChange > 0) return "Up";
+            if (nChange < 0) return "Down";
+            return "Neutral";
+        },
+        
+        /**
+         * Initialize market data structure
+         * @private
+         */
+        _getInitialMarketData: function() {
+            return {
+                symbols: {},
+                statistics: {
+                    totalMarketCap: 0,
+                    totalVolume24h: 0,
+                    activeSymbols: 0,
+                    gainers: [],
+                    losers: []
+                },
+                watchlist: ["BTC", "ETH", "BNB", "SOL", "XRP"],
+                connectionStatus: false,
+                loading: false,
+                error: null,
+                lastUpdate: null
+            };
+        },
+        
+        /**
+         * Process symbol data with calculations
+         * @private
+         */
+        _processSymbolData: function(oNewData, oOldData) {
+            var oProcessed = Object.assign({}, oNewData);
+            
+            // Calculate additional fields
+            if (oProcessed.price && oOldData.price) {
+                oProcessed.priceChange = oProcessed.price - oOldData.price;
+                oProcessed.priceChangePercent = 
+                    ((oProcessed.price - oOldData.price) / oOldData.price * 100).toFixed(2);
+            }
+            
+            // Add timestamp
+            oProcessed.lastUpdate = new Date().toISOString();
+            
+            // Preserve price history (last 24 hours)
+            oProcessed.priceHistory = oOldData.priceHistory || [];
+            if (oProcessed.price) {
+                oProcessed.priceHistory.push({
+                    price: oProcessed.price,
+                    timestamp: new Date().toISOString()
+                });
+                
+                // Keep only last 24 hours (assuming 5-minute intervals)
+                if (oProcessed.priceHistory.length > 288) {
+                    oProcessed.priceHistory = oProcessed.priceHistory.slice(-288);
+                }
+            }
+            
+            return oProcessed;
+        },
+        
+        /**
+         * Update market statistics
+         * @private
+         */
+        _updateMarketStatistics: function(oSymbolsData) {
+            var aSymbols = Object.values(oSymbolsData);
+            
+            var oStatistics = {
+                totalMarketCap: aSymbols.reduce((sum, symbol) => 
+                    sum + (symbol.marketCap || 0), 0),
+                totalVolume24h: aSymbols.reduce((sum, symbol) => 
+                    sum + (symbol.volume24h || 0), 0),
+                activeSymbols: aSymbols.length,
+                gainers: aSymbols
+                    .filter(symbol => (symbol.change24h || 0) > 0)
+                    .sort((a, b) => (b.change24h || 0) - (a.change24h || 0))
+                    .slice(0, 5),
+                losers: aSymbols
+                    .filter(symbol => (symbol.change24h || 0) < 0)
+                    .sort((a, b) => (a.change24h || 0) - (b.change24h || 0))
+                    .slice(0, 5)
+            };
+            
+            this.updateObject("/statistics", oStatistics);
+        },
+        
+        /**
+         * Initialize validation schema
+         * @private
+         */
+        _initializeValidationSchema: function() {
+            this._oValidationSchema = {
+                symbols: {
+                    type: 'object',
+                    required: false
+                }
+            };
+            
+            this._oSymbolSchema = {
+                price: { type: 'number', required: true },
+                change24h: { type: 'number', required: false },
+                volume24h: { type: 'number', required: false },
+                marketCap: { type: 'number', required: false },
+                high24h: { type: 'number', required: false },
+                low24h: { type: 'number', required: false }
+            };
+        },
+        
+        /**
+         * Validate symbol data
+         * @private
+         */
+        _validateSymbolData: function(sSymbol, oData) {
+            if (!sSymbol || typeof sSymbol !== 'string') {
+                console.error("Invalid symbol:", sSymbol);
+                return false;
+            }
+            
+            if (!oData || typeof oData !== 'object') {
+                console.error("Invalid symbol data for", sSymbol);
+                return false;
+            }
+            
+            // Validate required fields
+            if (typeof oData.price !== 'number' || oData.price <= 0) {
+                console.error("Invalid price for", sSymbol, oData.price);
+                return false;
+            }
+            
+            return true;
+        },
+        
+        /**
+         * Setup event handlers
+         * @private
+         */
+        _setupEventHandlers: function() {
+            // Listen for system events that might affect market data
+            this._oEventBusManager.subscribe(
+                this._oEventBusManager.CHANNELS.SYSTEM,
+                this._oEventBusManager.EVENTS.SYSTEM.ERROR_GLOBAL,
+                this._onSystemError.bind(this),
+                this
+            );
+        },
+        
+        /**
+         * Handle system errors
+         * @private
+         */
+        _onSystemError: function(sChannel, sEvent, oData) {
+            if (oData.component === 'market') {
+                this.setError(oData.error);
+                this.setLoading(false);
+            }
+        },
+        
+        /**
+         * Cleanup
+         */
+        destroy: function() {
+            this.stopAutoRefresh();
+            
+            if (this._oEventBusManager) {
+                this._oEventBusManager.destroy();
+            }
+            
+            DataManager.prototype.destroy.apply(this, arguments);
+        }
+    });
+});

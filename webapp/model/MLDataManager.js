@@ -30,4 +30,450 @@ sap.ui.define([
          * Update predictions for multiple symbols
          * @param {Object} oPredictions - Predictions data by symbol
          */
-        updatePredictions: function(oPredictions) {\n            var oCurrentPredictions = this.getProperty("/predictions") || {};\n            var oUpdatedPredictions = Object.assign({}, oCurrentPredictions);\n            \n            // Process each symbol's predictions\n            Object.keys(oPredictions).forEach(sSymbol => {\n                var oPrediction = oPredictions[sSymbol];\n                if (this._validatePrediction(sSymbol, oPrediction)) {\n                    oUpdatedPredictions[sSymbol] = this._processPrediction(oPrediction);\n                }\n            });\n            \n            this.setProperty("/predictions", oUpdatedPredictions);\n            this.setProperty("/lastPredictionUpdate", new Date().toISOString());\n            \n            // Publish predictions updated event\n            this._oEventBusManager.publishPredictionsUpdated(oUpdatedPredictions);\n        },\n        \n        /**\n         * Update prediction for single symbol\n         * @param {string} sSymbol - Symbol to update\n         * @param {Object} oPrediction - Prediction data\n         */\n        updateSymbolPrediction: function(sSymbol, oPrediction) {\n            if (this._validatePrediction(sSymbol, oPrediction)) {\n                var oProcessedPrediction = this._processPrediction(oPrediction);\n                this.setProperty(`/predictions/${sSymbol}`, oProcessedPrediction);\n                \n                // Add to prediction history\n                this._addToPredictionHistory(sSymbol, oProcessedPrediction);\n            }\n        },\n        \n        /**\n         * Update model performance metrics\n         * @param {string} sModelName - Model name\n         * @param {Object} oMetrics - Performance metrics\n         */\n        updateModelPerformance: function(sModelName, oMetrics) {\n            if (this._validateMetrics(oMetrics)) {\n                var oProcessedMetrics = this._processMetrics(oMetrics);\n                this.setProperty(`/models/${sModelName}/performance`, oProcessedMetrics);\n                this.setProperty(`/models/${sModelName}/lastEvaluation`, new Date().toISOString());\n            }\n        },\n        \n        /**\n         * Start model training\n         * @param {string} sModelName - Model name\n         * @param {Object} oTrainingConfig - Training configuration\n         */\n        startModelTraining: function(sModelName, oTrainingConfig) {\n            var oTrainingData = {\n                status: "training",\n                progress: 0,\n                startedAt: new Date().toISOString(),\n                config: oTrainingConfig || {},\n                logs: []\n            };\n            \n            this.setProperty(`/models/${sModelName}/training`, oTrainingData);\n            this.setProperty("/globalTrainingStatus", "active");\n        },\n        \n        /**\n         * Update training progress\n         * @param {string} sModelName - Model name\n         * @param {number} nProgress - Progress percentage (0-100)\n         * @param {string} sMessage - Progress message\n         */\n        updateTrainingProgress: function(sModelName, nProgress, sMessage) {\n            this.setProperty(`/models/${sModelName}/training/progress`, nProgress);\n            this.setProperty(`/models/${sModelName}/training/lastUpdate`, new Date().toISOString());\n            \n            if (sMessage) {\n                this.addToArray(`/models/${sModelName}/training/logs`, {\n                    message: sMessage,\n                    progress: nProgress,\n                    timestamp: new Date().toISOString()\n                });\n            }\n            \n            // Publish training progress event\n            this._oEventBusManager.publish(\n                this._oEventBusManager.CHANNELS.ML,\n                this._oEventBusManager.EVENTS.ML.TRAINING_PROGRESS,\n                { modelName: sModelName, progress: nProgress, message: sMessage }\n            );\n        },\n        \n        /**\n         * Compvare model training\n         * @param {string} sModelName - Model name\n         * @param {Object} oResults - Training results\n         */\n        compvareModelTraining: function(sModelName, oResults) {\n            this.updateObject(`/models/${sModelName}/training`, {\n                status: "compvared",\n                progress: 100,\n                compvaredAt: new Date().toISOString(),\n                results: oResults || {}\n            });\n            \n            // Check if all models are done training\n            var oModels = this.getProperty("/models") || {};\n            var bAllCompvare = Object.values(oModels).every(model => \n                !model.training || model.training.status !== "training"\n            );\n            \n            if (bAllCompvare) {\n                this.setProperty("/globalTrainingStatus", "idle");\n            }\n            \n            // Publish model trained event\n            this._oEventBusManager.publishModelTrained(sModelName, oResults);\n        },\n        \n        /**\n         * Set training error\n         * @param {string} sModelName - Model name\n         * @param {Object|string} vError - Error data\n         */\n        setTrainingError: function(sModelName, vError) {\n            var oError = typeof vError === 'string' ? { message: vError } : vError;\n            \n            this.updateObject(`/models/${sModelName}/training`, {\n                status: "error",\n                error: oError,\n                failedAt: new Date().toISOString()\n            });\n            \n            this._oEventBusManager.publish(\n                this._oEventBusManager.CHANNELS.ML,\n                this._oEventBusManager.EVENTS.ML.ERROR_OCCURRED,\n                { modelName: sModelName, error: oError }\n            );\n        },\n        \n        /**\n         * Get prediction for symbol\n         * @param {string} sSymbol - Symbol\n         * @returns {Object} Prediction data\n         */\n        getPrediction: function(sSymbol) {\n            return this.getProperty(`/predictions/${sSymbol}`) || {};\n        },\n        \n        /**\n         * Get all predictions\n         * @returns {Object} All predictions\n         */\n        getAllPredictions: function() {\n            return this.getProperty("/predictions") || {};\n        },\n        \n        /**\n         * Get model information\n         * @param {string} sModelName - Model name\n         * @returns {Object} Model data\n         */\n        getModel: function(sModelName) {\n            return this.getProperty(`/models/${sModelName}`) || {};\n        },\n        \n        /**\n         * Get all models\n         * @returns {Object} All models\n         */\n        getAllModels: function() {\n            return this.getProperty("/models") || {};\n        },\n        \n        /**\n         * Get prediction history for symbol\n         * @param {string} sSymbol - Symbol\n         * @param {number} iLimit - Maximum number of predictions\n         * @returns {Array} Prediction history\n         */\n        getPredictionHistory: function(sSymbol, iLimit) {\n            var aHistory = this.getProperty(`/predictionHistory/${sSymbol}`) || [];\n            return iLimit ? aHistory.slice(0, iLimit) : aHistory;\n        },\n        \n        /**\n         * Get global ML statistics\n         * @returns {Object} Statistics\n         */\n        getStatistics: function() {\n            return this.getProperty("/statistics") || {};\n        },\n        \n        /**\n         * Set loading state\n         * @param {boolean} bLoading - Loading state\n         * @param {string} sOperation - Operation being performed\n         */\n        setLoading: function(bLoading, sOperation) {\n            this.setProperty("/loading", bLoading);\n            if (sOperation) {\n                this.setProperty("/currentOperation", sOperation);\n            }\n        },\n        \n        /**\n         * Set error state\n         * @param {Object|string} vError - Error data\n         */\n        setError: function(vError) {\n            var oError = typeof vError === 'string' ? { message: vError } : vError;\n            this.setProperty("/error", oError);\n            \n            if (oError) {\n                this._oEventBusManager.publish(\n                    this._oEventBusManager.CHANNELS.ML,\n                    this._oEventBusManager.EVENTS.ML.ERROR_OCCURRED,\n                    { error: oError }\n                );\n            }\n        },\n        \n        /**\n         * Clear error state\n         */\n        clearError: function() {\n            this.setProperty("/error", null);\n        },\n        \n        /**\n         * Get confidence level description\n         * @param {number} nConfidence - Confidence value (0-1)\n         * @returns {string} Description\n         */\n        getConfidenceDescription: function(nConfidence) {\n            if (nConfidence >= 0.8) return "High";\n            if (nConfidence >= 0.6) return "Medium";\n            if (nConfidence >= 0.4) return "Low";\n            return "Very Low";\n        },\n        \n        /**\n         * Format prediction direction\n         * @param {string} sSymbol - Symbol\n         * @returns {string} Direction (Up, Down, Neutral)\n         */\n        getPredictionDirection: function(sSymbol) {\n            var oPrediction = this.getPrediction(sSymbol);\n            if (!oPrediction.predictedChange) return "Neutral";\n            \n            var nChange = parseFloat(oPrediction.predictedChange);\n            if (nChange > 1) return "Up";\n            if (nChange < -1) return "Down";\n            return "Neutral";\n        },\n        \n        /**\n         * Initialize ML data structure\n         * @private\n         */\n        _getInitialMLData: function() {\n            return {\n                predictions: {},\n                models: {\n                    "LSTM": {\n                        name: "LSTM",\n                        type: "neural_network",\n                        status: "ready",\n                        performance: {},\n                        training: null,\n                        lastEvaluation: null\n                    },\n                    "RandomForest": {\n                        name: "RandomForest",\n                        type: "ensemble",\n                        status: "ready",\n                        performance: {},\n                        training: null,\n                        lastEvaluation: null\n                    }\n                },\n                predictionHistory: {},\n                statistics: {\n                    totalPredictions: 0,\n                    successfulPredictions: 0,\n                    accuracy: 0,\n                    modelsActive: 2\n                },\n                globalTrainingStatus: "idle",\n                lastPredictionUpdate: null,\n                loading: false,\n                currentOperation: null,\n                error: null\n            };\n        },\n        \n        /**\n         * Process prediction data\n         * @private\n         */\n        _processPrediction: function(oPrediction) {\n            return {\n                currentPrice: oPrediction.currentPrice || 0,\n                predictedPrice: oPrediction.predictedPrice || 0,\n                predictedChange: oPrediction.predictedChange || 0,\n                confidence: oPrediction.confidence || 0,\n                horizon: oPrediction.horizon || "24h",\n                model: oPrediction.model || "unknown",\n                features: oPrediction.features || {},\n                timestamp: new Date().toISOString(),\n                expiresAt: this._calculateExpiration(oPrediction.horizon)\n            };\n        },\n        \n        /**\n         * Process performance metrics\n         * @private\n         */\n        _processMetrics: function(oMetrics) {\n            return {\n                accuracy: oMetrics.accuracy || 0,\n                precision: oMetrics.precision || 0,\n                recall: oMetrics.recall || 0,\n                f1Score: oMetrics.f1Score || 0,\n                mape: oMetrics.mape || 0, // Mean Absolute Percentage Error\n                rmse: oMetrics.rmse || 0, // Root Mean Square Error\n                sharpeRatio: oMetrics.sharpeRatio || 0,\n                evaluatedAt: new Date().toISOString()\n            };\n        },\n        \n        /**\n         * Add prediction to history\n         * @private\n         */\n        _addToPredictionHistory: function(sSymbol, oPrediction) {\n            var sPath = `/predictionHistory/${sSymbol}`;\n            this.addToArray(sPath, oPrediction, 0); // Add to beginning\n            \n            // Limit history size\n            var aHistory = this.getProperty(sPath) || [];\n            if (aHistory.length > 50) {\n                this.setProperty(sPath, aHistory.slice(0, 50));\n            }\n        },\n        \n        /**\n         * Calculate prediction expiration\n         * @private\n         */\n        _calculateExpiration: function(sHorizon) {\n            var oNow = new Date();\n            var iHours = this._parseHorizon(sHorizon);\n            return new Date(oNow.getTime() + (iHours * 60 * 60 * 1000)).toISOString();\n        },\n        \n        /**\n         * Parse horizon string to hours\n         * @private\n         */\n        _parseHorizon: function(sHorizon) {\n            if (sHorizon.includes('h')) {\n                return parseInt(sHorizon.replace('h', ''));\n            }\n            if (sHorizon.includes('d')) {\n                return parseInt(sHorizon.replace('d', '')) * 24;\n            }\n            return 24; // Default to 24 hours\n        },\n        \n        /**\n         * Validate prediction data\n         * @private\n         */\n        _validatePrediction: function(sSymbol, oPrediction) {\n            if (!sSymbol || typeof sSymbol !== 'string') {\n                console.error("Invalid symbol for prediction:", sSymbol);\n                return false;\n            }\n            \n            if (!oPrediction || typeof oPrediction !== 'object') {\n                console.error("Invalid prediction data for", sSymbol);\n                return false;\n            }\n            \n            if (typeof oPrediction.predictedPrice !== 'number' || oPrediction.predictedPrice <= 0) {\n                console.error("Invalid predicted price for", sSymbol);\n                return false;\n            }\n            \n            return true;\n        },\n        \n        /**\n         * Validate metrics data\n         * @private\n         */\n        _validateMetrics: function(oMetrics) {\n            return oMetrics && typeof oMetrics === 'object';\n        },\n        \n        /**\n         * Initialize validation schema\n         * @private\n         */\n        _initializeValidationSchema: function() {\n            this._oValidationSchema = {\n                predictions: { type: 'object', required: false },\n                models: { type: 'object', required: true },\n                statistics: { type: 'object', required: false }\n            };\n        },\n        \n        /**\n         * Setup event handlers\n         * @private\n         */\n        _setupEventHandlers: function() {\n            // Listen for market data changes to trigger predictions\n            this._oEventBusManager.subscribe(\n                this._oEventBusManager.CHANNELS.MARKET,\n                this._oEventBusManager.EVENTS.MARKET.DATA_UPDATED,\n                this._onMarketDataUpdated.bind(this),\n                this\n            );\n        },\n        \n        /**\n         * Handle market data updates\n         * @private\n         */\n        _onMarketDataUpdated: function(sChannel, sEvent, oData) {\n            // Market data updated - could trigger new predictions\n            // This would be handled by the component/service layer\n        },\n        \n        /**\n         * Cleanup\n         */\n        destroy: function() {\n            if (this._oEventBusManager) {\n                this._oEventBusManager.destroy();\n            }\n            \n            DataManager.prototype.destroy.apply(this, arguments);\n        }\n    });\n});
+        updatePredictions: function(oPredictions) {
+            var oCurrentPredictions = this.getProperty("/predictions") || {};
+            var oUpdatedPredictions = Object.assign({}, oCurrentPredictions);
+            
+            // Process each symbol's predictions
+            Object.keys(oPredictions).forEach(sSymbol => {
+                var oPrediction = oPredictions[sSymbol];
+                if (this._validatePrediction(sSymbol, oPrediction)) {
+                    oUpdatedPredictions[sSymbol] = this._processPrediction(oPrediction);
+                }
+            });
+            
+            this.setProperty("/predictions", oUpdatedPredictions);
+            this.setProperty("/lastPredictionUpdate", new Date().toISOString());
+            
+            // Publish predictions updated event
+            this._oEventBusManager.publishPredictionsUpdated(oUpdatedPredictions);
+        },
+        
+        /**
+         * Update prediction for single symbol
+         * @param {string} sSymbol - Symbol to update
+         * @param {Object} oPrediction - Prediction data
+         */
+        updateSymbolPrediction: function(sSymbol, oPrediction) {
+            if (this._validatePrediction(sSymbol, oPrediction)) {
+                var oProcessedPrediction = this._processPrediction(oPrediction);
+                this.setProperty(`/predictions/${sSymbol}`, oProcessedPrediction);
+                
+                // Add to prediction history
+                this._addToPredictionHistory(sSymbol, oProcessedPrediction);
+            }
+        },
+        
+        /**
+         * Update model performance metrics
+         * @param {string} sModelName - Model name
+         * @param {Object} oMetrics - Performance metrics
+         */
+        updateModelPerformance: function(sModelName, oMetrics) {
+            if (this._validateMetrics(oMetrics)) {
+                var oProcessedMetrics = this._processMetrics(oMetrics);
+                this.setProperty(`/models/${sModelName}/performance`, oProcessedMetrics);
+                this.setProperty(`/models/${sModelName}/lastEvaluation`, new Date().toISOString());
+            }
+        },
+        
+        /**
+         * Start model training
+         * @param {string} sModelName - Model name
+         * @param {Object} oTrainingConfig - Training configuration
+         */
+        startModelTraining: function(sModelName, oTrainingConfig) {
+            var oTrainingData = {
+                status: "training",
+                progress: 0,
+                startedAt: new Date().toISOString(),
+                config: oTrainingConfig || {},
+                logs: []
+            };
+            
+            this.setProperty(`/models/${sModelName}/training`, oTrainingData);
+            this.setProperty("/globalTrainingStatus", "active");
+        },
+        
+        /**
+         * Update training progress
+         * @param {string} sModelName - Model name
+         * @param {number} nProgress - Progress percentage (0-100)
+         * @param {string} sMessage - Progress message
+         */
+        updateTrainingProgress: function(sModelName, nProgress, sMessage) {
+            this.setProperty(`/models/${sModelName}/training/progress`, nProgress);
+            this.setProperty(`/models/${sModelName}/training/lastUpdate`, new Date().toISOString());
+            
+            if (sMessage) {
+                this.addToArray(`/models/${sModelName}/training/logs`, {
+                    message: sMessage,
+                    progress: nProgress,
+                    timestamp: new Date().toISOString()
+                });
+            }
+            
+            // Publish training progress event
+            this._oEventBusManager.publish(
+                this._oEventBusManager.CHANNELS.ML,
+                this._oEventBusManager.EVENTS.ML.TRAINING_PROGRESS,
+                { modelName: sModelName, progress: nProgress, message: sMessage }
+            );
+        },
+        
+        /**
+         * Compvare model training
+         * @param {string} sModelName - Model name
+         * @param {Object} oResults - Training results
+         */
+        compvareModelTraining: function(sModelName, oResults) {
+            this.updateObject(`/models/${sModelName}/training`, {
+                status: "compvared",
+                progress: 100,
+                compvaredAt: new Date().toISOString(),
+                results: oResults || {}
+            });
+            
+            // Check if all models are done training
+            var oModels = this.getProperty("/models") || {};
+            var bAllCompvare = Object.values(oModels).every(model => 
+                !model.training || model.training.status !== "training"
+            );
+            
+            if (bAllCompvare) {
+                this.setProperty("/globalTrainingStatus", "idle");
+            }
+            
+            // Publish model trained event
+            this._oEventBusManager.publishModelTrained(sModelName, oResults);
+        },
+        
+        /**
+         * Set training error
+         * @param {string} sModelName - Model name
+         * @param {Object|string} vError - Error data
+         */
+        setTrainingError: function(sModelName, vError) {
+            var oError = typeof vError === 'string' ? { message: vError } : vError;
+            
+            this.updateObject(`/models/${sModelName}/training`, {
+                status: "error",
+                error: oError,
+                failedAt: new Date().toISOString()
+            });
+            
+            this._oEventBusManager.publish(
+                this._oEventBusManager.CHANNELS.ML,
+                this._oEventBusManager.EVENTS.ML.ERROR_OCCURRED,
+                { modelName: sModelName, error: oError }
+            );
+        },
+        
+        /**
+         * Get prediction for symbol
+         * @param {string} sSymbol - Symbol
+         * @returns {Object} Prediction data
+         */
+        getPrediction: function(sSymbol) {
+            return this.getProperty(`/predictions/${sSymbol}`) || {};
+        },
+        
+        /**
+         * Get all predictions
+         * @returns {Object} All predictions
+         */
+        getAllPredictions: function() {
+            return this.getProperty("/predictions") || {};
+        },
+        
+        /**
+         * Get model information
+         * @param {string} sModelName - Model name
+         * @returns {Object} Model data
+         */
+        getModel: function(sModelName) {
+            return this.getProperty(`/models/${sModelName}`) || {};
+        },
+        
+        /**
+         * Get all models
+         * @returns {Object} All models
+         */
+        getAllModels: function() {
+            return this.getProperty("/models") || {};
+        },
+        
+        /**
+         * Get prediction history for symbol
+         * @param {string} sSymbol - Symbol
+         * @param {number} iLimit - Maximum number of predictions
+         * @returns {Array} Prediction history
+         */
+        getPredictionHistory: function(sSymbol, iLimit) {
+            var aHistory = this.getProperty(`/predictionHistory/${sSymbol}`) || [];
+            return iLimit ? aHistory.slice(0, iLimit) : aHistory;
+        },
+        
+        /**
+         * Get global ML statistics
+         * @returns {Object} Statistics
+         */
+        getStatistics: function() {
+            return this.getProperty("/statistics") || {};
+        },
+        
+        /**
+         * Set loading state
+         * @param {boolean} bLoading - Loading state
+         * @param {string} sOperation - Operation being performed
+         */
+        setLoading: function(bLoading, sOperation) {
+            this.setProperty("/loading", bLoading);
+            if (sOperation) {
+                this.setProperty("/currentOperation", sOperation);
+            }
+        },
+        
+        /**
+         * Set error state
+         * @param {Object|string} vError - Error data
+         */
+        setError: function(vError) {
+            var oError = typeof vError === 'string' ? { message: vError } : vError;
+            this.setProperty("/error", oError);
+            
+            if (oError) {
+                this._oEventBusManager.publish(
+                    this._oEventBusManager.CHANNELS.ML,
+                    this._oEventBusManager.EVENTS.ML.ERROR_OCCURRED,
+                    { error: oError }
+                );
+            }
+        },
+        
+        /**
+         * Clear error state
+         */
+        clearError: function() {
+            this.setProperty("/error", null);
+        },
+        
+        /**
+         * Get confidence level description
+         * @param {number} nConfidence - Confidence value (0-1)
+         * @returns {string} Description
+         */
+        getConfidenceDescription: function(nConfidence) {
+            if (nConfidence >= 0.8) return "High";
+            if (nConfidence >= 0.6) return "Medium";
+            if (nConfidence >= 0.4) return "Low";
+            return "Very Low";
+        },
+        
+        /**
+         * Format prediction direction
+         * @param {string} sSymbol - Symbol
+         * @returns {string} Direction (Up, Down, Neutral)
+         */
+        getPredictionDirection: function(sSymbol) {
+            var oPrediction = this.getPrediction(sSymbol);
+            if (!oPrediction.predictedChange) return "Neutral";
+            
+            var nChange = parseFloat(oPrediction.predictedChange);
+            if (nChange > 1) return "Up";
+            if (nChange < -1) return "Down";
+            return "Neutral";
+        },
+        
+        /**
+         * Initialize ML data structure
+         * @private
+         */
+        _getInitialMLData: function() {
+            return {
+                predictions: {},
+                models: {
+                    "LSTM": {
+                        name: "LSTM",
+                        type: "neural_network",
+                        status: "ready",
+                        performance: {},
+                        training: null,
+                        lastEvaluation: null
+                    },
+                    "RandomForest": {
+                        name: "RandomForest",
+                        type: "ensemble",
+                        status: "ready",
+                        performance: {},
+                        training: null,
+                        lastEvaluation: null
+                    }
+                },
+                predictionHistory: {},
+                statistics: {
+                    totalPredictions: 0,
+                    successfulPredictions: 0,
+                    accuracy: 0,
+                    modelsActive: 2
+                },
+                globalTrainingStatus: "idle",
+                lastPredictionUpdate: null,
+                loading: false,
+                currentOperation: null,
+                error: null
+            };
+        },
+        
+        /**
+         * Process prediction data
+         * @private
+         */
+        _processPrediction: function(oPrediction) {
+            return {
+                currentPrice: oPrediction.currentPrice || 0,
+                predictedPrice: oPrediction.predictedPrice || 0,
+                predictedChange: oPrediction.predictedChange || 0,
+                confidence: oPrediction.confidence || 0,
+                horizon: oPrediction.horizon || "24h",
+                model: oPrediction.model || "unknown",
+                features: oPrediction.features || {},
+                timestamp: new Date().toISOString(),
+                expiresAt: this._calculateExpiration(oPrediction.horizon)
+            };
+        },
+        
+        /**
+         * Process performance metrics
+         * @private
+         */
+        _processMetrics: function(oMetrics) {
+            return {
+                accuracy: oMetrics.accuracy || 0,
+                precision: oMetrics.precision || 0,
+                recall: oMetrics.recall || 0,
+                f1Score: oMetrics.f1Score || 0,
+                mape: oMetrics.mape || 0, // Mean Absolute Percentage Error
+                rmse: oMetrics.rmse || 0, // Root Mean Square Error
+                sharpeRatio: oMetrics.sharpeRatio || 0,
+                evaluatedAt: new Date().toISOString()
+            };
+        },
+        
+        /**
+         * Add prediction to history
+         * @private
+         */
+        _addToPredictionHistory: function(sSymbol, oPrediction) {
+            var sPath = `/predictionHistory/${sSymbol}`;
+            this.addToArray(sPath, oPrediction, 0); // Add to beginning
+            
+            // Limit history size
+            var aHistory = this.getProperty(sPath) || [];
+            if (aHistory.length > 50) {
+                this.setProperty(sPath, aHistory.slice(0, 50));
+            }
+        },
+        
+        /**
+         * Calculate prediction expiration
+         * @private
+         */
+        _calculateExpiration: function(sHorizon) {
+            var oNow = new Date();
+            var iHours = this._parseHorizon(sHorizon);
+            return new Date(oNow.getTime() + (iHours * 60 * 60 * 1000)).toISOString();
+        },
+        
+        /**
+         * Parse horizon string to hours
+         * @private
+         */
+        _parseHorizon: function(sHorizon) {
+            if (sHorizon.includes('h')) {
+                return parseInt(sHorizon.replace('h', ''));
+            }
+            if (sHorizon.includes('d')) {
+                return parseInt(sHorizon.replace('d', '')) * 24;
+            }
+            return 24; // Default to 24 hours
+        },
+        
+        /**
+         * Validate prediction data
+         * @private
+         */
+        _validatePrediction: function(sSymbol, oPrediction) {
+            if (!sSymbol || typeof sSymbol !== 'string') {
+                console.error("Invalid symbol for prediction:", sSymbol);
+                return false;
+            }
+            
+            if (!oPrediction || typeof oPrediction !== 'object') {
+                console.error("Invalid prediction data for", sSymbol);
+                return false;
+            }
+            
+            if (typeof oPrediction.predictedPrice !== 'number' || oPrediction.predictedPrice <= 0) {
+                console.error("Invalid predicted price for", sSymbol);
+                return false;
+            }
+            
+            return true;
+        },
+        
+        /**
+         * Validate metrics data
+         * @private
+         */
+        _validateMetrics: function(oMetrics) {
+            return oMetrics && typeof oMetrics === 'object';
+        },
+        
+        /**
+         * Initialize validation schema
+         * @private
+         */
+        _initializeValidationSchema: function() {
+            this._oValidationSchema = {
+                predictions: { type: 'object', required: false },
+                models: { type: 'object', required: true },
+                statistics: { type: 'object', required: false }
+            };
+        },
+        
+        /**
+         * Setup event handlers
+         * @private
+         */
+        _setupEventHandlers: function() {
+            // Listen for market data changes to trigger predictions
+            this._oEventBusManager.subscribe(
+                this._oEventBusManager.CHANNELS.MARKET,
+                this._oEventBusManager.EVENTS.MARKET.DATA_UPDATED,
+                this._onMarketDataUpdated.bind(this),
+                this
+            );
+        },
+        
+        /**
+         * Handle market data updates
+         * @private
+         */
+        _onMarketDataUpdated: function(sChannel, sEvent, oData) {
+            // Market data updated - could trigger new predictions
+            // This would be handled by the component/service layer
+        },
+        
+        /**
+         * Cleanup
+         */
+        destroy: function() {
+            if (this._oEventBusManager) {
+                this._oEventBusManager.destroy();
+            }
+            
+            DataManager.prototype.destroy.apply(this, arguments);
+        }
+    });
+});
