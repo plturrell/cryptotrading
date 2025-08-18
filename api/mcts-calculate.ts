@@ -2,7 +2,7 @@
  * Vercel Edge Function for MCTS Calculation Agent
  * Provides serverless endpoint for Monte Carlo Tree Search calculations
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { kv } from '@vercel/kv';
 
 export const config = {
   runtime: 'edge',
@@ -40,8 +40,7 @@ interface CalculationResponse {
 }
 
 // Edge function handler
-export default async function handler(req: NextRequest) {
-  // CORS headers for browser compatibility
+export default async function handler(req: Request): Promise<Response> {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -49,101 +48,91 @@ export default async function handler(req: NextRequest) {
     'Content-Type': 'application/json',
   };
 
-  // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    return new NextResponse(null, { status: 200, headers });
+    return new Response(null, { status: 200, headers });
   }
 
-  // Only allow POST
   if (req.method !== 'POST') {
-    return NextResponse.json(
-      { error: 'Method not allowed' },
-      { status: 405, headers }
-    );
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers,
+    });
   }
 
   try {
-    // Parse request body
     const body: CalculationRequest = await req.json();
 
-    // Validate required fields
     if (!body.problem_type || !body.parameters) {
-      return NextResponse.json(
-        { error: 'Missing required fields: problem_type, parameters' },
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields: problem_type, parameters' }),
         { status: 400, headers }
       );
     }
 
-    // Validate problem type
     if (!['trading', 'portfolio', 'optimization'].includes(body.problem_type)) {
-      return NextResponse.json(
-        { error: 'Invalid problem_type. Must be: trading, portfolio, or optimization' },
+      return new Response(
+        JSON.stringify({
+          error: 'Invalid problem_type. Must be: trading, portfolio, or optimization',
+        }),
         { status: 400, headers }
       );
     }
 
-    // Validate parameters
     const { initial_portfolio, symbols } = body.parameters;
-    
     if (typeof initial_portfolio !== 'number' || initial_portfolio <= 0) {
-      return NextResponse.json(
-        { error: 'initial_portfolio must be a positive number' },
-        { status: 400, headers }
-      );
-    }
-
-    if (!Array.isArray(symbols) || symbols.length === 0) {
-      return NextResponse.json(
-        { error: 'symbols must be a non-empty array' },
-        { status: 400, headers }
-      );
-    }
-
-    // Set defaults
-    const iterations = Math.min(body.iterations || 1000, 10000);
-    const timeout = Math.min(body.timeout || 30, 30); // Max 30s for Edge Functions
-
-    // Create cache key for response caching
-    const cacheKey = `mcts:${body.problem_type}:${JSON.stringify(body.parameters)}:${iterations}`;
-    
-    // Check KV cache if available
-    // @ts-ignore - KV namespace injected by Vercel
-    if (typeof MCTS_CACHE !== 'undefined') {
-      const cached = await MCTS_CACHE.get(cacheKey, 'json');
-      if (cached) {
-        return NextResponse.json(
-          { ...cached, cached: true },
-          { status: 200, headers }
-        );
-      }
-    }
-
-    // Execute MCTS calculation
-    // In production, this would call the Python agent via internal API
-    const result = await performMCTSCalculation(body, iterations, timeout);
-
-    // Cache successful results
-    // @ts-ignore
-    if (typeof MCTS_CACHE !== 'undefined' && !result.error) {
-      await MCTS_CACHE.put(cacheKey, JSON.stringify(result), {
-        expirationTtl: 300, // 5 minutes
+      return new Response(JSON.stringify({ error: 'initial_portfolio must be a positive number' }), {
+        status: 400,
+        headers,
       });
     }
 
-    // Return response
-    return NextResponse.json(result, { 
-      status: result.error ? 400 : 200, 
-      headers 
+    if (!Array.isArray(symbols) || symbols.length === 0) {
+      return new Response(JSON.stringify({ error: 'symbols must be a non-empty array' }), {
+        status: 400,
+        headers,
+      });
+    }
+
+    const iterations = Math.min(body.iterations || 1000, 10000);
+    const timeout = Math.min(body.timeout || 30, 30);
+
+    const cacheKey = `mcts:${body.problem_type}:${JSON.stringify(body.parameters)}:${iterations}`;
+
+    try {
+      const cached: CalculationResponse | null = await kv.get(cacheKey);
+      if (cached) {
+        return new Response(JSON.stringify({ ...cached, cached: true }), {
+          status: 200,
+          headers,
+        });
+      }
+    } catch (e) {
+      console.error('Failed to access Vercel KV for GET', e);
+    }
+
+    const result = await performMCTSCalculation(body, iterations, timeout);
+
+    try {
+      if (!result.error) {
+        await kv.set(cacheKey, result, { ex: 300 });
+      }
+    } catch (e) {
+      console.error('Failed to access Vercel KV for SET', e);
+    }
+
+    return new Response(JSON.stringify(result), {
+      status: result.error ? 400 : 200,
+      headers,
     });
 
   } catch (error) {
     console.error('MCTS calculation error:', error);
-    return NextResponse.json(
-      { 
+    return new Response(
+      JSON.stringify({
         type: 'error',
         error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
+        details: error instanceof Error ? error.message : 'Unknown error',
+      }),
       { status: 500, headers }
     );
   }

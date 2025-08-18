@@ -1,0 +1,176 @@
+version: '3.8'
+
+services:
+  # Main application
+  cryptotrading-app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: cryptotrading-app
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/cryptotrading
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - BLOB_READ_WRITE_TOKEN=${BLOB_READ_WRITE_TOKEN}
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
+      - PERPLEXITY_API_KEY=${PERPLEXITY_API_KEY}
+    volumes:
+      - app_data:/app/data
+      - app_logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - cryptotrading-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cryptotrading.rule=Host(`cryptotrading.local`)"
+      - "traefik.http.routers.cryptotrading.entrypoints=web"
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: cryptotrading-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=cryptotrading
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - cryptotrading-network
+
+  # Redis for caching and Celery
+  redis:
+    image: redis:7-alpine
+    container_name: cryptotrading-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - cryptotrading-network
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+
+  # Celery worker for background tasks
+  celery-worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: cryptotrading-celery
+    restart: unless-stopped
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/cryptotrading
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - app_data:/app/data
+      - app_logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - cryptotrading-network
+    command: ["poetry", "run", "celery", "-A", "src.cryptotrading.tasks", "worker", "--loglevel=info", "--concurrency=4"]
+
+  # Celery beat scheduler
+  celery-beat:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: cryptotrading-beat
+    restart: unless-stopped
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/cryptotrading
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - app_data:/app/data
+      - app_logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - cryptotrading-network
+    command: ["poetry", "run", "celery", "-A", "src.cryptotrading.tasks", "beat", "--loglevel=info"]
+
+  # Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: cryptotrading-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/cryptotrading.conf:/etc/nginx/conf.d/default.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - cryptotrading-app
+    networks:
+      - cryptotrading-network
+
+  # Prometheus for monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: cryptotrading-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - cryptotrading-network
+
+  # Grafana for dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: cryptotrading-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+    networks:
+      - cryptotrading-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  app_data:
+  app_logs:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  cryptotrading-network:
+    driver: bridge
