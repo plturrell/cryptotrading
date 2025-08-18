@@ -476,5 +476,6 @@ class DatabaseHealthHook(LifecycleHook):
             async with pool.acquire() as conn:
                 await conn.fetchval("SELECT 1")
             return True
-        except:
+        except Exception as e:
+            logger.warning(f"Database health check failed: {e}")
             return False

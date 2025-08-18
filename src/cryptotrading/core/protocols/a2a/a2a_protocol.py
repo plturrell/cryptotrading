@@ -138,8 +138,77 @@ class A2AProtocol:
         
         return True
 
-# A2A Capability Registry
+# A2A Capability Registry - Updated with Specialized Agents
 A2A_CAPABILITIES = {
+    # Specialized STRAND Agents
+    'technical_analysis_agent': [
+        'technical_indicators', 'momentum_analysis', 'volume_analysis',
+        'pattern_recognition', 'trend_analysis', 'oscillator_analysis',
+        'support_resistance', 'market_sentiment'
+    ],
+    'mcts_calculation_agent': [
+        'general_optimization', 'algorithm_performance', 'monte_carlo_simulation',
+        'calculation_metrics', 'convergence_analysis'
+    ],
+    'ml_agent': [
+        'price_prediction', 'model_training', 'feature_engineering',
+        'batch_prediction', 'model_evaluation', 'hyperparameter_optimization',
+        'ml_inference'
+    ],
+    'agent_manager_agent': [
+        'agent_registration', 'compliance_monitoring', 'skill_card_management',
+        'mcp_segregation', 'system_health', 'agent_orchestration',
+        'capability_discovery', 'status_monitoring'
+    ],
+    'strands_glean_agent': [
+        'code_analysis', 'dependency_mapping', 'symbol_search',
+        'code_navigation', 'insight_generation', 'coverage_validation',
+        'change_monitoring', 'code_quality'
+    ],
+    'historical_data_loader_agent': [
+        'data_loading', 'historical_data', 'multi_source_aggregation',
+        'temporal_alignment', 'data_validation', 'catalog_management',
+        'yahoo_finance', 'fred_data', 'cboe_data', 'defillama_data'
+    ],
+    'database_agent': [
+        'data_storage', 'data_retrieval', 'bulk_insert', 'ai_analysis_storage',
+        'portfolio_management', 'trade_history', 'database_health',
+        'query_optimization', 'data_cleanup'
+    ],
+    'feature_store_agent': [
+        'compute_features', 'get_feature_vector', 'get_training_features',
+        'get_feature_definitions', 'get_feature_importance', 'feature_engineering',
+        'ml_features', 'technical_indicators'
+    ],
+    'data_analysis_agent': [
+        'validate_data_quality', 'analyze_data_distribution', 'compute_correlation_matrix',
+        'detect_outliers', 'compute_rolling_statistics', 'statistical_analysis',
+        'data_validation', 'quality_assessment'
+    ],
+    'clrs_algorithms_agent': [
+        'binary_search', 'linear_search', 'quick_select', 'find_minimum', 'find_maximum',
+        'insertion_sort', 'merge_sort', 'quick_sort', 'algorithmic_calculations',
+        'search_algorithms', 'sorting_algorithms', 'clrs_algorithms'
+    ],
+    'technical_analysis_skills_agent': [
+        'calculate_momentum_indicators', 'calculate_momentum_volatility', 'analyze_volume_patterns',
+        'identify_support_resistance', 'detect_chart_patterns', 'comprehensive_analysis',
+        'technical_indicators', 'momentum_analysis', 'volume_analysis', 'pattern_recognition',
+        'support_resistance', 'chart_patterns', 'ta_calculations'
+    ],
+    'ml_models_agent': [
+        'train_model', 'predict_prices', 'evaluate_model', 'optimize_hyperparameters',
+        'ensemble_predict', 'feature_importance', 'ml_training', 'model_evaluation',
+        'hyperparameter_optimization', 'ensemble_methods', 'ml_calculations'
+    ],
+    'code_quality_agent': [
+        'analyze_code_quality', 'calculate_complexity_metrics', 'detect_code_smells',
+        'analyze_dependencies', 'calculate_impact_analysis', 'generate_quality_report',
+        'code_analysis', 'quality_metrics', 'code_smells', 'dependency_analysis',
+        'impact_analysis', 'quality_reporting'
+    ],
+    
+    # Legacy capability groups (for backward compatibility)
     'historical-loader-001': [
         'data_loading', 'historical_data', 'technical_indicators', 
         'bulk_processing', 'multi_source_aggregation'
@@ -162,10 +231,66 @@ A2A_CAPABILITIES = {
     ]
 }
 
-# Message routing table
+# Message routing table - Updated with Specialized Agents
 A2A_ROUTING = {
-    MessageType.DATA_LOAD_REQUEST: ['database-001'],
-    MessageType.ANALYSIS_REQUEST: ['illuminate-001', 'database-001'],
-    MessageType.DATA_QUERY: ['database-001'],
-    MessageType.TRADE_EXECUTION: ['execute-001', 'database-001']
+    MessageType.DATA_LOAD_REQUEST: ['historical_data_loader_agent', 'database_agent'],
+    MessageType.ANALYSIS_REQUEST: ['technical_analysis_agent', 'ml_agent', 'strands_glean_agent', 'feature_store_agent', 'data_analysis_agent', 'technical_analysis_skills_agent', 'ml_models_agent', 'code_quality_agent', 'clrs_algorithms_agent'],
+    MessageType.DATA_QUERY: ['database_agent'],
+    MessageType.TRADE_EXECUTION: ['database_agent'],
+    MessageType.WORKFLOW_REQUEST: ['agent_manager_agent'],
+    MessageType.WORKFLOW_STATUS: ['agent_manager_agent'],
+    MessageType.HEARTBEAT: ['agent_manager_agent'],
+    
+    # Legacy routing (for backward compatibility)
+    'legacy_data_load': ['database-001'],
+    'legacy_analysis': ['illuminate-001', 'database-001'],
+    'legacy_query': ['database-001'],
+    'legacy_trade': ['execute-001', 'database-001']
 }
+
+# Agent registration helper
+class A2AAgentRegistry:
+    """A2A Agent Registration and Discovery"""
+    
+    _registered_agents = {}
+    
+    @classmethod
+    def register_agent(cls, agent_id: str, capabilities: List[str], 
+                      agent_instance=None, status: AgentStatus = AgentStatus.ACTIVE):
+        """Register agent with A2A protocol"""
+        cls._registered_agents[agent_id] = {
+            'capabilities': capabilities,
+            'status': status,
+            'instance': agent_instance,
+            'registered_at': datetime.now().isoformat(),
+            'last_heartbeat': datetime.now().isoformat()
+        }
+        return True
+    
+    @classmethod
+    def get_agent_capabilities(cls, agent_id: str) -> List[str]:
+        """Get capabilities for specific agent"""
+        return cls._registered_agents.get(agent_id, {}).get('capabilities', [])
+    
+    @classmethod
+    def find_agents_by_capability(cls, capability: str) -> List[str]:
+        """Find all agents that support a specific capability"""
+        agents = []
+        for agent_id, info in cls._registered_agents.items():
+            if capability in info.get('capabilities', []):
+                agents.append(agent_id)
+        return agents
+    
+    @classmethod
+    def get_all_agents(cls) -> Dict[str, Any]:
+        """Get all registered agents"""
+        return cls._registered_agents.copy()
+    
+    @classmethod
+    def update_agent_status(cls, agent_id: str, status: AgentStatus):
+        """Update agent status"""
+        if agent_id in cls._registered_agents:
+            cls._registered_agents[agent_id]['status'] = status
+            cls._registered_agents[agent_id]['last_heartbeat'] = datetime.now().isoformat()
+            return True
+        return False

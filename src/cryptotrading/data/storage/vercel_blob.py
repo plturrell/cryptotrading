@@ -216,8 +216,8 @@ class VercelBlobClient:
         
         return recent_blobs
     
-    def cleanup_old_data(self, prefix: str, days_to_keep: int = 30) -> int:
-        """Clean up old data from blob storage"""
+    def purge_expired_blobs(self, prefix: str, days_to_keep: int = 30) -> int:
+        """Purge expired data from blob storage"""
         blobs = self.list(prefix, limit=1000)
         cutoff = datetime.now().timestamp() - (days_to_keep * 24 * 60 * 60)
         

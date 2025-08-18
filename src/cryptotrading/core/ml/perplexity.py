@@ -57,14 +57,13 @@ class PerplexityClient:
         except Exception as e:
             return {"error": str(e)}
     
-    def analyze_market_conditions(self, pairs: List[str]) -> Dict[str, any]:
+    async def analyze_market_conditions(self, pairs: List[str]) -> Dict[str, any]:
         """Analyze multiple crypto pairs market conditions"""
         query = f"Current market analysis for {', '.join(pairs)} including support/resistance levels and trading volume"
         
         try:
-            response = requests.post(
+            response = await self.client.post(
                 f"{self.base_url}/chat/completions",
-                headers=self.headers,
                 json={
                     "model": "pplx-70b-online",
                     "messages": [
@@ -85,14 +84,13 @@ class PerplexityClient:
         except Exception as e:
             return {"error": str(e)}
     
-    def get_trading_signals(self, symbol: str, timeframe: str = "4h") -> Dict[str, any]:
+    async def get_trading_signals(self, symbol: str, timeframe: str = "4h") -> Dict[str, any]:
         """Get AI-powered trading signals"""
         query = f"Technical analysis {symbol} {timeframe} timeframe: RSI, MACD, moving averages. Should I buy, sell, or hold?"
         
         try:
-            response = requests.post(
+            response = await self.client.post(
                 f"{self.base_url}/chat/completions",
-                headers=self.headers,
                 json={
                     "model": "pplx-7b-online",
                     "messages": [
@@ -133,3 +131,7 @@ class PerplexityClient:
                 
         except Exception as e:
             return {"error": str(e)}
+    
+    async def close(self):
+        """Close the HTTP client"""
+        await self.client.aclose()

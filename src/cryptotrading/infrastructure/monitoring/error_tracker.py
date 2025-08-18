@@ -319,8 +319,8 @@ class ErrorTracker:
             errors = self.error_fingerprints.get(fingerprint, [])
             return [e.to_dict() for e in errors[-limit:]]
     
-    def clear_old_errors(self, days: int = 7):
-        """Clear errors older than N days"""
+    def purge_expired_errors(self, days: int = 7):
+        """Purge errors older than N days"""
         cutoff = datetime.utcnow() - timedelta(days=days)
         
         with self.lock:
@@ -362,8 +362,8 @@ class ErrorTracker:
         def cleanup_task():
             while True:
                 try:
-                    # Clean up old errors every hour
-                    self.clear_old_errors(days=7)
+                    # Purge expired errors every hour
+                    self.purge_expired_errors(days=7)
                     time.sleep(3600)
                 except Exception as e:
                     logger.error(f"Error in cleanup task: {e}")

@@ -6,13 +6,8 @@ with Tree library operations for advanced code analysis.
 Implements strict agent segregation and multi-tenancy.
 """
 
-import asyncio
-import json
 import logging
-import time
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Union
-from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Union
 
 from .clrs_algorithms import (
     CLRSSortingAlgorithms,
@@ -468,8 +463,8 @@ class TreeMCPTools:
         else:
             return "complex"
 
-class EnhancedGleanMCPTools:
-    """Enhanced Glean MCP tools with CLRS and Tree capabilities"""
+class GleanAnalysisMCPTools:
+    """Glean analysis MCP tools with CLRS and Tree capabilities"""
     
     def __init__(self, glean_client: GleanClient):
         self.glean_client = glean_client

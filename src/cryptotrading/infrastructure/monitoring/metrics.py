@@ -3,8 +3,10 @@ Metrics Collection and Monitoring
 Provides performance metrics and business metrics tracking
 """
 
+import os
 import time
 import threading
+import asyncio
 from typing import Dict, Any, Optional, List, Callable
 from collections import defaultdict, deque
 from datetime import datetime, timedelta
@@ -245,23 +247,75 @@ class MetricsCollector:
     
     def _start_background_export(self):
         """Start background metric export"""
-        def export_task():
-            while True:
-                try:
-                    # Export metrics every 60 seconds
-                    time.sleep(60)
-                    
-                    # Send to external monitoring system if configured
-                    endpoint = os.getenv('METRICS_ENDPOINT')
-                    if endpoint:
-                        self._send_to_external_system(endpoint)
-                        
-                except Exception as e:
-                    logger.error(f"Error in metrics export task: {e}")
+        self._export_task = None
+        self._running = True
         
-        import os
-        export_thread = threading.Thread(target=export_task, daemon=True)
-        export_thread.start()
+        # Start async export task
+        try:
+            loop = asyncio.get_running_loop()
+            self._export_task = loop.create_task(self._async_export_task())
+        except RuntimeError:
+            # No event loop running, use thread fallback
+            import threading
+            export_thread = threading.Thread(target=self._sync_export_task, daemon=True)
+            export_thread.start()
+    
+    async def _async_export_task(self):
+        """Async metric export task"""
+        while self._running:
+            try:
+                # Export metrics every 60 seconds
+                await asyncio.sleep(60)
+                
+                # Send to external monitoring system if configured
+                endpoint = os.getenv('METRICS_ENDPOINT')
+                if endpoint:
+                    await self._async_send_to_external_system(endpoint)
+                    
+            except Exception as e:
+                logger.error(f"Error in metrics export task: {e}")
+                await asyncio.sleep(60)  # Continue after error
+    
+    def _sync_export_task(self):
+        """Synchronous export task for non-async contexts"""
+        while self._running:
+            try:
+                time.sleep(60)
+                endpoint = os.getenv('METRICS_ENDPOINT')
+                if endpoint:
+                    self._send_to_external_system(endpoint)
+            except Exception as e:
+                logger.error(f"Error in sync metrics export: {e}")
+    
+    async def stop_export(self):
+        """Stop the export task gracefully"""
+        self._running = False
+        if self._export_task:
+            self._export_task.cancel()
+            try:
+                await self._export_task
+            except asyncio.CancelledError:
+                pass
+    
+    async def _async_send_to_external_system(self, endpoint: str):
+        """Send metrics to external monitoring system asynchronously"""
+        try:
+            import aiohttp
+            
+            metrics_data = self.get_all_metrics_summary(hours=1)
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    endpoint,
+                    json=metrics_data,
+                    headers={'Content-Type': 'application/json'},
+                    timeout=aiohttp.ClientTimeout(total=30)
+                ) as response:
+                    if response.status != 200:
+                        logger.error(f"Failed to send metrics: {response.status}")
+                        
+        except Exception as e:
+            logger.error(f"Error sending metrics to external system: {e}")
     
     def _send_to_external_system(self, endpoint: str):
         """Send metrics to external monitoring system"""

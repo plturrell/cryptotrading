@@ -159,7 +159,8 @@ class QueryOptimizer:
             with self.db_client.engine.connect() as conn:
                 result = conn.execute(query, params)
                 return len(list(result)) > 0
-        except:
+        except Exception as e:
+            logger.warning(f"Query execution failed during optimization check: {e}")
             return False
     
     def _infer_table(self, query: str) -> str:

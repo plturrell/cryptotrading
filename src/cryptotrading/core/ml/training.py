@@ -22,7 +22,7 @@ except ImportError:
     print("Schedule not available - automatic retraining disabled")
 
 from .models import CryptoPricePredictor, model_registry
-from ..data.historical.yahoo_finance import YahooFinanceClient
+# Training should use database data, not direct market data clients
 
 # Use unified monitoring
 from ..monitoring import get_monitor
@@ -37,7 +37,9 @@ class ModelTrainingPipeline:
     """Automated model training pipeline"""
     
     def __init__(self):
-        self.yahoo_client = YahooFinanceClient()
+        # Use database for training data instead of direct market client
+        from ...data.database.unified_database import UnifiedDatabase
+        self.database = UnifiedDatabase()
         self.training_config = {
             'symbols': ['BTC', 'ETH', 'BNB', 'SOL', 'ADA', 'AVAX', 'DOT', 'MATIC', 'LINK', 'UNI'],
             'lookback_days': 365,
@@ -60,10 +62,10 @@ class ModelTrainingPipeline:
                 end_date = datetime.now()
                 start_date = end_date - timedelta(days=self.training_config['lookback_days'])
                 
-                data = self.yahoo_client.get_historical_data(
-                    symbol, 
-                    start_date.strftime('%Y-%m-%d'),
-                    end_date.strftime('%Y-%m-%d'),
+                data = await self.database.get_historical_data(
+                    symbol=symbol, 
+                    start_date=start_date.strftime('%Y-%m-%d'),
+                    end_date=end_date.strftime('%Y-%m-%d'),
                     interval='1h'
                 )
                 
@@ -234,22 +236,46 @@ class ModelTrainingPipeline:
         
         logger.info(f"Model retraining scheduled every {interval_hours} hours")
         
-        # Run scheduler in background
-        def run_scheduler():
-            while True:
-                schedule.run_pending()
-                time.sleep(60)  # Check every minute
+        # Use async scheduler instead of blocking thread
+        self._scheduler_task = None
+        self._running = True
         
-        # Start scheduler thread
-        executor = ThreadPoolExecutor(max_workers=1)
-        executor.submit(run_scheduler)
+    async def start_scheduler(self):
+        """Start the async training scheduler"""
+        self._scheduler_task = asyncio.create_task(self._run_scheduler())
+        logger.info("Training scheduler started")
+        
+    async def stop_scheduler(self):
+        """Stop the training scheduler gracefully"""
+        self._running = False
+        if self._scheduler_task:
+            self._scheduler_task.cancel()
+            try:
+                await self._scheduler_task
+            except asyncio.CancelledError:
+                pass
+        logger.info("Training scheduler stopped")
+        
+    async def _run_scheduler(self):
+        """Run scheduled training tasks asynchronously"""
+        while self._running:
+            try:
+                # Check and run pending scheduled tasks
+                schedule.run_pending()
+                # Use async sleep instead of blocking sleep
+                await asyncio.sleep(60)  # Check every minute
+            except Exception as e:
+                logger.error(f"Scheduler error: {e}")
+                await asyncio.sleep(60)  # Continue after error
 
 
 class ModelEvaluator:
     """Evaluate and compare model performance"""
     
     def __init__(self):
-        self.yahoo_client = YahooFinanceClient()
+        # Use database for evaluation data instead of direct market client
+        from ...data.database.unified_database import UnifiedDatabase
+        self.database = UnifiedDatabase()
         
     async def backtest_model(self, model_name: str, test_days: int = 30) -> Dict[str, Any]:
         """Backtest a model on recent data"""
@@ -266,10 +292,10 @@ class ModelEvaluator:
             end_date = datetime.now()
             start_date = end_date - timedelta(days=test_days + 30)  # Extra for feature engineering
             
-            data = self.yahoo_client.get_historical_data(
-                symbol,
-                start_date.strftime('%Y-%m-%d'),
-                end_date.strftime('%Y-%m-%d'),
+            data = await self.database.get_historical_data(
+                symbol=symbol,
+                start_date=start_date.strftime('%Y-%m-%d'),
+                end_date=end_date.strftime('%Y-%m-%d'),
                 interval='1h'
             )
             

@@ -28,7 +28,7 @@ except ImportError as e:
 
 # Try to import specialized agents
 try:
-    from .specialized.mcts_calculation_agent_v2 import ProductionMCTSCalculationAgent
+    from .specialized.mcts_calculation_agent import MCTSCalculationAgent, ProductionMCTSCalculationAgent
     from .specialized.agent_manager import AgentManagerAgent
     from .specialized.strands_glean_agent import StrandsGleanAgent
     specialized_available = True

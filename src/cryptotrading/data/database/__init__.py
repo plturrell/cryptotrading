@@ -5,6 +5,7 @@ Supports SQLite (local) and PostgreSQL/Vercel (production)
 
 # Use enhanced unified database as the primary interface  
 from ...infrastructure.database.unified_database import UnifiedDatabase, DatabaseConfig
+from .client import get_db, close_db, reset_db, get_database, initialize_database
 from .models import (
     Base, User, AIAnalysis, ConversationSession, 
     ConversationMessage, AgentContext, MemoryFragment, SemanticMemory,
@@ -27,6 +28,9 @@ from .validation import (
 __all__ = [
     # Database (Enhanced Unified)
     'UnifiedDatabase', 'DatabaseConfig',
+    
+    # Client functions
+    'get_db', 'close_db', 'reset_db', 'get_database', 'initialize_database',
     
     # Models
     'Base', 'User', 'AIAnalysis',

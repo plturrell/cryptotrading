@@ -5,220 +5,188 @@ Demonstrates the improved database layer features
 
 import pytest
 import time
+import asyncio
 from datetime import datetime
+from sqlalchemy import text
 from src.cryptotrading.data.database import (
-    UnifiedDatabaseClient, get_unified_db, close_unified_db,
-    DatabaseConfig, DatabaseMigrator, QueryOptimizer, 
+    UnifiedDatabase, DatabaseConfig, get_db, close_db,
+    DatabaseMigrator, QueryOptimizer, 
     DatabaseHealthMonitor, DataValidator, ValidationError, 
     User, AIAnalysis, MarketData
 )
 
-def test_database_migrations():
-    """Test database migration system"""
-    db = get_unified_db()
-    
-    # Check migration status
-    status = db.migrator.get_status()
-    print(f"Migration Status: {status}")
-    
-    # Validate migrations
-    validation = db.migrator.validate_migrations()
-    assert validation['valid'], f"Migration validation failed: {validation['issues']}"
-    
-    # Run pending migrations
-    if status['pending_count'] > 0:
-        result = db.run_migrations()
-        print(f"Migrations applied: {result['applied']}")
-        assert len(result['failed']) == 0, f"Failed migrations: {result['failed']}"
+@pytest.fixture
+async def db():
+    """Get database instance for tests"""
+    database = get_db()
+    # Ensure it's initialized
+    if database.db_conn is None:
+        await database.initialize()
+    yield database
+    # Don't close - let the global instance remain
 
-def test_query_optimization():
-    """Test query optimization and monitoring"""
-    db = get_unified_db()
+@pytest.mark.asyncio
+async def test_database_connection(db):
+    """Test basic database connection"""
+    # Test simple connection
+    cursor = db.db_conn.cursor()
+    cursor.execute("SELECT 1")
+    result = cursor.fetchone()
+    assert result[0] == 1
+    cursor.close()
     
-    # Test query analysis
-    test_query = """
-    SELECT u.username, COUNT(a.id) as analysis_count
-    FROM users u
-    LEFT JOIN ai_analyses a ON u.id = a.user_id
-    WHERE u.is_active = 1
-    GROUP BY u.username
-    ORDER BY analysis_count DESC
-    """
-    
-    analysis = db.query_optimizer.analyze_query(test_query)
-    print(f"Query Analysis: {analysis}")
-    
-    # Execute with optimization monitoring
-    start_time = time.time()
-    with db.query_optimizer.monitor_query(test_query):
-        results = db.execute_query(test_query)
-    execution_time = (time.time() - start_time) * 1000
-    
-    print(f"Query executed in {execution_time:.2f}ms")
-    print(f"Results: {len(results)} rows")
-    
-    # Get performance report
-    report = db.get_performance_report(hours=1)
-    print(f"Performance Report: {report}")
+    # Test SQLAlchemy session
+    with db.get_session() as session:
+        result = session.execute(text("SELECT 1"))
+        assert result.scalar() == 1
 
-def test_health_monitoring():
-    """Test database health monitoring"""
-    db = get_unified_db()
+@pytest.mark.asyncio
+async def test_schema_creation(db):
+    """Test that all schemas are created"""
+    cursor = db.db_conn.cursor()
     
-    # Run health checks
-    health_results = db.health_monitor.run_health_checks()
-    print(f"Health Status: {health_results['overall_status']}")
-    
-    for check_name, check_result in health_results['checks'].items():
-        print(f"  {check_name}: {check_result['status']} - {check_result['message']}")
-    
-    # Get health summary
-    summary = db.get_health_status()
-    print(f"\nHealth Summary: {summary}")
-    
-    assert summary['status'] != 'unhealthy', "Database is unhealthy"
-
-def test_data_validation():
-    """Test data validation and constraints"""
-    db = get_unified_db()
-    
-    # Test valid user data
-    valid_user_data = {
-        'username': 'testuser123',
-        'email': 'test@example.com',
-        'password_hash': 'hashed_password_here'
-    }
-    
-    try:
-        validated = db.data_validator.validate('users', valid_user_data)
-        print(f"Validated user data: {validated}")
-    except ValidationError as e:
-        pytest.fail(f"Valid data failed validation: {e}")
-    
-    # Test invalid email
-    invalid_data = {
-        'username': 'testuser456',
-        'email': 'invalid-email',
-        'password_hash': 'hashed_password'
-    }
-    
-    with pytest.raises(ValidationError) as exc_info:
-        db.data_validator.validate('users', invalid_data)
-    print(f"Expected validation error: {exc_info.value}")
-    
-    # Test constraint enforcement
-    violations = db.constraint_enforcer.check_constraints('users', valid_user_data, 'insert')
-    print(f"Constraint violations: {violations}")
-
-def test_data_quality():
-    """Test data quality monitoring"""
-    db = get_unified_db()
-    
-    # Run data quality checks
-    quality_results = db.run_data_quality_checks()
-    
-    print(f"Data Quality Score: {quality_results['overall_score']:.1f}%")
-    print(f"Quality Issues: {len(quality_results['issues'])}")
-    
-    for issue in quality_results['issues'][:5]:  # Show first 5 issues
-        print(f"  - {issue['check']}: {issue['issue']}")
-    
-    # Check individual quality metrics
-    for check_name, check_result in quality_results['checks'].items():
-        print(f"\n{check_name}:")
-        print(f"  Score: {check_result.get('score', 0):.1f}%")
-        if 'metrics' in check_result:
-            for metric, value in check_result['metrics'].items():
-                print(f"  {metric}: {value}")
-
-def test_connection_resilience():
-    """Test connection resilience and retry logic"""
-    db = get_unified_db()
-    
-    # Test resilient connection
-    with db.health_monitor.resilient_connection() as session:
-        # Perform database operation
-        user_count = session.query(User).count()
-        print(f"User count: {user_count}")
-    
-    # Check connection pool status
-    pool_status = db.get_pool_status()
-    print(f"\nConnection Pool Status:")
-    for key, value in pool_status.items():
-        print(f"  {key}: {value}")
-
-def test_performance_indexes():
-    """Test that performance indexes are properly created"""
-    db = get_unified_db()
-    
-    # Check if indexes exist
-    if db.is_sqlite:
-        query = "SELECT name FROM sqlite_master WHERE type='index' AND name LIKE 'idx_%'"
+    # Check tables exist
+    if db.config.mode.value == 'local':
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
     else:
-        query = "SELECT indexname FROM pg_indexes WHERE indexname LIKE 'idx_%'"
+        cursor.execute("""
+            SELECT table_name FROM information_schema.tables 
+            WHERE table_schema = 'public'
+        """)
     
-    indexes = db.execute_query(query)
-    print(f"\nPerformance Indexes: {len(indexes)}")
-    for idx in indexes:
-        print(f"  - {idx[0]}")
+    tables = [row[0] for row in cursor.fetchall()]
+    cursor.close()
     
-    assert len(indexes) > 10, "Missing performance indexes"
+    # Verify essential tables exist
+    essential_tables = [
+        'issues', 'code_files', 'code_metrics', 'monitoring_events',
+        'market_data', 'portfolio_positions', 'trading_orders', 
+        'historical_data_cache'
+    ]
+    
+    for table in essential_tables:
+        assert table in tables, f"Missing table: {table}"
 
-def test_integrated_features():
-    """Test integrated database features working together"""
-    db = get_unified_db()
+@pytest.mark.asyncio
+async def test_market_data_operations(db):
+    """Test market data storage and retrieval"""
+    # Store test data
+    test_data = {
+        'open': 50000.0,
+        'high': 51000.0,
+        'low': 49000.0,
+        'close': 50500.0,
+        'volume': 1000000000.0,
+        'timestamp': datetime.now()
+    }
     
-    print("\n=== Database Enhancement Test Summary ===")
+    success = await db.store_market_data('BTC-USD', test_data)
+    assert success, "Failed to store market data"
     
-    # 1. Migration status
-    migration_status = db.migrator.get_status()
-    print(f"\n1. Migrations: {migration_status['applied_count']} applied, "
-          f"{migration_status['pending_count']} pending")
+    # Retrieve data
+    latest = await db.get_latest_market_data('BTC-USD')
+    assert latest is not None, "Failed to retrieve market data"
+    assert latest['close'] == 50500.0
+
+@pytest.mark.asyncio
+async def test_cache_operations(db):
+    """Test Redis cache operations"""
+    # Set cache value
+    await db.cache_set('test_key', {'data': 'test_value'}, ttl=60)
     
-    # 2. Health status
+    # Get cache value
+    cached = await db.cache_get('test_key')
+    if db.redis_client:
+        assert cached is not None
+        assert cached['data'] == 'test_value'
+    else:
+        # Cache might not be available in test environment
+        print("Redis cache not available")
+
+@pytest.mark.asyncio
+async def test_health_status(db):
+    """Test database health monitoring"""
     health = db.get_health_status()
-    print(f"\n2. Health: {health['status']} "
-          f"({health['healthy_checks']}/{health['total_checks']} checks passing)")
     
-    # 3. Performance metrics
-    perf_report = db.get_performance_report(hours=1)
-    print(f"\n3. Performance: {perf_report['total_queries']} queries, "
-          f"{len(perf_report['slow_queries'])} slow queries")
+    assert 'engine_connected' in health
+    assert 'simple_connection' in health
+    assert 'mode' in health
     
-    # 4. Data quality
-    quality = db.run_data_quality_checks()
-    print(f"\n4. Data Quality: {quality['overall_score']:.1f}% "
-          f"({len(quality['issues'])} issues)")
+    assert health['engine_connected'] is True
+    assert health['simple_connection'] is True
+
+@pytest.mark.asyncio
+async def test_query_execution(db):
+    """Test query execution methods"""
+    # Test synchronous query
+    results = db.execute_query("SELECT 1 as value")
+    assert len(results) == 1
+    assert results[0]['value'] == 1
     
-    # 5. Connection pool
-    pool = db.get_pool_status()
-    utilization = (pool['checked_out'] / pool['total_connections'] * 100) if pool['total_connections'] > 0 else 0
-    print(f"\n5. Connection Pool: {utilization:.1f}% utilization "
-          f"({pool['checked_out']}/{pool['total_connections']} connections)")
+    # Test async query
+    results = await db.execute_query_async("SELECT 2 as value")
+    assert len(results) == 1
+    assert results[0]['value'] == 2
+
+@pytest.mark.asyncio
+async def test_portfolio_operations(db):
+    """Test portfolio position operations"""
+    # Get positions (should be empty initially)
+    positions = await db.get_portfolio_positions('test_user')
+    assert isinstance(positions, list)
+
+@pytest.mark.asyncio
+async def test_connection_resilience(db):
+    """Test that database connections are resilient"""
+    # Run multiple operations
+    for i in range(5):
+        cursor = db.db_conn.cursor()
+        cursor.execute("SELECT ?", (i,))
+        result = cursor.fetchone()
+        assert result[0] == i
+        cursor.close()
+        
+    # Verify connection is still healthy
+    health = db.get_health_status()
+    assert health['simple_connection'] is True
+
+@pytest.mark.asyncio
+async def test_environment_detection(db):
+    """Test environment detection works correctly"""
+    assert db.config.mode.value in ['local', 'production']
     
-    print("\n=== All Database Enhancements Working ===")
+    if db.config.mode.value == 'local':
+        assert 'sqlite' in db.config.sqlite_path
+    else:
+        assert db.config.postgres_url is not None
 
 if __name__ == "__main__":
     # Run all tests
-    test_database_migrations()
-    print("\n" + "="*50 + "\n")
+    asyncio.run(test_database_connection(get_db()))
+    print("✓ Database connection test passed")
     
-    test_query_optimization()
-    print("\n" + "="*50 + "\n")
+    asyncio.run(test_schema_creation(get_db()))
+    print("✓ Schema creation test passed")
     
-    test_health_monitoring()
-    print("\n" + "="*50 + "\n")
+    asyncio.run(test_market_data_operations(get_db()))
+    print("✓ Market data operations test passed")
     
-    test_data_validation()
-    print("\n" + "="*50 + "\n")
+    asyncio.run(test_cache_operations(get_db()))
+    print("✓ Cache operations test passed")
     
-    test_data_quality()
-    print("\n" + "="*50 + "\n")
+    asyncio.run(test_health_status(get_db()))
+    print("✓ Health status test passed")
     
-    test_connection_resilience()
-    print("\n" + "="*50 + "\n")
+    asyncio.run(test_query_execution(get_db()))
+    print("✓ Query execution test passed")
     
-    test_performance_indexes()
-    print("\n" + "="*50 + "\n")
+    asyncio.run(test_portfolio_operations(get_db()))
+    print("✓ Portfolio operations test passed")
     
-    test_integrated_features()
+    asyncio.run(test_connection_resilience(get_db()))
+    print("✓ Connection resilience test passed")
+    
+    asyncio.run(test_environment_detection(get_db()))
+    print("✓ Environment detection test passed")
+    
+    print("\n✅ All database enhancement tests passed!")

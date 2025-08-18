@@ -291,14 +291,14 @@ class DatabaseConnectionPool:
             
     async def _health_check_loop(self):
         """Periodic health check for connections"""
-        while True:
-            try:
+        try:
+            while True:
                 await asyncio.sleep(self.config.health_check_interval)
                 await self._health_check()
-            except asyncio.CancelledError:
-                break
-            except Exception as e:
-                logger.error("Health check failed: %s", e)
+        except asyncio.CancelledError:
+            logger.info("Health check loop cancelled")
+        except Exception as e:
+            logger.error("Health check failed: %s", e)
                 
     async def _health_check(self):
         """Perform health check on pool"""

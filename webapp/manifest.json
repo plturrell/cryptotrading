@@ -55,6 +55,21 @@
                         "parameters": {},
                         "additionalParameters": "allowed"
                     }
+                },
+                "technicalAnalysis": {
+                    "semanticObject": "TechnicalAnalysis",
+                    "action": "analyze",
+                    "title": "Technical Analysis Dashboard",
+                    "signature": {
+                        "parameters": {
+                            "symbol": {
+                                "defaultValue": {
+                                    "value": "BTC-USD"
+                                }
+                            }
+                        },
+                        "additionalParameters": "allowed"
+                    }
                 }
             }
         },
@@ -202,6 +217,10 @@
                 "name": "trading",
                 "pattern": "trading",
                 "target": ["trading"]
+            }, {
+                "name": "technicalAnalysis",
+                "pattern": "technical-analysis/{symbol}",
+                "target": ["technicalAnalysis"]
             }],
             "targets": {
                 "launchpad": {
@@ -219,6 +238,10 @@
                 "trading": {
                     "viewType": "XML",
                     "viewName": "Trading"
+                },
+                "technicalAnalysis": {
+                    "viewType": "XML",
+                    "viewName": "TechnicalAnalysis"
                 }
             }
         }

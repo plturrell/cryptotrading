@@ -169,9 +169,13 @@ class RealDataProvider(DataProvider):
                 
         except Exception as e:
             logger.error(f"Real-time price fetch failed for {symbol}: {e}")
-            # Fallback to mock data
-            mock_provider = MockDataProvider()
-            return await mock_provider.get_real_time_price(symbol)
+            # NO FALLBACK TO MOCK DATA - Return error instead
+            return {
+                "error": f"Real-time price unavailable for {symbol}: {str(e)}",
+                "symbol": symbol,
+                "timestamp": datetime.now().isoformat(),
+                "price": None
+            }
     
     async def get_historical_data(self, symbol: str, period: str = "1y") -> Dict[str, Any]:
         """Get historical data from Yahoo Finance"""
@@ -218,9 +222,14 @@ class RealDataProvider(DataProvider):
                 
         except Exception as e:
             logger.error(f"Historical data fetch failed for {symbol}: {e}")
-            # Fallback to mock data
-            mock_provider = MockDataProvider()
-            return await mock_provider.get_historical_data(symbol, period)
+            # NO FALLBACK TO MOCK DATA - Return error instead
+            return {
+                "error": f"Historical data unavailable for {symbol}: {str(e)}",
+                "symbol": symbol,
+                "period": period,
+                "timestamp": datetime.now().isoformat(),
+                "data": []
+            }
     
     async def get_market_data(self, symbol: str) -> Dict[str, Any]:
         """Get comprehensive market data"""
@@ -252,9 +261,15 @@ class RealDataProvider(DataProvider):
             
         except Exception as e:
             logger.error(f"Market data fetch failed for {symbol}: {e}")
-            # Fallback to mock data
-            mock_provider = MockDataProvider()
-            return await mock_provider.get_market_data(symbol)
+            # NO FALLBACK TO MOCK DATA - Return error instead
+            return {
+                "error": f"Market data unavailable for {symbol}: {str(e)}",
+                "symbol": symbol,
+                "timestamp": datetime.now().isoformat(),
+                "price": None,
+                "indicators": {},
+                "volume": None
+            }
 
 class UnifiedDataProvider:
     """Unified data provider that switches between real and mock based on environment"""

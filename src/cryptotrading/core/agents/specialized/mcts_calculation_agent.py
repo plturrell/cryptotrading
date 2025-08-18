@@ -16,6 +16,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from enum import Enum
 import os
+import pandas as pd
 
 # Import adaptive control components
 from .mcts_adaptive_control import (
@@ -41,8 +42,20 @@ from .mcts_anomaly_detection import AnomalyDetector, MCTSMonitoringDashboard
 from .vercel_runtime_adapter import vercel_adapter, vercel_edge_handler, VercelRuntimeError
 
 # Import Grok4 client and strategy backtesting
-from ...ai.grok4_client import Grok4Client, get_grok4_client, MarketInsight, StrategyAnalysis
-from .strategy_backtesting import StrategyBacktester, BacktestConfig, StrategyType, BacktestResult
+from ...ai.grok4_client import (
+    Grok4Client, get_grok4_client, close_grok4_client,
+    MarketInsight, StrategyAnalysis,
+    Grok4Error, Grok4APIError, Grok4ConfigError
+)
+# Removed backtesting imports - not needed for Week 2
+
+# Import Technical Analysis MCP tools
+try:
+    from ...infrastructure.mcp.technical_analysis_mcp_tools import TechnicalAnalysisMCPServer
+    TA_MCP_AVAILABLE = True
+except ImportError:
+    TA_MCP_AVAILABLE = False
+    # Logger not available yet during import, will log later
 
 # Conditional imports to handle missing dependencies
 try:
@@ -105,7 +118,7 @@ except ImportError:
         return None
 
 try:
-    from ...protocols.mcp.rate_limiter import RateLimiter
+    from ...protocols.mcp.security.rate_limiter import RateLimiter
 except ImportError:
     # Production mode requires rate limiter
     if os.getenv('ENVIRONMENT', 'development') == 'production':
@@ -119,6 +132,10 @@ except ImportError:
 
 
 logger = logging.getLogger(__name__)
+
+# Log TA MCP availability now that logger is available
+if not TA_MCP_AVAILABLE:
+    logger.warning("Technical Analysis MCP tools not available - using simulated analysis")
 
 
 # Configuration Management
@@ -472,8 +489,11 @@ class DataAnalysisEnvironment(CalculationEnvironment):
         
         if action['type'] == 'buy':
             symbol = action['symbol']
-            percentage = action['percentage']
-            amount = new_state['portfolio_value'] * percentage
+            percentage = action.get('percentage', 0.1)
+            
+            # For technical analysis focused MCTS, track action cost without portfolio value
+            base_amount = 1000  # Base amount for cost calculation
+            amount = base_amount * percentage
             
             # Apply transaction costs and slippage
             effective_amount = amount * (1 - transaction_cost - slippage)
@@ -482,11 +502,11 @@ class DataAnalysisEnvironment(CalculationEnvironment):
             quantity = effective_amount / price
             
             new_state['positions'][symbol] = new_state['positions'].get(symbol, 0) + quantity
-            new_state['portfolio_value'] -= amount
+            new_state['total_cost'] = new_state.get('total_cost', 0) + amount
             
         elif action['type'] == 'sell':
             symbol = action['symbol']
-            percentage = action['percentage']
+            percentage = action.get('percentage', 0.1)
             position = new_state['positions'].get(symbol, 0)
             sell_quantity = position * percentage
             price = new_state['market_data'].get(symbol, {}).get('price', 1)
@@ -495,56 +515,57 @@ class DataAnalysisEnvironment(CalculationEnvironment):
             sale_value = sell_quantity * price * (1 - transaction_cost - slippage)
             
             new_state['positions'][symbol] = position - sell_quantity
-            new_state['portfolio_value'] += sale_value
+            new_state['total_sales'] = new_state.get('total_sales', 0) + sale_value
             
         elif action['type'] in ['technical_analysis', 'sentiment_analysis']:
-            # Deduct analysis cost
-            cost = action.get('cost', 0)
-            new_state['portfolio_value'] -= cost
+            # Store analysis result without cost deduction
             new_state[f'{action["type"]}_result'] = await self._perform_analysis(action)
-        
-        # Update risk metrics
-        new_state['risk_metrics'] = await self._calculate_risk_metrics(new_state)
         new_state['available_actions'] = await self.get_available_actions(new_state)
         
         return new_state
     
     async def is_terminal_state(self, state: Dict[str, Any]) -> bool:
-        """Check terminal conditions including risk limits"""
+        """Check terminal conditions for technical analysis"""
         # Depth limit
         if state.get('depth', 0) >= self.max_depth:
             return True
         
-        # Stop loss: portfolio down more than 20%
-        initial = self.config.get('initial_portfolio', 10000)
-        current_value = await self._calculate_portfolio_value(state)
-        if current_value < initial * 0.8:
-            return True
+        # Terminal if all symbols have been analyzed
+        symbols = self.config.get('symbols', [])
+        analyzed_symbols = set()
+        for key in state.keys():
+            if key.endswith('_result') and key.replace('_result', '') in symbols:
+                analyzed_symbols.add(key.replace('_result', ''))
         
-        # Take profit: portfolio up more than 50%
-        if current_value > initial * 1.5:
+        if len(analyzed_symbols) >= len(symbols):
             return True
         
         return False
     
     async def evaluate_state(self, state: Dict[str, Any]) -> float:
-        """Evaluate portfolio with risk-adjusted returns"""
-        total_value = await self._calculate_portfolio_value(state)
-        initial = self.config.get('initial_portfolio', 10000)
+        """Evaluate state based on technical analysis quality and AI confidence"""
+        score = 0.0
         
-        # Basic return
-        basic_return = (total_value - initial) / initial
+        # Base score for completed analyses
+        analysis_count = sum(1 for key in state.keys() if key.endswith('_result'))
+        score += analysis_count * 0.3
         
-        # Risk adjustment
-        risk_metrics = state.get('risk_metrics', {})
-        volatility = risk_metrics.get('volatility', 0.2)
-        sharpe_ratio = basic_return / volatility if volatility > 0 else basic_return
+        # Bonus for AI-enhanced analysis
+        for key, value in state.items():
+            if key.endswith('_result') and isinstance(value, dict):
+                if value.get('ai_enhanced', False):
+                    ai_confidence = value.get('ai_confidence', 0.5)
+                    combined_strength = value.get('combined_strength', value.get('strength', 0.5))
+                    score += ai_confidence * combined_strength * 0.5
+                
+                # Bonus for signal alignment
+                alignment = value.get('signal_alignment', 'neutral')
+                if alignment == 'strong':
+                    score += 0.3
+                elif alignment == 'conflicting':
+                    score -= 0.2
         
-        # Penalty for excessive risk
-        max_drawdown = risk_metrics.get('max_drawdown', 0)
-        risk_penalty = abs(max_drawdown) * 0.5
-        
-        return sharpe_ratio - risk_penalty
+        return score
     
     async def _fetch_market_data(self) -> Dict[str, Any]:
         """Fetch market data with intelligent caching and fallback"""
@@ -670,9 +691,9 @@ class DataAnalysisEnvironment(CalculationEnvironment):
             'warning': f'Extrapolated from {reference_symbol} - use with caution'
         }
     
-    async def _calculate_portfolio_value(self, state: Dict[str, Any]) -> float:
-        """Calculate total portfolio value"""
-        total_value = state['portfolio_value']
+    async def _calculate_position_value(self, state: Dict[str, Any]) -> float:
+        """Calculate total position value for technical analysis evaluation"""
+        total_value = 0
         
         for symbol, quantity in state.get('positions', {}).items():
             price = state['market_data'].get(symbol, {}).get('price', 1)
@@ -680,77 +701,30 @@ class DataAnalysisEnvironment(CalculationEnvironment):
         
         return total_value
     
-    async def _calculate_risk_metrics(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """Calculate portfolio risk metrics"""
-        # Simplified risk calculation
-        positions = state.get('positions', {})
-        if not positions:
-            return {'volatility': 0.1, 'max_drawdown': 0, 'var_95': 0}
+    async def _calculate_analysis_quality(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Calculate technical analysis quality metrics"""
+        analyses = {}
         
-        # Portfolio volatility (simplified)
-        total_volatility = 0
-        total_value = await self._calculate_portfolio_value(state)
-        
-        for symbol, quantity in positions.items():
-            asset_volatility = state['market_data'].get(symbol, {}).get('volatility', 0.2)
-            asset_value = quantity * state['market_data'].get(symbol, {}).get('price', 1)
-            weight = asset_value / total_value if total_value > 0 else 0
-            total_volatility += (weight * asset_volatility) ** 2
-        
-        portfolio_volatility = math.sqrt(total_volatility)
-        
-        # Calculate max drawdown using historical simulation
-        max_drawdown = self._calculate_max_drawdown(state, total_value)
-        
-        return {
-            'volatility': portfolio_volatility,
-            'max_drawdown': max_drawdown,
-            'var_95': -total_value * portfolio_volatility * 1.645  # 95% VaR
-        }
-    
-    def _calculate_max_drawdown(self, state: Dict[str, Any], current_value: float) -> float:
-        """Calculate maximum drawdown using portfolio value simulation"""
-        # Use state depth as proxy for time progression
-        depth = state.get('depth', 0)
-        initial_value = self.config.get('initial_portfolio', 10000)
-        
-        # Calculate drawdown based on current position
-        if current_value < initial_value:
-            drawdown = (current_value - initial_value) / initial_value
-        else:
-            # Estimate potential drawdown based on portfolio volatility
-            positions = state.get('positions', {})
-            if positions:
-                # Higher concentration = higher potential drawdown
-                position_values = []
-                for symbol, quantity in positions.items():
-                    price = state['market_data'].get(symbol, {}).get('price', 1)
-                    position_values.append(quantity * price)
+        for key, value in state.items():
+            if key.endswith('_result') and isinstance(value, dict):
+                symbol = key.replace('_result', '')
+                quality_score = 0.5  # Base score
                 
-                if position_values:
-                    concentration = max(position_values) / sum(position_values)
-                    # Estimate max drawdown based on concentration and volatility
-                    portfolio_vol = math.sqrt(sum((pv/sum(position_values))**2 * 
-                                                state['market_data'].get(list(positions.keys())[i], {}).get('volatility', 0.2)**2 
-                                                for i, pv in enumerate(position_values)))
-                    drawdown = -concentration * portfolio_vol * 0.5  # Conservative estimate
-                else:
-                    drawdown = -0.05  # Small default drawdown
-            else:
-                drawdown = -0.02  # Minimal risk for cash position
+                # Higher score for AI-enhanced analysis
+                if value.get('ai_enhanced', False):
+                    quality_score += 0.3
                 
-        return min(drawdown, 0)  # Drawdown should be negative
-    
-    async def _calculate_action_risk(self, action_type: str, symbol: str, percentage: float) -> float:
-        """Calculate risk score for an action"""
-        # Simple risk scoring
-        base_risk = 0.5
-        if action_type == 'buy':
-            base_risk += percentage * 0.5  # Higher percentage = higher risk
-        elif action_type == 'sell':
-            base_risk -= percentage * 0.2  # Selling reduces risk
+                # Score based on signal strength
+                strength = value.get('combined_strength', value.get('strength', 0.5))
+                quality_score += strength * 0.3
+                
+                analyses[symbol] = {
+                    'quality_score': min(quality_score, 1.0),
+                    'has_ai_enhancement': value.get('ai_enhanced', False),
+                    'signal_strength': strength
+                }
         
-        return min(max(base_risk, 0), 1)
+        return analyses
     
     async def _perform_analysis(self, action: Dict[str, Any]) -> Dict[str, Any]:
         """Perform technical analysis using actual market indicators"""
@@ -855,57 +829,67 @@ class DataAnalysisEnvironment(CalculationEnvironment):
             logger.warning(f"Failed to calculate dynamic volume thresholds: {e}")
             return 'hold'
     
-    def _calculate_dynamic_support_resistance(self, current_price: float) -> Dict[str, float]:
-        """Calculate dynamic support and resistance levels based on price percentiles"""
+    async def _calculate_dynamic_support_resistance(self, current_price: float) -> Dict[str, float]:
+        """Calculate dynamic support and resistance levels using MCP tools"""
         try:
-            # TODO: Replace with real historical price data from market data provider
-            # For now, calculate relative to current price using statistical approach
+            # Use MCTS calculation MCP tools for calculation
+            from ...infrastructure.mcp.mcts_calculation_mcp_tools import mcts_calculation_mcp_tools
             
-            # Use price-relative calculations (20% bands as starting point)
-            price_volatility = 0.15  # Assume 15% volatility
+            result = await mcts_calculation_mcp_tools.handle_tool_call(
+                "calculate_dynamic_support_resistance",
+                {"current_price": current_price}
+            )
             
-            # Calculate dynamic levels based on current price and volatility
-            resistance_level = current_price * (1 + price_volatility * 0.8)
-            support_level = current_price * (1 - price_volatility * 0.8)
-            
-            return {
-                'resistance': resistance_level,
-                'support': support_level,
-                'volatility_used': price_volatility,
-                'calculation_method': 'price_relative'
-            }
+            if result.get("success", False):
+                return result["result"]
+            else:
+                # Fallback calculation
+                price_volatility = 0.15
+                resistance_level = current_price * (1 + price_volatility * 0.8)
+                support_level = current_price * (1 - price_volatility * 0.8)
+                
+                return {
+                    'resistance': resistance_level,
+                    'support': support_level,
+                    'volatility_used': price_volatility,
+                    'calculation_method': 'price_relative_fallback'
+                }
         except Exception as e:
             logger.error(f"Dynamic support/resistance calculation failed: {e}")
             raise ValueError("Unable to calculate dynamic support/resistance levels")
     
-    def _calculate_dynamic_volume_thresholds(self, current_volume: float) -> Dict[str, float]:
-        """Calculate dynamic volume thresholds based on volume percentiles"""
+    async def _calculate_dynamic_volume_thresholds(self, current_volume: float) -> Dict[str, float]:
+        """Calculate dynamic volume thresholds using MCP tools"""
         try:
-            # TODO: Replace with real historical volume data from market data provider
-            # For now, calculate relative to current volume using statistical approach
+            # Use MCTS calculation MCP tools for calculation
+            from ...infrastructure.mcp.mcts_calculation_mcp_tools import mcts_calculation_mcp_tools
             
-            # Use volume-relative calculations (80th and 20th percentiles)
-            volume_multiplier_high = 2.5  # High volume = 2.5x current
-            volume_multiplier_low = 0.4   # Low volume = 0.4x current
+            result = await mcts_calculation_mcp_tools.handle_tool_call(
+                "calculate_dynamic_volume_thresholds",
+                {"current_volume": current_volume}
+            )
             
-            # Calculate dynamic thresholds based on current volume
-            high_threshold = current_volume * volume_multiplier_high
-            low_threshold = current_volume * volume_multiplier_low
-            
-            return {
-                'high': high_threshold,
-                'low': low_threshold,
-                'base_volume': current_volume,
-                'calculation_method': 'volume_relative'
-            }
+            if result.get("success", False):
+                return result["result"]
+            else:
+                # Fallback calculation
+                volume_multiplier_high = 2.5
+                volume_multiplier_low = 0.4
+                
+                return {
+                    'high': current_volume * volume_multiplier_high,
+                    'low': current_volume * volume_multiplier_low,
+                    'base_volume': current_volume,
+                    'calculation_method': 'volume_relative_fallback'
+                }
         except Exception as e:
             logger.error(f"Dynamic volume threshold calculation failed: {e}")
             raise ValueError("Unable to calculate dynamic volume thresholds")
 
 
-class ProductionMCTSCalculationAgent(SecureMCTSAgent, StrandsAgent):
+class MCTSCalculationAgent(SecureMCTSAgent, StrandsAgent):
     """
-    Production-ready MCTS Calculation Agent with Vercel optimization
+    Production-ready MCTS Calculation Agent with AI and Technical Analysis integration
     """
     
     def __init__(self, agent_id: str, 
@@ -943,21 +927,109 @@ class ProductionMCTSCalculationAgent(SecureMCTSAgent, StrandsAgent):
         
         # Register this agent with the bridge for Strands-MCP integration
         if self.mcp_bridge:
-            self.mcp_bridge.register_strand_agent(self)
+            self.mcp_bridge.register_agent(self)
         
         # Register Strands tools
         self._register_strands_tools()
         
-        # Initialize A/B testing and anomaly detection
+        # Initialize monitoring and security
+        self.security_manager = SecurityManager()
         self.ab_test_manager = ABTestManager()
-        self.anomaly_detector = AnomalyDetector(agent_id)
-        self.monitoring_dashboard = MCTSMonitoringDashboard(self.anomaly_detector)
+        self.anomaly_detector = AnomalyDetector()
+        self.monitoring_dashboard = MCTSMonitoringDashboard()
+        
+        # Initialize Grok4 AI client (will be properly initialized in async context)
+        self.grok4_client = None  # Initialized in _initialize_grok4_client()
+        
+        # Initialize strategy backtester
+        self.strategy_backtester = StrategyBacktester()
+        
+        # Initialize market data provider (placeholder)
+        self.market_data_provider = None  # To be injected or configured
+        
+        # Initialize memory system for MCTS calculations and learning
+        asyncio.create_task(self._initialize_memory_system())
+        
+        # Initialize AI cache for performance
+        self._ai_cache = {}
+        self._ai_cache_ttl = 300  # 5 minutes
+        self._last_ai_fetch = {}
+        
+        # Initialize Technical Analysis MCP server if available
+        self.ta_mcp_server = None
+        if TA_MCP_AVAILABLE:
+            try:
+                self.ta_mcp_server = TechnicalAnalysisMCPServer()
+                logger.info("Technical Analysis MCP server initialized")
+            except Exception as e:
+                logger.warning(f"Failed to initialize TA MCP server: {e}")
+                self.ta_mcp_server = None
+        
+        logger.info(f"MCTS Agent {agent_id} initialized successfully")
+    
+    async def _initialize_memory_system(self):
+        """Initialize memory system for MCTS calculations and performance tracking"""
+        try:
+            # Store MCTS agent configuration
+            await self.store_memory(
+                "mcts_agent_config",
+                {
+                    "agent_id": self.agent_id,
+                    "iterations": self.config.iterations,
+                    "exploration_constant": self.config.exploration_constant,
+                    "simulation_depth": self.config.simulation_depth,
+                    "timeout_seconds": self.config.timeout_seconds,
+                    "initialized_at": datetime.now().isoformat()
+                },
+                {"type": "configuration", "persistent": True}
+            )
+            
+            # Initialize calculation cache
+            await self.store_memory(
+                "calculation_cache",
+                {},
+                {"type": "calculation_cache", "persistent": True}
+            )
+            
+            # Initialize performance metrics
+            await self.store_memory(
+                "mcts_performance",
+                {
+                    "total_calculations": 0,
+                    "avg_calculation_time": 0,
+                    "success_rate": 0,
+                    "cache_hit_rate": 0,
+                    "best_results": []
+                },
+                {"type": "performance_tracking", "persistent": True}
+            )
+            
+            # Initialize strategy learning cache
+            await self.store_memory(
+                "strategy_learning",
+                {"successful_strategies": [], "failed_strategies": []},
+                {"type": "strategy_learning", "persistent": True}
+            )
+            
+            # Initialize calculation history
+            await self.store_memory(
+                "calculation_history",
+                [],
+                {"type": "calculation_log", "persistent": True}
+            )
+            
+            logger.info(f"Memory system initialized for MCTS Agent {self.agent_id}")
+        except Exception as e:
+            logger.error(f"Failed to initialize MCTS agent memory system: {e}")
+        if not self.is_vercel_runtime and os.getenv('MCTS_MONITORING_ENABLED', 'true').lower() == 'true':
+            try:
+                asyncio.create_task(self.monitoring_dashboard.start_monitoring())
+            except RuntimeError:
+                # Handle case where event loop isn't running yet
+                logger.info("Monitoring will be enabled when event loop starts")
         
         # Detect runtime environment
         self.is_vercel_runtime = bool(os.getenv('VERCEL_ENV') or os.getenv('VERCEL'))
-        
-        # Initialize Grok4 client asynchronously
-        asyncio.create_task(self._initialize_grok4_client())
         
         # Start monitoring only for local development (not in Vercel)
         if not self.is_vercel_runtime and os.getenv('MCTS_MONITORING_ENABLED', 'true').lower() == 'true':
@@ -968,6 +1040,56 @@ class ProductionMCTSCalculationAgent(SecureMCTSAgent, StrandsAgent):
                 logger.info("Monitoring will be enabled when event loop starts")
         
         logger.info(f"Enhanced MCTS Agent {agent_id} initialized with MCTS, Grok4 AI, backtesting, and monitoring")
+    
+    async def initialize(self) -> bool:
+        """Initialize the MCTS Calculation Agent"""
+        try:
+            logger.info(f"Initializing MCTS Agent {self.agent_id}")
+            
+            # Initialize Grok4 client if available
+            await self._initialize_grok4_client()
+            
+            # Verify MCTS environment
+            if not self.environment:
+                logger.warning("MCTS environment not initialized")
+            
+            # Test basic MCTS functionality
+            try:
+                # Quick validation test
+                test_result = await self.run_mcts_parallel(iterations=10)
+                if test_result and test_result.get('best_action'):
+                    logger.info("MCTS validation successful")
+                else:
+                    logger.warning("MCTS validation returned no results")
+            except Exception as e:
+                logger.warning(f"MCTS validation failed: {e}")
+            
+            logger.info(f"MCTS Agent {self.agent_id} initialized successfully")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize MCTS Agent {self.agent_id}: {e}")
+            return False
+    
+    async def start(self) -> bool:
+        """Start the MCTS Calculation Agent"""
+        try:
+            logger.info(f"Starting MCTS Agent {self.agent_id}")
+            
+            # Start monitoring dashboard if enabled
+            if not self.is_vercel_runtime and os.getenv('MCTS_MONITORING_ENABLED', 'true').lower() == 'true':
+                try:
+                    await self.monitoring_dashboard.start_monitoring()
+                    logger.info("MCTS monitoring dashboard started")
+                except Exception as e:
+                    logger.warning(f"Failed to start monitoring dashboard: {e}")
+            
+            logger.info(f"MCTS Agent {self.agent_id} started successfully")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to start MCTS Agent {self.agent_id}: {e}")
+            return False
     
     def _register_mcp_tools(self):
         """Register calculation-specific MCP tools with rate limiting"""
@@ -1022,9 +1144,334 @@ class ProductionMCTSCalculationAgent(SecureMCTSAgent, StrandsAgent):
         try:
             self.grok4_client = await get_grok4_client()
             logger.info("Grok4 AI client initialized successfully")
-        except Exception as e:
+        except Grok4ConfigError as e:
+            logger.error(f"Grok4 configuration error: {e}")
+            logger.warning("Please set GROK4_API_KEY environment variable")
+            self.grok4_client = None
+        except Grok4Error as e:
             logger.warning(f"Grok4 client initialization failed: {e} - using fallback mode")
             self.grok4_client = None
+        except Exception as e:
+            logger.error(f"Unexpected error initializing Grok4 client: {e}")
+            self.grok4_client = None
+    
+    async def _get_ai_market_sentiment(self, symbols: List[str], state: Dict[str, Any]) -> Dict[str, Any]:
+        """Get AI market sentiment with caching for MCTS integration"""
+        if not self.grok4_client or not symbols:
+            return {}
+        
+        # Check cache
+        cache_key = f"ai_sentiment_{','.join(sorted(symbols))}_{state.get('timestamp', '')}"
+        current_time = time.time()
+        
+        if cache_key in self._ai_cache and cache_key in self._last_ai_fetch:
+            if current_time - self._last_ai_fetch[cache_key] < self._ai_cache_ttl:
+                return self._ai_cache[cache_key]
+        
+        try:
+            # Fetch fresh AI insights
+            insights = await self.grok4_client.analyze_market_sentiment(symbols, timeframe='1h')
+            
+            # Convert to dict for easy lookup
+            sentiment_dict = {}
+            for insight in insights:
+                sentiment_dict[insight.symbol] = {
+                    'recommendation': insight.recommendation,
+                    'sentiment_score': insight.score,
+                    'risk_level': insight.risk_level,
+                    'confidence': insight.confidence,
+                    'reasoning': insight.reasoning
+                }
+            
+            # Cache the results
+            self._ai_cache[cache_key] = sentiment_dict
+            self._last_ai_fetch[cache_key] = current_time
+            
+            return sentiment_dict
+            
+        except Grok4APIError as e:
+            if e.status_code == 429:
+                logger.warning("AI rate limit reached, using cached data")
+            return self._ai_cache.get(cache_key, {})
+        except Exception as e:
+            logger.warning(f"Failed to get AI sentiment: {e}")
+            return {}
+    
+    async def _calculate_ai_value_boost(self, action_sequence: List[Dict[str, Any]], 
+                                      final_state: Dict[str, Any]) -> float:
+        """Calculate value boost based on AI alignment with action sequence"""
+        if not action_sequence:
+            return 0.0
+        
+        total_boost = 0.0
+        alignment_count = 0
+        
+        # Check how well actions align with AI recommendations
+        for action in action_sequence:
+            action_type = action.get('type', '')
+            symbol = action.get('symbol', '')
+            
+            # Get cached AI sentiment for this symbol
+            cache_key = f"ai_sentiment_{final_state.get('timestamp', '')}"
+            if cache_key in self._ai_cache and symbol in self._ai_cache[cache_key]:
+                ai_data = self._ai_cache[cache_key][symbol]
+                ai_rec = ai_data.get('recommendation', 'HOLD')
+                ai_confidence = ai_data.get('confidence', 0.5)
+                
+                # Check alignment
+                if (action_type == 'buy' and ai_rec == 'BUY') or \
+                   (action_type == 'sell' and ai_rec == 'SELL') or \
+                   (action_type == 'hold' and ai_rec == 'HOLD'):
+                    # Action aligns with AI recommendation
+                    total_boost += ai_confidence * 0.1  # Max 10% boost per aligned action
+                    alignment_count += 1
+                elif (action_type == 'buy' and ai_rec == 'SELL') or \
+                     (action_type == 'sell' and ai_rec == 'BUY'):
+                    # Action opposes AI recommendation
+                    total_boost -= ai_confidence * 0.05  # Max 5% penalty per opposed action
+        
+        # Cap the total boost/penalty
+        return max(-0.2, min(0.3, total_boost))  # Between -20% and +30%
+    
+    async def _get_ai_predictions_cached(self, symbols: List[str], state: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Get AI market predictions with caching"""
+        if not self.grok4_client or not symbols:
+            return None
+        
+        cache_key = f"ai_predictions_{','.join(sorted(symbols))}_{state.get('timestamp', '')}"
+        current_time = time.time()
+        
+        if cache_key in self._ai_cache and cache_key in self._last_ai_fetch:
+            if current_time - self._last_ai_fetch[cache_key] < self._ai_cache_ttl:
+                return self._ai_cache[cache_key]
+        
+        try:
+            # Get AI predictions
+            predictions = await self.grok4_client.predict_market_movement(symbols, horizon='1h')
+            
+            # Cache the results
+            self._ai_cache[cache_key] = predictions
+            self._last_ai_fetch[cache_key] = current_time
+            
+            return predictions
+            
+        except Exception as e:
+            logger.warning(f"Failed to get AI predictions: {e}")
+            return None
+    
+    async def _enhance_technical_analysis_with_ai(self, ta_result: Dict[str, Any], 
+                                                 symbol: str) -> Dict[str, Any]:
+        """Enhance technical analysis results with AI insights"""
+        if not self.grok4_client:
+            return ta_result
+        
+        try:
+            # Get cached AI sentiment
+            cache_key = f"ai_sentiment_{symbol}"
+            ai_sentiment = self._ai_cache.get(cache_key, {})
+            
+            if symbol in ai_sentiment:
+                ai_data = ai_sentiment[symbol]
+                
+                # Enhance TA result with AI insights
+                ta_result['ai_enhanced'] = True
+                ta_result['ai_recommendation'] = ai_data.get('recommendation', 'HOLD')
+                ta_result['ai_confidence'] = ai_data.get('confidence', 0.5)
+                ta_result['ai_reasoning'] = ai_data.get('reasoning', '')
+                
+                # Adjust signal strength based on AI alignment
+                if 'signal' in ta_result and 'strength' in ta_result:
+                    ta_signal = ta_result['signal']  # BUY/SELL/HOLD
+                    ai_rec = ai_data.get('recommendation', 'HOLD')
+                    
+                    if ta_signal == ai_rec:
+                        # Signals align - boost confidence
+                        ta_result['combined_strength'] = min(
+                            ta_result['strength'] * (1 + ai_data.get('confidence', 0.5) * 0.3),
+                            1.0
+                        )
+                        ta_result['signal_alignment'] = 'strong'
+                    elif (ta_signal == 'BUY' and ai_rec == 'SELL') or \
+                         (ta_signal == 'SELL' and ai_rec == 'BUY'):
+                        # Signals oppose - reduce confidence
+                        ta_result['combined_strength'] = ta_result['strength'] * 0.5
+                        ta_result['signal_alignment'] = 'conflicting'
+                    else:
+                        # Mixed signals
+                        ta_result['combined_strength'] = ta_result['strength'] * 0.8
+                        ta_result['signal_alignment'] = 'neutral'
+                
+                logger.info(f"Enhanced TA with AI: {ta_signal} + {ai_rec} = {ta_result.get('signal_alignment', 'unknown')}")
+            
+            return ta_result
+            
+        except Exception as e:
+            logger.warning(f"Failed to enhance TA with AI: {e}")
+            return ta_result
+    
+    async def _execute_real_technical_analysis(self, symbol: str, analysis_type: str, 
+                                            market_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute real technical analysis using MCP tools"""
+        if not self.ta_mcp_server:
+            # Fallback to simulated analysis if MCP tools not available
+            return {
+                'symbol': symbol,
+                'analysis_type': analysis_type,
+                'signal': 'HOLD',
+                'strength': 0.5,
+                'indicators': {'fallback': True, 'reason': 'TA MCP server not available'}
+            }
+        
+        try:
+            # Convert market data to JSON format for MCP
+            market_data_json = json.dumps(market_data.get(symbol, {}))
+            
+            # Map MCTS action types to MCP tool names
+            mcp_tool_mapping = {
+                'analyze_indicators': 'analyze_momentum_indicators',
+                'detect_patterns': 'detect_chart_patterns',
+                'support_resistance': 'analyze_support_resistance',
+                'generate_signals': 'generate_trading_signals',
+                'comprehensive': 'analyze_market_comprehensive'
+            }
+            
+            mcp_tool_name = mcp_tool_mapping.get(analysis_type, 'analyze_momentum_indicators')
+            
+            # Prepare arguments for MCP tool
+            arguments = {
+                'market_data': market_data_json,
+                'symbol': symbol
+            }
+            
+            # Call the MCP tool directly (bypassing MCP protocol for internal use)
+            if mcp_tool_name == 'analyze_momentum_indicators':
+                result = await self.ta_mcp_server._handle_momentum_indicators(
+                    pd.DataFrame(market_data.get(symbol, {})), symbol
+                )
+            elif mcp_tool_name == 'detect_chart_patterns':
+                result = await self.ta_mcp_server._handle_chart_patterns(
+                    pd.DataFrame(market_data.get(symbol, {})), symbol
+                )
+            elif mcp_tool_name == 'analyze_support_resistance':
+                result = await self.ta_mcp_server._handle_support_resistance(
+                    pd.DataFrame(market_data.get(symbol, {})), symbol
+                )
+            elif mcp_tool_name == 'generate_trading_signals':
+                result = await self.ta_mcp_server._handle_trading_signals(
+                    pd.DataFrame(market_data.get(symbol, {})), arguments
+                )
+            else:
+                result = await self.ta_mcp_server._handle_comprehensive_analysis(
+                    pd.DataFrame(market_data.get(symbol, {})), arguments
+                )
+            
+            # Convert MCP result to standard format
+            if result.get('success', False):
+                indicators = result.get('indicators', {})
+                signals = result.get('signals', [])
+                
+                # Extract signal and strength from MCP result
+                signal = 'HOLD'
+                strength = 0.5
+                
+                if signals:
+                    # Use the first signal for simplicity
+                    first_signal = signals[0] if isinstance(signals, list) else signals
+                    if isinstance(first_signal, dict):
+                        signal = first_signal.get('action', 'HOLD').upper()
+                        strength = first_signal.get('strength', 0.5)
+                
+                return {
+                    'symbol': symbol,
+                    'analysis_type': analysis_type,
+                    'signal': signal,
+                    'strength': strength,
+                    'indicators': indicators,
+                    'signals': signals,
+                    'mcp_result': True,
+                    'timestamp': result.get('timestamp', datetime.now().isoformat())
+                }
+            else:
+                logger.warning(f"TA MCP tool failed for {symbol}: {result.get('error', 'Unknown error')}")
+                return {
+                    'symbol': symbol,
+                    'analysis_type': analysis_type,
+                    'signal': 'HOLD',
+                    'strength': 0.3,
+                    'indicators': {'error': result.get('error', 'TA analysis failed')},
+                    'mcp_result': False
+                }
+                
+        except Exception as e:
+            logger.error(f"Real technical analysis failed for {symbol}: {e}")
+            return {
+                'symbol': symbol,
+                'analysis_type': analysis_type,
+                'signal': 'HOLD',
+                'strength': 0.2,
+                'indicators': {'error': str(e)},
+                'mcp_result': False
+            }
+    
+    async def analyze_with_technical_indicators(self, symbols: List[str], 
+                                              market_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Run MCTS-guided technical analysis enhanced with AI insights
+        
+        Args:
+            symbols: List of symbols to analyze
+            market_data: OHLCV market data
+            
+        Returns:
+            Combined technical analysis with AI enhancement
+        """
+        logger.info(f"AI-Enhanced Technical Analysis for {symbols}")
+        
+        results = {}
+        
+        for symbol in symbols:
+            # Get AI sentiment first
+            ai_sentiment = await self._get_ai_market_sentiment([symbol], market_data)
+            
+            # Configure MCTS for technical analysis decisions
+            ta_config = {
+                'symbols': [symbol],
+                'analysis_depth': 5,
+                'available_actions': [
+                    {'type': 'analyze_indicators', 'symbol': symbol},
+                    {'type': 'detect_patterns', 'symbol': symbol},
+                    {'type': 'support_resistance', 'symbol': symbol},
+                    {'type': 'generate_signals', 'symbol': symbol}
+                ]
+            }
+            
+            # Run MCTS to determine best technical analysis approach
+            self.environment = ProductionTradingEnvironment(ta_config, self.market_data_provider)
+            mcts_result = await self.run_mcts_parallel(iterations=100)
+            
+            # Execute the recommended technical analysis
+            best_action = mcts_result.get('best_action', {})
+            action_type = best_action.get('type', 'analyze_indicators')
+            
+            # Execute real technical analysis using MCP tools
+            ta_result = await self._execute_real_technical_analysis(symbol, action_type, market_data)
+            
+            # Enhance with AI insights
+            enhanced_result = await self._enhance_technical_analysis_with_ai(ta_result, symbol)
+            
+            # Add MCTS confidence
+            enhanced_result['mcts_confidence'] = mcts_result.get('confidence', 0)
+            enhanced_result['analysis_path'] = [a.get('type') for a in mcts_result.get('stats', {}).get('action_sequence', [])]
+            
+            results[symbol] = enhanced_result
+        
+        return {
+            'timestamp': datetime.now().isoformat(),
+            'analysis_results': results,
+            'ai_enabled': self.grok4_client is not None,
+            'mcts_iterations': 100,
+            'method': 'ai_enhanced_mcts_technical_analysis'
+        }
     
     def _register_strands_tools(self):
         """Register simplified Strands tools with AI and backtesting capabilities"""
@@ -1036,7 +1483,7 @@ class ProductionMCTSCalculationAgent(SecureMCTSAgent, StrandsAgent):
             
             # AI-powered analysis tools
             'analyze_market_sentiment': self.analyze_market_sentiment,
-            'assess_trading_risk': self.assess_trading_risk,
+            'analyze_technical_signals': self.analyze_technical_signals,
             'predict_market_movement': self.predict_market_movement,
             
             # Strategy backtesting tools
@@ -1053,7 +1500,7 @@ class ProductionMCTSCalculationAgent(SecureMCTSAgent, StrandsAgent):
                 'mcts_calculation',
                 'ai_market_analysis',
                 'strategy_backtesting',
-                'risk_assessment'
+                'technical_analysis'
             ])
         
         logger.info(f"Registered {len(self.strands_tools)} Strands tools")
@@ -1419,12 +1866,19 @@ class ProductionMCTSCalculationAgent(SecureMCTSAgent, StrandsAgent):
         except ValidationError as e:
             return {'error': str(e), 'type': 'validation_error'}
         
-        # Check cache
+        # Check memory cache first
         cache_key = f"mcts_result:{problem_type}:{hashlib.md5(json.dumps(parameters, sort_keys=True).encode()).hexdigest()}"
-        cached_result = mcp_cache.get(cache_key)
+        cached_result = await self.retrieve_memory(f"calculation_cache_{cache_key}")
         if cached_result:
             cached_result['cached'] = True
+            await self._track_calculation_performance("cache_hit", 0, True)
             return cached_result
+        
+        # Check MCP cache as fallback
+        mcp_cached_result = mcp_cache.get(cache_key)
+        if mcp_cached_result:
+            mcp_cached_result['cached'] = True
+            return mcp_cached_result
         
         # Create environment
         if problem_type == 'trading':
@@ -1439,8 +1893,20 @@ class ProductionMCTSCalculationAgent(SecureMCTSAgent, StrandsAgent):
                 timeout=timeout
             )
             
-            # Cache result
+            # Cache result in both memory and MCP cache
+            await self.store_memory(
+                f"calculation_cache_{cache_key}",
+                result,
+                {"type": "calculation_cache", "expires_at": time.time() + self.config.cache_ttl}
+            )
             mcp_cache.set(cache_key, result, ttl=self.config.cache_ttl)
+            
+            # Track performance
+            calculation_time = time.time() - start_time if 'start_time' in locals() else 0
+            await self._track_calculation_performance("calculation", calculation_time, True)
+            
+            # Log calculation for learning
+            await self._log_calculation_result(problem_type, parameters, result, calculation_time)
             
             return {
                 'type': 'calculation_result',
@@ -1475,6 +1941,15 @@ class ProductionMCTSCalculationAgent(SecureMCTSAgent, StrandsAgent):
         initial_state = await self.environment.get_initial_state()
         root = MCTSNodeV2(state=initial_state, untried_actions=initial_state['available_actions'])
         self._current_root_node = root  # Store reference for memory checking
+        
+        # Pre-fetch AI insights for initial state
+        symbols = initial_state.get('symbols', [])
+        if symbols and self.grok4_client:
+            ai_sentiment = await self._get_ai_market_sentiment(symbols, initial_state)
+            if ai_sentiment:
+                logger.info(f"AI insights loaded for {len(ai_sentiment)} symbols")
+                # Store in cache for simulation phase
+                self._ai_cache[f"ai_sentiment_{initial_state.get('timestamp', '')}"] = ai_sentiment
         
         # Statistics
         start_time = time.time()
@@ -1556,10 +2031,33 @@ class ProductionMCTSCalculationAgent(SecureMCTSAgent, StrandsAgent):
             final_confidence, final_tree_size, final_report['convergence_confidence']
         ))
         
+        # Calculate AI contribution metrics
+        ai_metrics = {
+            'ai_enabled': self.grok4_client is not None,
+            'ai_cache_hits': len(self._ai_cache),
+            'ai_insights_used': len([k for k in self._ai_cache.keys() if 'sentiment' in k]),
+            'ai_predictions_used': len([k for k in self._ai_cache.keys() if 'predictions' in k])
+        }
+        
+        # Get AI reasoning for best action if available
+        ai_reasoning = None
+        if final_best and self.grok4_client:
+            symbol = final_best.action.get('symbol', '') if final_best.action else ''
+            cache_key = f"ai_sentiment_{initial_state.get('timestamp', '')}"
+            if cache_key in self._ai_cache and symbol in self._ai_cache[cache_key]:
+                ai_data = self._ai_cache[cache_key][symbol]
+                ai_reasoning = {
+                    'recommendation': ai_data.get('recommendation'),
+                    'confidence': ai_data.get('confidence'),
+                    'reasoning': ai_data.get('reasoning'),
+                    'risk_level': ai_data.get('risk_level')
+                }
+        
         result = {
             'best_action': final_best.action if final_best else None,
             'expected_value': final_expected_value,
             'confidence': final_confidence,
+            'ai_reasoning': ai_reasoning,  # AI explanation for the decision
             'stats': {
                 'iterations': actual_iterations,
                 'max_iterations': max_iterations,
@@ -1574,7 +2072,8 @@ class ProductionMCTSCalculationAgent(SecureMCTSAgent, StrandsAgent):
                 'convergence_reason': final_report['convergence_reason'],
                 'convergence_confidence': final_report['convergence_confidence'],
                 'adaptive_params_final': adaptive_controller.get_current_parameters(),
-                'convergence_history': convergence_history[-10:]  # Last 10 status updates
+                'convergence_history': convergence_history[-10:],  # Last 10 status updates
+                'ai_metrics': ai_metrics  # AI contribution metrics
             }
         }
         
@@ -1637,7 +2136,7 @@ class ProductionMCTSCalculationAgent(SecureMCTSAgent, StrandsAgent):
                 # Add virtual loss to new node
                 node.add_virtual_loss(1)
         
-        # Simulation with adaptive depth
+        # Simulation with adaptive depth and AI enhancement
         simulation_state = state.copy()
         simulation_actions = []
         depth = 0
@@ -1645,6 +2144,16 @@ class ProductionMCTSCalculationAgent(SecureMCTSAgent, StrandsAgent):
         # Adaptive simulation depth based on convergence
         convergence_confidence = adaptive_params.get('convergence_confidence', 0)
         adaptive_depth = int(self.config.simulation_depth * (1 + convergence_confidence))
+        
+        # Pre-fetch AI insights for this simulation branch
+        if depth == 0 and self.grok4_client:
+            symbols = simulation_state.get('symbols', [])
+            if symbols:
+                ai_sentiment = await self._get_ai_market_sentiment(symbols, simulation_state)
+                if ai_sentiment:
+                    # Store in cache for this simulation
+                    cache_key = f"ai_sentiment_{simulation_state.get('timestamp', '')}"
+                    self._ai_cache[cache_key] = ai_sentiment
         
         while not await self.environment.is_terminal_state(simulation_state) and depth < adaptive_depth:
             available_actions = await self.environment.get_available_actions(simulation_state)
@@ -1654,8 +2163,19 @@ class ProductionMCTSCalculationAgent(SecureMCTSAgent, StrandsAgent):
                 simulation_actions.append(action)
             depth += 1
         
-        # Evaluation
-        value = await self.environment.evaluate_state(simulation_state)
+        # AI-Enhanced Evaluation
+        base_value = await self.environment.evaluate_state(simulation_state)
+        
+        # Apply AI value adjustment if we have insights
+        if self.grok4_client and action_sequence:
+            # Calculate AI confidence boost based on alignment with recommendations
+            ai_boost = await self._calculate_ai_value_boost(
+                action_sequence + simulation_actions, 
+                simulation_state
+            )
+            value = base_value * (1 + ai_boost)
+        else:
+            value = base_value
         
         # Remove virtual loss from all nodes in path after completing iteration
         for path_node in path:
@@ -1712,24 +2232,64 @@ class ProductionMCTSCalculationAgent(SecureMCTSAgent, StrandsAgent):
     
     async def _select_simulation_action(self, available_actions: List[Dict[str, Any]], 
                                       state: Dict[str, Any], depth: int) -> Dict[str, Any]:
-        """Select action during simulation using TRUE Monte Carlo random sampling"""
+        """Select action during simulation using TRUE Monte Carlo random sampling with AI enhancement"""
         if not available_actions:
             raise ValueError("No available actions for simulation")
         
-        # TRUE MONTE CARLO: Use random selection with optional biasing
+        # TRUE MONTE CARLO: Use random selection with optional AI-informed biasing
         
         # Option 1: Pure random (classic Monte Carlo)
         if self.config.simulation_strategy == 'pure_random':
             return random.choice(available_actions)
         
-        # Option 2: Weighted random based on simple heuristics (still stochastic)
+        # Option 2: AI-enhanced weighted random (still stochastic but smarter)
         weights = []
+        
+        # Get AI insights if available (cached for performance)
+        ai_market_sentiment = None
+        if self.grok4_client and depth < 3:  # Only use AI for early decisions
+            cache_key = f"ai_sentiment_{state.get('timestamp', '')}"
+            if cache_key in self._ai_cache:
+                ai_market_sentiment = self._ai_cache[cache_key]
+        
         for action in available_actions:
             weight = 1.0  # Base weight
             
             # Adjust weights based on action characteristics
             action_type = action.get('type', 'unknown')
+            symbol = action.get('symbol', '')
             
+            # AI-enhanced weight adjustment for technical analysis actions
+            if ai_market_sentiment and symbol in ai_market_sentiment:
+                ai_rec = ai_market_sentiment[symbol].get('recommendation', 'HOLD')
+                ai_confidence = ai_market_sentiment[symbol].get('confidence', 0.5)
+                
+                # Enhanced weighting for technical analysis actions
+                if action_type in ['technical_analysis', 'analyze_indicators']:
+                    # AI boost for technical analysis when market is uncertain
+                    if ai_confidence < 0.6:  # Low AI confidence means we need more TA
+                        weight *= 2.5
+                    else:
+                        weight *= 1.5
+                elif action_type == 'detect_patterns' and ai_rec in ['BUY', 'SELL']:
+                    # Pattern detection more valuable when AI has strong signal
+                    weight *= (1.0 + ai_confidence * 0.7)
+                elif action_type == 'support_resistance':
+                    # Support/resistance analysis always valuable
+                    weight *= 2.0
+                elif action_type == 'generate_signals':
+                    # Signal generation gets AI confidence boost
+                    weight *= (1.0 + ai_confidence * 0.6)
+                
+                # Standard trading actions with AI alignment
+                if action_type == 'buy' and ai_rec == 'BUY':
+                    weight *= (1.0 + ai_confidence * 0.5)  # Boost buy actions if AI recommends
+                elif action_type == 'sell' and ai_rec == 'SELL':
+                    weight *= (1.0 + ai_confidence * 0.5)  # Boost sell actions if AI recommends
+                elif action_type == 'hold' and ai_rec == 'HOLD':
+                    weight *= (1.0 + ai_confidence * 0.3)
+            
+            # Original heuristics (maintained for robustness)
             if action_type == 'buy':
                 # Slightly favor buys in early simulation
                 weight *= 1.2 if depth < 5 else 0.9
@@ -1742,6 +2302,15 @@ class ProductionMCTSCalculationAgent(SecureMCTSAgent, StrandsAgent):
             
             # Risk adjustment (still maintains randomness)
             risk_score = action.get('risk_score', 0.5)
+            
+            # AI risk adjustment if available
+            if ai_market_sentiment and symbol in ai_market_sentiment:
+                ai_risk = ai_market_sentiment[symbol].get('risk_level', 'MEDIUM')
+                if ai_risk == 'HIGH':
+                    risk_score = min(risk_score + 0.2, 1.0)
+                elif ai_risk == 'LOW':
+                    risk_score = max(risk_score - 0.2, 0.0)
+            
             weight *= (1.5 - risk_score)  # Slight bias against high risk
             
             weights.append(weight)
@@ -1753,7 +2322,7 @@ class ProductionMCTSCalculationAgent(SecureMCTSAgent, StrandsAgent):
         else:
             weights = [1.0 / len(available_actions)] * len(available_actions)
         
-        # STOCHASTIC SELECTION - this is true Monte Carlo
+        # STOCHASTIC SELECTION - this is true Monte Carlo with AI guidance
         return random.choices(available_actions, weights=weights, k=1)[0]
     
     def _backpropagate(self, node: MCTSNodeV2, value: float, action_sequence: List[Dict[str, Any]]):
@@ -2033,55 +2602,40 @@ class ProductionMCTSCalculationAgent(SecureMCTSAgent, StrandsAgent):
                 'analysis_timestamp': datetime.now().isoformat()
             }
             
-        except Exception as e:
+        except Grok4APIError as e:
+            logger.error(f"Grok4 API error during sentiment analysis: {e}")
+            if e.status_code == 429:
+                logger.warning("Rate limit exceeded - using fallback analysis")
+            # Fallback to MCTS-based analysis
+            return await self.analyze_market_correlation(symbols, timeframe)
+        except Grok4Error as e:
             logger.error(f"Grok4 sentiment analysis failed: {e}")
             # Fallback to MCTS-based analysis
             return await self.analyze_market_correlation(symbols, timeframe)
+        except Exception as e:
+            logger.error(f"Unexpected error in sentiment analysis: {e}")
+            # Fallback to MCTS-based analysis
+            return await self.analyze_market_correlation(symbols, timeframe)
     
-    async def assess_trading_risk(self, portfolio: Dict[str, float],
-                                market_conditions: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def analyze_technical_signals(self, symbols: List[str],
+                                      market_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
-        Assess trading risk using Grok4 AI
+        Analyze technical signals using AI-enhanced MCTS approach
         
         Args:
-            portfolio: Current portfolio positions
-            market_conditions: Optional market state information
+            symbols: Symbols to analyze
+            market_data: Optional market data
             
         Returns:
-            AI-powered risk assessment
+            Technical analysis results with AI enhancement
         """
-        logger.info(f"AI Risk Assessment: portfolio with {len(portfolio)} positions")
+        logger.info(f"Technical Signal Analysis: {len(symbols)} symbols")
         
-        if not self.grok4_client:
-            return {
-                'error': 'Grok4 AI client not available',
-                'basic_risk_score': 0.5,
-                'recommendation': 'Use manual risk assessment'
-            }
+        if not market_data:
+            market_data = await self._fetch_market_data()
         
-        try:
-            # Get AI risk assessment
-            risk_analysis = await self.grok4_client.assess_trading_risk(
-                portfolio, market_conditions or {}
-            )
-            
-            # Enhance with MCTS simulation
-            mcts_risk = await self._run_mcts_risk_simulation(portfolio)
-            
-            # Combine AI and MCTS insights
-            combined_analysis = {
-                'ai_risk_assessment': risk_analysis,
-                'mcts_risk_simulation': mcts_risk,
-                'combined_risk_score': (risk_analysis['overall_risk_score'] + mcts_risk['risk_score']) / 2,
-                'recommendation_confidence': min(risk_analysis.get('confidence', 0.8), 0.9),
-                'analysis_methods': ['grok4_ai', 'mcts_simulation']
-            }
-            
-            return combined_analysis
-            
-        except Exception as e:
-            logger.error(f"AI risk assessment failed: {e}")
-            return await self._run_mcts_risk_simulation(portfolio)
+        # Use the existing analyze_with_technical_indicators method
+        return await self.analyze_with_technical_indicators(symbols, market_data)
     
     async def predict_market_movement(self, symbols: List[str],
                                     horizon: str = '1d') -> Dict[str, Any]:
@@ -2216,8 +2770,100 @@ class ProductionMCTSCalculationAgent(SecureMCTSAgent, StrandsAgent):
             }
             
         except Exception as e:
+            # Track failed calculation
+            await self._track_calculation_performance("calculation", 0, False)
+            # Store error for learning
+            await self.store_memory(
+                f"calculation_error_{time.time()}",
+                {"error": str(e), "problem_type": "strategy_comparison", "parameters": strategy_configs, "timestamp": datetime.now().isoformat()},
+                {"type": "error_log"}
+            )
             logger.error(f"Strategy comparison failed: {e}")
-            return {'error': str(e), 'comparison_results': None}
+            return {'error': str(e), 'type': 'calculation_error'}
+    
+    async def _track_calculation_performance(self, operation_type: str, duration: float, success: bool):
+        """Track calculation performance metrics in memory"""
+        try:
+            performance_data = await self.retrieve_memory("mcts_performance") or {
+                "total_calculations": 0, "avg_calculation_time": 0, "success_rate": 0, 
+                "cache_hit_rate": 0, "best_results": []
+            }
+            
+            if operation_type == "cache_hit":
+                performance_data["cache_hits"] = performance_data.get("cache_hits", 0) + 1
+                total_ops = performance_data["total_calculations"] + performance_data.get("cache_hits", 0)
+                performance_data["cache_hit_rate"] = performance_data.get("cache_hits", 0) / total_ops if total_ops > 0 else 0
+            elif operation_type == "calculation":
+                performance_data["total_calculations"] += 1
+                if success:
+                    performance_data["successful_calculations"] = performance_data.get("successful_calculations", 0) + 1
+                    # Update average calculation time
+                    current_avg = performance_data["avg_calculation_time"]
+                    performance_data["avg_calculation_time"] = (current_avg * (performance_data["total_calculations"] - 1) + duration) / performance_data["total_calculations"]
+                
+                performance_data["success_rate"] = performance_data.get("successful_calculations", 0) / performance_data["total_calculations"]
+            
+            await self.store_memory("mcts_performance", performance_data, {"type": "performance_tracking"})
+            
+        except Exception as e:
+            logger.error(f"Failed to track calculation performance: {e}")
+    
+    async def _log_calculation_result(self, problem_type: str, parameters: Dict[str, Any], result: Dict[str, Any], duration: float):
+        """Log calculation results for learning and analysis"""
+        try:
+            calculation_history = await self.retrieve_memory("calculation_history") or []
+            
+            log_entry = {
+                "timestamp": datetime.now().isoformat(),
+                "problem_type": problem_type,
+                "parameters": parameters,
+                "result": {
+                    "best_action": result.get("best_action"),
+                    "expected_value": result.get("expected_value"),
+                    "confidence": result.get("confidence")
+                },
+                "duration": duration,
+                "iterations": result.get("stats", {}).get("iterations", 0)
+            }
+            
+            calculation_history.append(log_entry)
+            
+            # Keep only last 100 calculations to prevent memory bloat
+            if len(calculation_history) > 100:
+                calculation_history = calculation_history[-100:]
+            
+            await self.store_memory("calculation_history", calculation_history, {"type": "calculation_log"})
+            
+            # Learn from successful strategies
+            if result.get("confidence", 0) > 0.8:  # High confidence results
+                await self._learn_from_successful_strategy(problem_type, parameters, result)
+            
+        except Exception as e:
+            logger.error(f"Failed to log calculation result: {e}")
+    
+    async def _learn_from_successful_strategy(self, problem_type: str, parameters: Dict[str, Any], result: Dict[str, Any]):
+        """Learn from successful MCTS strategies"""
+        try:
+            strategy_learning = await self.retrieve_memory("strategy_learning") or {"successful_strategies": [], "failed_strategies": []}
+            
+            strategy_pattern = {
+                "problem_type": problem_type,
+                "key_parameters": {k: v for k, v in parameters.items() if k in ["initial_portfolio", "symbols", "max_depth"]},
+                "result_confidence": result.get("confidence"),
+                "best_action": result.get("best_action"),
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            strategy_learning["successful_strategies"].append(strategy_pattern)
+            
+            # Keep only last 50 successful strategies
+            if len(strategy_learning["successful_strategies"]) > 50:
+                strategy_learning["successful_strategies"] = strategy_learning["successful_strategies"][-50:]
+            
+            await self.store_memory("strategy_learning", strategy_learning, {"type": "strategy_learning"})
+            
+        except Exception as e:
+            logger.error(f"Failed to learn from successful strategy: {e}")
     
     # ==================== HELPER METHODS ====================
     
@@ -2265,57 +2911,57 @@ class ProductionMCTSCalculationAgent(SecureMCTSAgent, StrandsAgent):
         
         return sorted(signals, key=lambda x: x['confidence'], reverse=True)
     
-    async def _run_mcts_risk_simulation(self, portfolio: Dict[str, float]) -> Dict[str, Any]:
-        """Run MCTS simulation for risk assessment"""
+    async def _run_mcts_technical_analysis_simulation(self, symbols: List[str]) -> Dict[str, Any]:
+        """Run MCTS simulation for technical analysis optimization"""
         try:
-            # Setup risk assessment environment
-            symbols = list(portfolio.keys())
-            total_value = sum(portfolio.values())
-            
+            # Setup technical analysis environment
             config = {
-                'initial_portfolio': total_value,
                 'symbols': symbols,
-                'current_positions': portfolio,
-                'max_depth': 10,
-                'risk_analysis': True
+                'max_depth': 8,
+                'technical_analysis_focus': True,
+                'available_actions': [
+                    {'type': 'analyze_indicators', 'symbols': symbols},
+                    {'type': 'detect_patterns', 'symbols': symbols},
+                    {'type': 'support_resistance', 'symbols': symbols}
+                ]
             }
             
             self.environment = ProductionTradingEnvironment(config, self.market_data_provider)
             
-            # Run risk-focused MCTS simulation
-            result = await self.run_mcts_parallel(iterations=200)
+            # Run technical analysis focused MCTS simulation
+            result = await self.run_mcts_parallel(iterations=150)
             
             return {
-                'risk_score': 1.0 - result['confidence'],  # Lower confidence = higher risk
-                'portfolio_value': total_value,
-                'risk_factors': ['volatility', 'correlation', 'concentration'],
+                'analysis_confidence': result['confidence'],
+                'recommended_analysis_sequence': [a.get('type') for a in result.get('stats', {}).get('action_sequence', [])],
+                'best_indicators': result.get('best_action', {}),
                 'mcts_confidence': result['confidence'],
                 'simulation_stats': result['stats']
             }
             
         except Exception as e:
-            logger.error(f"MCTS risk simulation failed: {e}")
+            logger.error(f"MCTS technical analysis simulation failed: {e}")
             return {
-                'risk_score': 0.5,
+                'analysis_confidence': 0.5,
                 'error': str(e),
                 'method': 'fallback_estimation'
             }
     
     async def _validate_predictions_with_mcts(self, predictions: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
-        """Validate AI predictions using MCTS simulation"""
+        """Validate AI predictions using MCTS technical analysis simulation"""
         try:
             symbols = list(predictions.keys())
             
-            # Run MCTS prediction validation
+            # Run MCTS technical analysis validation
             validation_config = {
-                'initial_portfolio': 10000,
                 'symbols': symbols,
-                'max_depth': 8,
-                'prediction_validation': True
+                'max_depth': 6,
+                'prediction_validation': True,
+                'technical_analysis_focus': True
             }
             
             self.environment = ProductionTradingEnvironment(validation_config, self.market_data_provider)
-            result = await self.run_mcts_parallel(iterations=150)
+            result = await self.run_mcts_parallel(iterations=100)
             
             return {
                 'mcts_validation_score': result['confidence'],
@@ -2331,3 +2977,31 @@ class ProductionMCTSCalculationAgent(SecureMCTSAgent, StrandsAgent):
                 'error': str(e),
                 'method': 'fallback_validation'
             }
+    
+    async def cleanup(self):
+        """
+        Cleanup resources used by MCTS agent.
+        Should be called when the agent is being shut down.
+        """
+        try:
+            # Note: Grok4 client is a singleton and managed globally
+            # We don't close it here as other agents might be using it
+            # It should be closed at application shutdown with close_grok4_client()
+            
+            # Clean up other resources
+            if hasattr(self, 'monitoring_dashboard') and self.monitoring_dashboard:
+                # Cleanup monitoring resources if needed
+                pass
+            
+            if hasattr(self, 'memory_agent') and self.memory_agent:
+                # Memory agent cleanup if needed
+                pass
+            
+            logger.info(f"MCTS Agent {self.agent_id} cleaned up successfully")
+            
+        except Exception as e:
+            logger.error(f"Error during MCTS agent cleanup: {e}")
+
+
+# Backward compatibility alias
+ProductionMCTSCalculationAgent = MCTSCalculationAgent

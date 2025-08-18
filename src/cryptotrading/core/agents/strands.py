@@ -17,7 +17,7 @@ from contextvars import ContextVar
 
 from .memory import MemoryAgent
 from ..config.production_config import get_config, StrandsConfig
-from ...infrastructure.database.connection_pool import get_connection_pool
+from ...infrastructure.database import UnifiedDatabase
 
 logger = logging.getLogger(__name__)
 
@@ -1166,14 +1166,18 @@ class StrandsAgent(MemoryAgent):
     async def _store_telemetry_event(self, event: Dict[str, Any]):
         """Store telemetry event in database"""
         try:
-            pool = get_connection_pool()
-            async with pool.acquire() as conn:
-                await conn.execute("""
-                    INSERT INTO strands_telemetry 
-                    (event_type, agent_id, workflow_id, span_id, timestamp, data)
-                    VALUES ($1, $2, $3, $4, $5, $6)
-                """, event["event_type"], event["agent_id"], event["workflow_id"], 
-                    event["span_id"], event["timestamp"], json.dumps(event["data"]))
+            # Use UnifiedDatabase for telemetry storage
+            db = UnifiedDatabase()
+            await db.initialize()
+            
+            # Store telemetry event using execute_query_async
+            await db.execute_query_async("""
+                INSERT INTO strands_telemetry 
+                (event_type, agent_id, workflow_id, span_id, timestamp, data)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (event["event_type"], event["agent_id"], event["workflow_id"], 
+                  event["span_id"], event["timestamp"], json.dumps(event["data"])))
+            
         except Exception as e:
             logger.error(f"Failed to store telemetry event: {e}")
     

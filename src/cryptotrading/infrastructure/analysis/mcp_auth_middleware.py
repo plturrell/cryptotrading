@@ -212,20 +212,45 @@ class MCPAuthenticationMiddleware:
     
     async def _create_agent_session(self, auth_request: AuthenticationRequest) -> Optional[AgentContext]:
         """Create new agent session"""
-        # Mock implementation - would integrate with actual user/agent database
-        if auth_request.agent_id.startswith("agent_") and auth_request.tenant_id.startswith("tenant_"):
-            # Determine role based on agent_id pattern
-            if "admin" in auth_request.agent_id:
-                role = AgentRole.ADMIN
-            elif "analyst" in auth_request.agent_id:
-                role = AgentRole.ANALYST
+        # REAL implementation - integrate with actual user/agent database
+        try:
+            # Validate agent exists in database
+            from ...data.database.unified_database import UnifiedDatabase
+            db = UnifiedDatabase()
+            
+            # Check if agent is registered and active
+            agent_record = await db.get_agent_by_id(auth_request.agent_id)
+            if not agent_record:
+                logger.warning(f"Agent {auth_request.agent_id} not found in database")
+                return None
+            
+            # Validate tenant association
+            if agent_record.get('tenant_id') != auth_request.tenant_id:
+                logger.warning(f"Agent {auth_request.agent_id} not associated with tenant {auth_request.tenant_id}")
+                return None
+            
+            # Determine role from database record
+            role = agent_record.get('role', 'BASIC_USER')
+            if role not in ['ADMIN', 'ANALYST', 'BASIC_USER']:
+                role = 'BASIC_USER'  # Default fallback
+                
+        except Exception as e:
+            logger.error(f"Database lookup failed for agent authentication: {e}")
+            return None
+            
+        if auth_request.agent_id and auth_request.tenant_id:
+            # Convert string role to AgentRole enum
+            if role == 'ADMIN':
+                agent_role = AgentRole.ADMIN
+            elif role == 'ANALYST':
+                agent_role = AgentRole.ANALYST
             else:
-                role = AgentRole.BASIC_USER
+                agent_role = AgentRole.BASIC_USER
             
             return self.segregation_manager.create_agent_context(
                 agent_id=auth_request.agent_id,
                 tenant_id=auth_request.tenant_id,
-                role=role
+                role=agent_role
             )
         
         return None

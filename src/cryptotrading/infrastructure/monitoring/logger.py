@@ -90,30 +90,30 @@ class StructuredLogger:
     def error(self, message: str, error: Optional[Exception] = None, 
               extra: Optional[Dict[str, Any]] = None):
         """Log error message with exception details"""
-        enhanced_extra = self._add_context(extra or {})
+        context_extra = self._add_context(extra or {})
         
         if error:
-            enhanced_extra.update({
+            context_extra.update({
                 'error_type': type(error).__name__,
                 'error_message': str(error),
                 'error_traceback': traceback.format_exc()
             })
         
-        self.logger.error(message, extra=enhanced_extra)
+        self.logger.error(message, extra=context_extra)
     
     def critical(self, message: str, error: Optional[Exception] = None,
                  extra: Optional[Dict[str, Any]] = None):
         """Log critical message with exception details"""
-        enhanced_extra = self._add_context(extra or {})
+        context_extra = self._add_context(extra or {})
         
         if error:
-            enhanced_extra.update({
+            context_extra.update({
                 'error_type': type(error).__name__,
                 'error_message': str(error),
                 'error_traceback': traceback.format_exc()
             })
         
-        self.logger.critical(message, extra=enhanced_extra)
+        self.logger.critical(message, extra=context_extra)
     
     def log_event(self, event_type: str, event_data: Dict[str, Any], 
                   level: str = "INFO"):

@@ -363,12 +363,8 @@ class AnomalyDetector:
         critical_alerts = [a for a in active_alerts if a.severity == AnomalySeverity.CRITICAL]
         high_alerts = [a for a in active_alerts if a.severity == AnomalySeverity.HIGH]
         
-        # Calculate health score (0-100)
-        health_score = 100
-        health_score -= len(critical_alerts) * 30
-        health_score -= len(high_alerts) * 15
-        health_score -= len(active_alerts) * 5
-        health_score = max(0, health_score)
+        # Calculate REAL health score based on actual system metrics
+        health_score = await self._calculate_real_health_score(critical_alerts, high_alerts, active_alerts)
         
         # Determine health status
         if health_score >= 90:
@@ -403,6 +399,61 @@ class AnomalyDetector:
             'metric_summaries': metric_summaries,
             'last_updated': datetime.utcnow().isoformat()
         }
+    
+    async def _calculate_real_health_score(self, critical_alerts: List, high_alerts: List, active_alerts: List) -> float:
+        """Calculate real health score based on actual system performance metrics"""
+        try:
+            # Start with base score
+            base_score = 100.0
+            
+            # Get real system metrics
+            from ...data.database.performance_monitor import PerformanceMonitor
+            perf_monitor = PerformanceMonitor()
+            
+            # Get actual performance metrics
+            metrics = await perf_monitor.get_current_metrics()
+            
+            # Deduct based on real performance issues
+            if metrics.get('cpu_usage_percent', 0) > 80:
+                base_score -= 15
+            elif metrics.get('cpu_usage_percent', 0) > 60:
+                base_score -= 8
+            
+            if metrics.get('memory_usage_percent', 0) > 85:
+                base_score -= 20
+            elif metrics.get('memory_usage_percent', 0) > 70:
+                base_score -= 10
+            
+            # Database performance impact
+            db_response_time = metrics.get('avg_db_response_ms', 0)
+            if db_response_time > 1000:
+                base_score -= 25
+            elif db_response_time > 500:
+                base_score -= 15
+            
+            # Error rate impact
+            error_rate = metrics.get('error_rate_percent', 0)
+            if error_rate > 5:
+                base_score -= 30
+            elif error_rate > 2:
+                base_score -= 15
+            
+            # Alert-based deductions (real impact assessment)
+            base_score -= len(critical_alerts) * 20  # Critical alerts have major impact
+            base_score -= len(high_alerts) * 10      # High alerts have moderate impact
+            base_score -= max(0, len(active_alerts) - len(critical_alerts) - len(high_alerts)) * 3  # Other alerts
+            
+            # Ensure score stays within bounds
+            return max(0.0, min(100.0, base_score))
+            
+        except Exception as e:
+            logger.error(f"Failed to calculate real health score: {e}")
+            # Fallback to conservative scoring based on alerts only
+            fallback_score = 100.0
+            fallback_score -= len(critical_alerts) * 25
+            fallback_score -= len(high_alerts) * 12
+            fallback_score -= len(active_alerts) * 3
+            return max(0.0, fallback_score)
     
     def _calculate_trend(self, analyzer: TimeSeriesAnalyzer) -> str:
         """Calculate trend direction for a metric"""

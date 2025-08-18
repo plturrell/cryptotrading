@@ -1,0 +1,505 @@
+<mvc:View
+    controllerName="com.рекс.cryptotrading.controller.TechnicalAnalysis"
+    displayBlock="true"
+    xmlns="sap.m"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:core="sap.ui.core"
+    xmlns:f="sap.f"
+    xmlns:suite="sap.suite.ui.commons"
+    xmlns:viz="sap.viz">
+    
+    <Shell id="shell" appWidthLimited="false">
+        <App id="app">
+            <pages>
+                <Page id="technicalAnalysisPage" 
+                      title="Technical Analysis Dashboard"
+                      showNavButton="true"
+                      navButtonPress="onNavBack"
+                      enableScrolling="true"
+                      backgroundDesign="Solid">
+                    
+                    <content>
+                        <!-- Header KPI Section -->
+                        <VBox class="sapUiMediumMargin">
+                            <Panel headerText="Market Overview" expandable="false" class="sapUiResponsiveMargin">
+                                <HBox justifyContent="SpaceBetween" class="sapUiSmallMarginBottom">
+                                    <VBox>
+                                        <Title text="Technical Analysis Dashboard" level="H2"/>
+                                        <Text text="Real-time crypto technical indicators and patterns"/>
+                                    </VBox>
+                                    <HBox>
+                                        <ComboBox id="symbolSelector" 
+                                                selectedKey="{ta>/selectedSymbol}"
+                                                items="{ta>/availableSymbols}"
+                                                change="onSymbolChange"
+                                                width="150px">
+                                            <core:Item key="{ta>symbol}" text="{ta>displayName}"/>
+                                        </ComboBox>
+                                        <ComboBox id="timeframeSelector"
+                                                selectedKey="{ta>/selectedTimeframe}"
+                                                items="{ta>/availableTimeframes}"
+                                                change="onTimeframeChange"
+                                                width="100px"
+                                                class="sapUiSmallMarginBegin">
+                                            <core:Item key="{ta>value}" text="{ta>label}"/>
+                                        </ComboBox>
+                                        <Button text="Refresh" 
+                                                icon="sap-icon://refresh"
+                                                press="onRefresh"
+                                                type="Emphasized"
+                                                class="sapUiSmallMarginBegin"/>
+                                    </HBox>
+                                </HBox>
+                                
+                                <!-- KPI Tiles Row -->
+                                <HBox justifyContent="SpaceBetween" class="sapUiSmallMarginBottom">
+                                    <GenericTile 
+                                        header="Current Price"
+                                        subheader="{ta>/selectedSymbol}"
+                                        frameType="OneByHalf"
+                                        class="sapUiTinyMarginEnd">
+                                        <tileContent>
+                                            <TileContent>
+                                                <content>
+                                                    <NumericContent
+                                                        value="{ta>/currentPrice}"
+                                                        scale="USD"
+                                                        indicator="{ta>/priceIndicator}"
+                                                        valueColor="{ta>/priceColor}"/>
+                                                </content>
+                                            </TileContent>
+                                        </tileContent>
+                                    </GenericTile>
+                                    
+                                    <GenericTile 
+                                        header="RSI (14)"
+                                        subheader="Momentum indicator"
+                                        frameType="OneByHalf"
+                                        class="sapUiTinyMarginEnd">
+                                        <tileContent>
+                                            <TileContent>
+                                                <content>
+                                                    <NumericContent
+                                                        value="{ta>/indicators/RSI}"
+                                                        indicator="{ta>/indicators/RSI_indicator}"
+                                                        valueColor="{ta>/indicators/RSI_color}"/>
+                                                </content>
+                                            </TileContent>
+                                        </tileContent>
+                                    </GenericTile>
+                                    
+                                    <GenericTile 
+                                        header="Signal Strength"
+                                        subheader="Overall sentiment"
+                                        frameType="OneByHalf">
+                                        <tileContent>
+                                            <TileContent>
+                                                <content>
+                                                    <NumericContent
+                                                        value="{ta>/analysis/confidence_score}"
+                                                        scale="%"
+                                                        indicator="{ta>/analysis/sentiment_indicator}"
+                                                        valueColor="{ta>/analysis/sentiment_color}"/>
+                                                </content>
+                                            </TileContent>
+                                        </tileContent>
+                                    </GenericTile>
+                                </HBox>
+                            </Panel>
+                        </VBox>
+                        
+                        <!-- Main Content Area with Tabs -->
+                        <IconTabBar id="technicalAnalysisTabs" 
+                                  selectedKey="overview"
+                                  class="sapUiResponsiveMargin"
+                                  select="onTabSelect">
+                            
+                            <!-- Overview Tab -->
+                            <items>
+                                <IconTabFilter key="overview" 
+                                             text="Overview" 
+                                             icon="sap-icon://overview-chart">
+                                    <VBox class="sapUiMediumMargin">
+                                        <!-- Price Chart with Indicators -->
+                                        <Panel headerText="Price Chart with Technical Indicators" 
+                                               expandable="true" 
+                                               expanded="true"
+                                               class="sapUiResponsiveMargin">
+                                            <suite:ChartContainer 
+                                                id="priceChart"
+                                                width="100%"
+                                                height="400px"
+                                                showPersonalization="true"
+                                                showFullScreen="true"
+                                                autoAdjustHeight="true">
+                                                <suite:content>
+                                                    <suite:ChartContainerContent 
+                                                        icon="sap-icon://line-chart"
+                                                        title="Price &amp; Moving Averages">
+                                                        <suite:content>
+                                                            <viz:Popover id="priceChartPopover"></viz:Popover>
+                                                            <viz:VizFrame 
+                                                                id="priceVizFrame"
+                                                                width="100%"
+                                                                height="100%"
+                                                                vizType="line"
+                                                                vizProperties="{ta>/chartConfig/priceChart}"
+                                                                selectData="onChartSelect">
+                                                                <viz:dataset>
+                                                                    <viz:FlattenedDataset data="{ta>/chartData/price}">
+                                                                        <viz:dimensions>
+                                                                            <viz:DimensionDefinition name="Date" value="{ta>date}"/>
+                                                                        </viz:dimensions>
+                                                                        <viz:measures>
+                                                                            <viz:MeasureDefinition name="Price" value="{ta>close}"/>
+                                                                            <viz:MeasureDefinition name="SMA 20" value="{ta>sma_20}"/>
+                                                                            <viz:MeasureDefinition name="EMA 20" value="{ta>ema_20}"/>
+                                                                        </viz:measures>
+                                                                    </viz:FlattenedDataset>
+                                                                </viz:dataset>
+                                                            </viz:VizFrame>
+                                                        </suite:content>
+                                                    </suite:ChartContainerContent>
+                                                    
+                                                    <suite:ChartContainerContent 
+                                                        icon="sap-icon://bar-chart"
+                                                        title="Volume Analysis">
+                                                        <suite:content>
+                                                            <viz:VizFrame 
+                                                                id="volumeVizFrame"
+                                                                width="100%"
+                                                                height="100%"
+                                                                vizType="column"
+                                                                vizProperties="{ta>/chartConfig/volumeChart}">
+                                                                <viz:dataset>
+                                                                    <viz:FlattenedDataset data="{ta>/chartData/volume}">
+                                                                        <viz:dimensions>
+                                                                            <viz:DimensionDefinition name="Date" value="{ta>date}"/>
+                                                                        </viz:dimensions>
+                                                                        <viz:measures>
+                                                                            <viz:MeasureDefinition name="Volume" value="{ta>volume}"/>
+                                                                            <viz:MeasureDefinition name="VWAP" value="{ta>vwap}"/>
+                                                                        </viz:measures>
+                                                                    </viz:FlattenedDataset>
+                                                                </viz:dataset>
+                                                            </viz:VizFrame>
+                                                        </suite:content>
+                                                    </suite:ChartContainerContent>
+                                                </suite:content>
+                                            </suite:ChartContainer>
+                                        </Panel>
+                                        
+                                        <!-- Signals Summary -->
+                                        <Panel headerText="Active Signals" 
+                                               expandable="true" 
+                                               expanded="true"
+                                               class="sapUiResponsiveMargin">
+                                            <Table id="signalsTable"
+                                                   items="{ta>/signals}"
+                                                   growing="true"
+                                                   growingThreshold="20"
+                                                   mode="None">
+                                                <columns>
+                                                    <Column>
+                                                        <Text text="Indicator"/>
+                                                    </Column>
+                                                    <Column>
+                                                        <Text text="Signal"/>
+                                                    </Column>
+                                                    <Column>
+                                                        <Text text="Strength"/>
+                                                    </Column>
+                                                    <Column>
+                                                        <Text text="Value"/>
+                                                    </Column>
+                                                    <Column>
+                                                        <Text text="AI Insight"/>
+                                                    </Column>
+                                                </columns>
+                                                <items>
+                                                    <ColumnListItem press="onSignalPress">
+                                                        <Text text="{ta>indicator}"/>
+                                                        <ObjectStatus 
+                                                            text="{ta>signal}"
+                                                            state="{ta>signalState}"/>
+                                                        <ProgressIndicator 
+                                                            percentValue="{ta>strengthPercent}"
+                                                            displayValue="{ta>strength}"
+                                                            state="{ta>strengthState}"/>
+                                                        <Text text="{ta>value}"/>
+                                                        <Link text="View Insight" 
+                                                              press="onInsightPress"
+                                                              visible="{ta>hasInsight}"/>
+                                                    </ColumnListItem>
+                                                </items>
+                                            </Table>
+                                        </Panel>
+                                    </VBox>
+                                </IconTabFilter>
+                                
+                                <!-- Indicators Tab -->
+                                <IconTabFilter key="indicators" 
+                                             text="Indicators" 
+                                             icon="sap-icon://line-charts">
+                                    <VBox class="sapUiMediumMargin">
+                                        <!-- RSI Chart -->
+                                        <Panel headerText="RSI (Relative Strength Index)" 
+                                               expandable="true" 
+                                               expanded="true"
+                                               class="sapUiResponsiveMargin">
+                                            <viz:VizFrame 
+                                                id="rsiVizFrame"
+                                                width="100%"
+                                                height="300px"
+                                                vizType="line"
+                                                vizProperties="{ta>/chartConfig/rsiChart}">
+                                                <viz:dataset>
+                                                    <viz:FlattenedDataset data="{ta>/chartData/rsi}">
+                                                        <viz:dimensions>
+                                                            <viz:DimensionDefinition name="Date" value="{ta>date}"/>
+                                                        </viz:dimensions>
+                                                        <viz:measures>
+                                                            <viz:MeasureDefinition name="RSI" value="{ta>rsi}"/>
+                                                        </viz:measures>
+                                                    </viz:FlattenedDataset>
+                                                </viz:dataset>
+                                            </viz:VizFrame>
+                                        </Panel>
+                                        
+                                        <!-- MACD Chart -->
+                                        <Panel headerText="MACD (Moving Average Convergence Divergence)" 
+                                               expandable="true" 
+                                               expanded="true"
+                                               class="sapUiResponsiveMargin">
+                                            <viz:VizFrame 
+                                                id="macdVizFrame"
+                                                width="100%"
+                                                height="300px"
+                                                vizType="combination"
+                                                vizProperties="{ta>/chartConfig/macdChart}">
+                                                <viz:dataset>
+                                                    <viz:FlattenedDataset data="{ta>/chartData/macd}">
+                                                        <viz:dimensions>
+                                                            <viz:DimensionDefinition name="Date" value="{ta>date}"/>
+                                                        </viz:dimensions>
+                                                        <viz:measures>
+                                                            <viz:MeasureDefinition name="MACD" value="{ta>macd_line}"/>
+                                                            <viz:MeasureDefinition name="Signal" value="{ta>signal_line}"/>
+                                                            <viz:MeasureDefinition name="Histogram" value="{ta>histogram}"/>
+                                                        </viz:measures>
+                                                    </viz:FlattenedDataset>
+                                                </viz:dataset>
+                                            </viz:VizFrame>
+                                        </Panel>
+                                        
+                                        <!-- Bollinger Bands -->
+                                        <Panel headerText="Bollinger Bands" 
+                                               expandable="true" 
+                                               expanded="false"
+                                               class="sapUiResponsiveMargin">
+                                            <viz:VizFrame 
+                                                id="bollingerVizFrame"
+                                                width="100%"
+                                                height="300px"
+                                                vizType="line"
+                                                vizProperties="{ta>/chartConfig/bollingerChart}">
+                                                <viz:dataset>
+                                                    <viz:FlattenedDataset data="{ta>/chartData/bollinger}">
+                                                        <viz:dimensions>
+                                                            <viz:DimensionDefinition name="Date" value="{ta>date}"/>
+                                                        </viz:dimensions>
+                                                        <viz:measures>
+                                                            <viz:MeasureDefinition name="Price" value="{ta>close}"/>
+                                                            <viz:MeasureDefinition name="Upper Band" value="{ta>bb_upper}"/>
+                                                            <viz:MeasureDefinition name="Middle Band" value="{ta>bb_middle}"/>
+                                                            <viz:MeasureDefinition name="Lower Band" value="{ta>bb_lower}"/>
+                                                        </viz:measures>
+                                                    </viz:FlattenedDataset>
+                                                </viz:dataset>
+                                            </viz:VizFrame>
+                                        </Panel>
+                                    </VBox>
+                                </IconTabFilter>
+                                
+                                <!-- Patterns Tab -->
+                                <IconTabFilter key="patterns" 
+                                             text="Patterns" 
+                                             icon="sap-icon://trend-up">
+                                    <VBox class="sapUiMediumMargin">
+                                        <!-- Pattern Detection Results -->
+                                        <Panel headerText="Detected Chart Patterns" 
+                                               expandable="true" 
+                                               expanded="true"
+                                               class="sapUiResponsiveMargin">
+                                            <List items="{ta>/patterns}" 
+                                                  mode="None"
+                                                  showSeparators="All">
+                                                <CustomListItem press="onPatternPress">
+                                                    <HBox justifyContent="SpaceBetween" alignItems="Center">
+                                                        <VBox>
+                                                            <Title text="{ta>pattern_name}" level="H4"/>
+                                                            <Text text="{ta>description}"/>
+                                                            <Text text="Confidence: {ta>confidence}%" class="sapUiSmallMarginTop"/>
+                                                        </VBox>
+                                                        <VBox alignItems="End">
+                                                            <ObjectStatus 
+                                                                text="{ta>reliability}"
+                                                                state="{ta>reliabilityState}"/>
+                                                            <Text text="{ta>detected_at}" class="sapUiSmallMarginTop"/>
+                                                        </VBox>
+                                                    </HBox>
+                                                </CustomListItem>
+                                            </List>
+                                        </Panel>
+                                        
+                                        <!-- Support/Resistance Levels -->
+                                        <Panel headerText="Support &amp; Resistance Levels" 
+                                               expandable="true" 
+                                               expanded="true"
+                                               class="sapUiResponsiveMargin">
+                                            <Table items="{ta>/supportResistance}"
+                                                   mode="None">
+                                                <columns>
+                                                    <Column>
+                                                        <Text text="Level"/>
+                                                    </Column>
+                                                    <Column>
+                                                        <Text text="Type"/>
+                                                    </Column>
+                                                    <Column>
+                                                        <Text text="Strength"/>
+                                                    </Column>
+                                                    <Column>
+                                                        <Text text="Touch Count"/>
+                                                    </Column>
+                                                    <Column>
+                                                        <Text text="Distance"/>
+                                                    </Column>
+                                                </columns>
+                                                <items>
+                                                    <ColumnListItem>
+                                                        <Text text="${ta>level}"/>
+                                                        <ObjectStatus 
+                                                            text="{ta>type}"
+                                                            state="{ta>typeState}"/>
+                                                        <ProgressIndicator 
+                                                            percentValue="{ta>strengthPercent}"
+                                                            displayValue="{ta>strength}"/>
+                                                        <Text text="{ta>touch_count}"/>
+                                                        <Text text="{ta>distance}%"/>
+                                                    </ColumnListItem>
+                                                </items>
+                                            </Table>
+                                        </Panel>
+                                    </VBox>
+                                </IconTabFilter>
+                                
+                                <!-- AI Insights Tab -->
+                                <IconTabFilter key="insights" 
+                                             text="AI Insights" 
+                                             icon="sap-icon://ai">
+                                    <VBox class="sapUiMediumMargin">
+                                        <!-- Grok-4 Market Analysis -->
+                                        <Panel headerText="AI Market Analysis (Powered by Grok-4)" 
+                                               expandable="true" 
+                                               expanded="true"
+                                               class="sapUiResponsiveMargin">
+                                            <VBox>
+                                                <MessageStrip 
+                                                    text="{ta>/aiInsights/market_summary}"
+                                                    type="Information"
+                                                    showIcon="true"
+                                                    class="sapUiMediumMarginBottom"/>
+                                                
+                                                <Title text="Key Signals" level="H4" class="sapUiSmallMarginBottom"/>
+                                                <List items="{ta>/aiInsights/key_signals}" mode="None">
+                                                    <StandardListItem 
+                                                        title="{ta>signal}"
+                                                        description="{ta>explanation}"
+                                                        icon="sap-icon://hint"/>
+                                                </List>
+                                                
+                                                <Title text="Risk Assessment" level="H4" class="sapUiMediumMarginTop sapUiSmallMarginBottom"/>
+                                                <MessageStrip 
+                                                    text="{ta>/aiInsights/risk_assessment}"
+                                                    type="{ta>/aiInsights/risk_type}"
+                                                    showIcon="true"/>
+                                                
+                                                <HBox justifyContent="SpaceBetween" class="sapUiMediumMarginTop">
+                                                    <VBox>
+                                                        <Label text="Market Regime:"/>
+                                                        <ObjectStatus 
+                                                            text="{ta>/aiInsights/market_regime}"
+                                                            state="{ta>/aiInsights/regime_state}"/>
+                                                    </VBox>
+                                                    <VBox>
+                                                        <Label text="AI Confidence:"/>
+                                                        <ProgressIndicator 
+                                                            percentValue="{ta>/aiInsights/confidence}"
+                                                            displayValue="{ta>/aiInsights/confidence}%"
+                                                            state="Success"/>
+                                                    </VBox>
+                                                </HBox>
+                                            </VBox>
+                                        </Panel>
+                                        
+                                        <!-- Performance Metrics -->
+                                        <Panel headerText="Analysis Performance" 
+                                               expandable="true" 
+                                               expanded="false"
+                                               class="sapUiResponsiveMargin">
+                                            <Table items="{ta>/performance/operations}"
+                                                   mode="None">
+                                                <columns>
+                                                    <Column>
+                                                        <Text text="Operation"/>
+                                                    </Column>
+                                                    <Column>
+                                                        <Text text="Execution Time"/>
+                                                    </Column>
+                                                    <Column>
+                                                        <Text text="Memory Usage"/>
+                                                    </Column>
+                                                    <Column>
+                                                        <Text text="Status"/>
+                                                    </Column>
+                                                </columns>
+                                                <items>
+                                                    <ColumnListItem>
+                                                        <Text text="{ta>operation}"/>
+                                                        <Text text="{ta>avg_time}ms"/>
+                                                        <Text text="{ta>memory_mb}MB"/>
+                                                        <ObjectStatus 
+                                                            text="{ta>status}"
+                                                            state="{ta>statusState}"/>
+                                                    </ColumnListItem>
+                                                </items>
+                                            </Table>
+                                        </Panel>
+                                    </VBox>
+                                </IconTabFilter>
+                            </items>
+                        </IconTabBar>
+                    </content>
+                    
+                    <!-- Footer with Actions -->
+                    <footer>
+                        <OverflowToolbar>
+                            <ToolbarSpacer/>
+                            <Button text="Export Analysis" 
+                                    icon="sap-icon://download"
+                                    press="onExportAnalysis"/>
+                            <Button text="Schedule Report" 
+                                    icon="sap-icon://appointment-2"
+                                    press="onScheduleReport"/>
+                            <Button text="Configure Alerts" 
+                                    icon="sap-icon://alert"
+                                    press="onConfigureAlerts"
+                                    type="Emphasized"/>
+                        </OverflowToolbar>
+                    </footer>
+                </Page>
+            </pages>
+        </App>
+    </Shell>
+</mvc:View>

@@ -280,7 +280,9 @@ class UnifiedDatabase:
             self._get_market_data_schema(),
             self._get_portfolio_schema(),
             self._get_trading_orders_schema(),
-            self._get_historical_data_schema()
+            self._get_historical_data_schema(),
+            # Add intelligence schemas
+            self._get_intelligence_schemas()
         ]
         
         cursor = self.db_conn.cursor()
@@ -460,6 +462,12 @@ class UnifiedDatabase:
                 CREATE INDEX IF NOT EXISTS idx_monitoring_component ON monitoring_events(component);
             """
         }
+    
+    def _get_intelligence_schemas(self) -> Dict[str, str]:
+        """Intelligence system schemas for AI insights, decisions, and memory"""
+        # Import intelligence schemas from the dedicated module
+        from ...data.database.intelligence_schema import get_all_intelligence_schemas
+        return get_all_intelligence_schemas()
     
     # Cache operations
     async def cache_set(self, key: str, value: Any, ttl: int = None) -> bool:
@@ -892,8 +900,9 @@ class UnifiedDatabase:
     
     def execute_query(self, query: str, params: tuple = None) -> List[Dict]:
         """Execute query with ORM session (legacy compatibility)"""
+        from sqlalchemy import text
         with self.get_session() as session:
-            result = session.execute(query, params or ())
+            result = session.execute(text(query), params or {})
             return [dict(row) for row in result.fetchall()]
     
     async def execute_query_async(self, query: str, params: tuple = None) -> List[Dict]:

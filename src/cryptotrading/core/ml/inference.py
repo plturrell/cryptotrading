@@ -16,7 +16,7 @@ import logging
 
 from .models import model_registry, CryptoPricePredictor
 from .training import training_pipeline, model_evaluator
-from ..data.historical.yahoo_finance import YahooFinanceClient
+# Market data should be fetched through database, not directly
 from ..storage import get_cache_client
 
 # Simple logging for Vercel compatibility
@@ -86,11 +86,13 @@ class MLInferenceService:
     """Real-time ML inference service"""
     
     def __init__(self):
-        self.yahoo_client = YahooFinanceClient()
+        # ML should get data through database, not direct market data clients
+        from ...infrastructure.database.unified_database import UnifiedDatabase
+        self.database = UnifiedDatabase()
         self.cache_client = get_cache_client()
         self.cache_ttl = 300  # 5 minutes
         self.executor = ThreadPoolExecutor(max_workers=4)
-        logger.info("ML Inference Service initialized with Vercel-compatible caching")
+        logger.info("ML Inference Service initialized with database data access")
     
     def _get_cache_key(self, symbol: str, horizon: str, model_type: Optional[str]) -> str:
         """Generate cache key for predictions"""
@@ -256,23 +258,33 @@ class MLInferenceService:
             raise HTTPException(status_code=500, detail=str(e))
     
     async def _get_recent_data(self, symbol: str) -> Optional[pd.DataFrame]:
-        """Get recent data for prediction"""
+        """Get recent data for prediction from database"""
         try:
-            # Get last 90 days of hourly data
-            end_date = datetime.now()
-            start_date = end_date - timedelta(days=90)
-            
-            data = self.yahoo_client.get_historical_data(
-                symbol,
-                start_date.strftime('%Y-%m-%d'),
-                end_date.strftime('%Y-%m-%d'),
+            # Get data from database instead of direct market data client
+            data = await self.database.get_historical_data(
+                symbol=symbol,
+                days=90,
                 interval='1h'
             )
+            
+            # If not enough data in database, use real data provider
+            if data is None or len(data) < 100:
+                logger.info(f"Insufficient historical data for {symbol}, fetching from provider")
+                from ...data.providers.real_only_provider import RealOnlyDataProvider
+                
+                provider = RealOnlyDataProvider()
+                # Get recent data directly for ML training
+                fresh_data = provider.get_historical_data(symbol, days=90)
+                
+                if fresh_data is not None and len(fresh_data) > 0:
+                    # Store in database for future use
+                    await self.database.store_market_data(symbol, fresh_data)
+                    return fresh_data
             
             return data
             
         except Exception as e:
-            logger.error(f"Error fetching recent data: {e}")
+            logger.error(f"Error fetching recent data from database: {e}")
             return None
     
     def _parse_horizon(self, horizon: str) -> int:

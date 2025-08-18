@@ -1,11 +1,10 @@
 """
 Serverless Glean Storage Backend
 Provides Glean-compatible fact storage without requiring Docker or a Glean server
-Suitable for Vercel deployment
+Suitable for Vercel deployment - uses UnifiedDatabase for consistency
 """
 
 import json
-import sqlite3
 import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Set, Tuple
@@ -13,6 +12,9 @@ from dataclasses import dataclass, asdict
 from datetime import datetime
 import hashlib
 import pickle
+
+# Use unified database instead of direct SQLite
+from ...infrastructure.database.unified_database import UnifiedDatabase
 
 logger = logging.getLogger(__name__)
 
@@ -36,18 +38,19 @@ class GleanFact:
 
 
 class GleanStorage:
-    """Serverless storage backend for Glean facts using SQLite"""
+    """Serverless storage backend for Glean facts using UnifiedDatabase"""
     
-    def __init__(self, db_path: Optional[Path] = None):
-        self.db_path = db_path or Path.home() / ".glean" / "cryptotrading.db"
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+    def __init__(self, db: Optional[UnifiedDatabase] = None):
+        # Use unified database instead of direct SQLite
+        self.db = db or UnifiedDatabase()
         self._init_db()
     
     def _init_db(self):
-        """Initialize SQLite database schema"""
-        with sqlite3.connect(str(self.db_path)) as conn:
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS facts (
+        """Initialize database schema using UnifiedDatabase"""
+        with self.db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS glean_facts (
                     fact_id TEXT PRIMARY KEY,
                     predicate TEXT NOT NULL,
                     key_json TEXT NOT NULL,
@@ -57,13 +60,13 @@ class GleanStorage:
                 )
             """)
             
-            conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_predicate 
-                ON facts(predicate)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_glean_predicate 
+                ON glean_facts(predicate)
             """)
             
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS units (
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS glean_units (
                     unit_id TEXT PRIMARY KEY,
                     name TEXT NOT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -72,22 +75,26 @@ class GleanStorage:
                 )
             """)
             
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS schemas (
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS glean_schemas (
                     predicate TEXT PRIMARY KEY,
                     schema_json TEXT NOT NULL,
                     version TEXT DEFAULT '1.0'
                 )
             """)
+            
+            conn.commit()
     
     def store_facts(self, facts: List[Dict[str, Any]], unit: str = "default") -> int:
         """Store multiple facts in the database"""
         stored = 0
         
-        with sqlite3.connect(str(self.db_path)) as conn:
+        with self.db.get_connection() as conn:
+            cursor = conn.cursor()
+            
             # Create unit if not exists
-            conn.execute(
-                "INSERT OR IGNORE INTO units (unit_id, name) VALUES (?, ?)",
+            cursor.execute(
+                "INSERT OR IGNORE INTO glean_units (unit_id, name) VALUES (?, ?)",
                 (unit, unit)
             )
             
@@ -100,8 +107,8 @@ class GleanStorage:
                 )
                 
                 try:
-                    conn.execute("""
-                        INSERT OR REPLACE INTO facts 
+                    cursor.execute("""
+                        INSERT OR REPLACE INTO glean_facts 
                         (fact_id, predicate, key_json, value_json, unit)
                         VALUES (?, ?, ?, ?, ?)
                     """, (
@@ -116,10 +123,10 @@ class GleanStorage:
                     logger.error(f"Failed to store fact: {e}")
             
             # Update unit stats
-            conn.execute("""
-                UPDATE units 
+            cursor.execute("""
+                UPDATE glean_units 
                 SET facts_count = (
-                    SELECT COUNT(*) FROM facts WHERE unit = ?
+                    SELECT COUNT(*) FROM glean_facts WHERE unit = ?
                 ),
                 indexed_at = CURRENT_TIMESTAMP
                 WHERE unit_id = ?
@@ -134,10 +141,10 @@ class GleanStorage:
                    key_filters: Optional[Dict[str, Any]] = None,
                    limit: Optional[int] = None) -> List[GleanFact]:
         """Query facts by predicate and optional key filters"""
-        with sqlite3.connect(str(self.db_path)) as conn:
-            conn.row_factory = sqlite3.Row
+        with self.db.get_connection() as conn:
+            cursor = conn.cursor()
             
-            query = "SELECT * FROM facts WHERE predicate = ?"
+            query = "SELECT * FROM glean_facts WHERE predicate = ?"
             params = [predicate]
             
             # Apply key filters if provided
@@ -149,15 +156,15 @@ class GleanStorage:
             if limit:
                 query += f" LIMIT {limit}"
             
-            cursor = conn.execute(query, params)
+            cursor.execute(query, params)
             
             facts = []
-            for row in cursor:
+            for row in cursor.fetchall():
                 fact = GleanFact(
-                    predicate=row["predicate"],
-                    key=json.loads(row["key_json"]),
-                    value=json.loads(row["value_json"]),
-                    unit=row["unit"]
+                    predicate=row[1],  # predicate
+                    key=json.loads(row[2]),  # key_json
+                    value=json.loads(row[3]),  # value_json
+                    unit=row[4]  # unit
                 )
                 facts.append(fact)
             
@@ -165,27 +172,38 @@ class GleanStorage:
     
     def get_predicates(self) -> List[str]:
         """Get all unique predicates in the database"""
-        with sqlite3.connect(str(self.db_path)) as conn:
-            cursor = conn.execute("SELECT DISTINCT predicate FROM facts")
-            return [row[0] for row in cursor]
+        with self.db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT DISTINCT predicate FROM glean_facts")
+            return [row[0] for row in cursor.fetchall()]
     
     def get_units(self) -> List[Dict[str, Any]]:
         """Get all units with their metadata"""
-        with sqlite3.connect(str(self.db_path)) as conn:
-            conn.row_factory = sqlite3.Row
-            cursor = conn.execute("""
+        with self.db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
                 SELECT unit_id, name, created_at, indexed_at, facts_count
-                FROM units
+                FROM glean_units
                 ORDER BY indexed_at DESC
             """)
-            return [dict(row) for row in cursor]
+            return [
+                {
+                    "unit_id": row[0],
+                    "name": row[1],
+                    "created_at": row[2],
+                    "indexed_at": row[3],
+                    "facts_count": row[4]
+                }
+                for row in cursor.fetchall()
+            ]
     
     def delete_unit(self, unit: str) -> int:
         """Delete all facts for a unit"""
-        with sqlite3.connect(str(self.db_path)) as conn:
-            cursor = conn.execute("DELETE FROM facts WHERE unit = ?", (unit,))
+        with self.db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM glean_facts WHERE unit = ?", (unit,))
             deleted = cursor.rowcount
-            conn.execute("DELETE FROM units WHERE unit_id = ?", (unit,))
+            cursor.execute("DELETE FROM glean_units WHERE unit_id = ?", (unit,))
             conn.commit()
         
         logger.info(f"Deleted {deleted} facts from unit '{unit}'")
@@ -195,18 +213,18 @@ class GleanStorage:
         """Export all facts for a unit to JSON"""
         facts = []
         
-        with sqlite3.connect(str(self.db_path)) as conn:
-            conn.row_factory = sqlite3.Row
-            cursor = conn.execute(
-                "SELECT * FROM facts WHERE unit = ?", 
+        with self.db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT predicate, key_json, value_json FROM glean_facts WHERE unit = ?", 
                 (unit,)
             )
             
-            for row in cursor:
+            for row in cursor.fetchall():
                 facts.append({
-                    "predicate": row["predicate"],
-                    "key": json.loads(row["key_json"]),
-                    "value": json.loads(row["value_json"])
+                    "predicate": row[0],
+                    "key": json.loads(row[1]),
+                    "value": json.loads(row[2])
                 })
         
         with open(output_path, 'w') as f:
@@ -230,18 +248,20 @@ class GleanStorage:
     
     def register_schema(self, predicate: str, schema: Dict[str, Any]) -> None:
         """Register a schema for a predicate"""
-        with sqlite3.connect(str(self.db_path)) as conn:
-            conn.execute("""
-                INSERT OR REPLACE INTO schemas (predicate, schema_json)
+        with self.db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT OR REPLACE INTO glean_schemas (predicate, schema_json)
                 VALUES (?, ?)
             """, (predicate, json.dumps(schema)))
             conn.commit()
     
     def get_schema(self, predicate: str) -> Optional[Dict[str, Any]]:
         """Get schema for a predicate"""
-        with sqlite3.connect(str(self.db_path)) as conn:
-            cursor = conn.execute(
-                "SELECT schema_json FROM schemas WHERE predicate = ?",
+        with self.db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT schema_json FROM glean_schemas WHERE predicate = ?",
                 (predicate,)
             )
             row = cursor.fetchone()
@@ -251,28 +271,25 @@ class GleanStorage:
     
     def get_stats(self) -> Dict[str, Any]:
         """Get storage statistics"""
-        with sqlite3.connect(str(self.db_path)) as conn:
+        with self.db.get_connection() as conn:
+            cursor = conn.cursor()
             # Total facts
-            total_facts = conn.execute("SELECT COUNT(*) FROM facts").fetchone()[0]
+            cursor.execute("SELECT COUNT(*) FROM glean_facts")
+            total_facts = cursor.fetchone()[0]
             
             # Facts by predicate
-            cursor = conn.execute("""
+            cursor.execute("""
                 SELECT predicate, COUNT(*) as count
-                FROM facts
+                FROM glean_facts
                 GROUP BY predicate
                 ORDER BY count DESC
             """)
-            predicate_counts = {row[0]: row[1] for row in cursor}
-            
-            # Storage size
-            db_size = self.db_path.stat().st_size
+            predicate_counts = {row[0]: row[1] for row in cursor.fetchall()}
             
             return {
                 "total_facts": total_facts,
                 "total_predicates": len(predicate_counts),
-                "predicate_counts": predicate_counts,
-                "storage_size_bytes": db_size,
-                "storage_size_mb": round(db_size / (1024 * 1024), 2)
+                "predicate_counts": predicate_counts
             }
 
 

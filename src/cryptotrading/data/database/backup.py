@@ -479,8 +479,8 @@ class BackupManager:
         except subprocess.CalledProcessError as e:
             raise BackupError(f"PostgreSQL restore failed: {e.stderr}")
     
-    def cleanup_old_backups(self):
-        """Remove old backup files based on retention policy"""
+    def purge_expired_backups(self):
+        """Remove expired backup files based on retention policy"""
         cutoff_date = datetime.now() - timedelta(days=self.config.RETENTION_DAYS)
         removed_count = 0
         
@@ -585,7 +585,7 @@ class BackupScheduler:
         
         # Weekly cleanup on Sunday at 3 AM
         schedule.every().sunday.at("03:00").do(
-            self.backup_manager.cleanup_old_backups
+            self.backup_manager.purge_expired_backups
         )
         
         logger.info("Backup schedule configured")

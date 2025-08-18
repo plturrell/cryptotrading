@@ -107,13 +107,116 @@ class AgentManagerAgent(StrandsAgent):
         self.db = get_db()
         self.segregation_manager = get_segregation_manager()
         self.registered_agents: Dict[str, AgentRegistrationRequest] = {}
-        self.skill_cards: Dict[str, SkillCard] = {}
         self.compliance_reports: Dict[str, ComplianceReport] = {}
+        self.skill_cards: Dict[str, SkillCard] = {}
+        self.mcp_segregation_status = {}
+        self.system_health = {"status": "initializing", "last_check": datetime.utcnow()}
         
-        # Initialize core skill cards
-        self._initialize_skill_cards()
+        # Initialize memory system for agent management
+        self._initialize_memory_system()
         
-        logger.info(f"Agent Manager {agent_id} initialized")
+        # Register with A2A protocol
+        capabilities = A2A_CAPABILITIES.get(agent_id, [])
+        A2AAgentRegistry.register_agent(agent_id, capabilities, self)
+    
+    async def initialize(self) -> bool:
+        """Initialize the Agent Manager"""
+        try:
+            logger.info(f"Initializing Agent Manager {self.agent_id}")
+            
+            # Verify database connection
+            if not self.db:
+                logger.error("Database connection not available")
+                return False
+            
+            # Initialize segregation manager
+            if not self.segregation_manager:
+                logger.warning("MCP segregation manager not available")
+            
+            # Update system health
+            self.system_health = {
+                "status": "running", 
+                "last_check": datetime.utcnow(),
+                "db_connected": bool(self.db),
+                "segregation_enabled": bool(self.segregation_manager)
+            }
+            
+            logger.info(f"Agent Manager {self.agent_id} initialized successfully")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize Agent Manager {self.agent_id}: {e}")
+            self.system_health = {"status": "error", "last_check": datetime.utcnow(), "error": str(e)}
+            return False
+    
+    async def start(self) -> bool:
+        """Start the Agent Manager"""
+        try:
+            logger.info(f"Starting Agent Manager {self.agent_id}")
+            
+            # Start compliance monitoring
+            await self._start_compliance_monitoring()
+            
+            # Update system health
+            self.system_health["status"] = "active"
+            self.system_health["started_at"] = datetime.utcnow()
+            
+            logger.info(f"Agent Manager {self.agent_id} started successfully")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to start Agent Manager {self.agent_id}: {e}")
+            self.system_health["status"] = "error"
+            self.system_health["error"] = str(e)
+            return False
+    
+    async def _start_compliance_monitoring(self):
+        """Start background compliance monitoring"""
+        try:
+            # This could be expanded to include periodic compliance checks
+            logger.info("Compliance monitoring started")
+        except Exception as e:
+            logger.warning(f"Compliance monitoring startup failed: {e}")
+    
+    async def _initialize_memory_system(self):
+        """Initialize memory system for agent management and compliance tracking"""
+        try:
+            # Store agent manager configuration
+            await self.store_memory(
+                "agent_manager_config",
+                {
+                    "agent_id": self.agent_id,
+                    "compliance_enabled": True,
+                    "mcp_segregation_enabled": True,
+                    "initialized_at": datetime.utcnow().isoformat()
+                },
+                {"type": "configuration", "persistent": True}
+            )
+            
+            # Initialize agent registry cache
+            await self.store_memory(
+                "agent_registry_cache",
+                {},
+                {"type": "registry", "persistent": True}
+            )
+            
+            # Initialize compliance history
+            await self.store_memory(
+                "compliance_history",
+                [],
+                {"type": "compliance_log", "persistent": True}
+            )
+            
+            # Initialize system health tracking
+            await self.store_memory(
+                "system_health_history",
+                [],
+                {"type": "health_monitoring", "persistent": True}
+            )
+            
+            logger.info(f"Memory system initialized for Agent Manager {self.agent_id}")
+        except Exception as e:
+            logger.error(f"Failed to initialize agent manager memory system: {e}")
     
     def _initialize_skill_cards(self):
         """Initialize core A2A skill cards"""
@@ -196,6 +299,99 @@ class AgentManagerAgent(StrandsAgent):
             return await self._handle_skill_card_validation(message)
         else:
             return {'error': f'Unknown message type: {msg_type}'}
+    
+    async def register_agent(self, agent_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Register a new agent with A2A compliance validation and memory tracking"""
+        try:
+            agent_id = agent_data.get("agent_id")
+            if not agent_id:
+                return {"success": False, "error": "Agent ID is required"}
+            
+            # Check if agent is already registered in memory
+            registry_cache = await self.retrieve_memory("agent_registry_cache") or {}
+            if agent_id in registry_cache:
+                logger.info(f"Agent {agent_id} already registered, updating registration")
+            
+            # Validate agent capabilities against A2A standards
+            capabilities = agent_data.get("capabilities", [])
+            compliance_result = await self._validate_a2a_compliance(agent_id, capabilities)
+            
+            if not compliance_result["compliant"]:
+                # Store compliance failure in memory
+                await self._log_compliance_event(agent_id, "registration_failed", compliance_result)
+                return {
+                    "success": False, 
+                    "error": f"A2A compliance validation failed: {compliance_result['issues']}"
+                }
+            
+            # Register agent
+            registration_data = {
+                "agent_id": agent_id,
+                "capabilities": capabilities,
+                "status": AgentStatus.ACTIVE,
+                "registered_at": datetime.utcnow(),
+                "compliance_score": compliance_result["score"],
+                "last_heartbeat": datetime.utcnow()
+            }
+            
+            self.registered_agents[agent_id] = registration_data
+            
+            # Update registry cache in memory
+            registry_cache[agent_id] = registration_data
+            await self.store_memory("agent_registry_cache", registry_cache, {"type": "registry"})
+            
+            # Generate skill card
+            skill_card = await self._generate_skill_card(agent_id, capabilities)
+            self.skill_cards[agent_id] = skill_card
+            
+            # Log successful registration
+            await self._log_compliance_event(agent_id, "registration_success", {
+                "compliance_score": compliance_result["score"],
+                "capabilities_count": len(capabilities)
+            })
+            
+            logger.info(f"Agent {agent_id} registered successfully with compliance score: {compliance_result['score']}")
+            
+            return {
+                "success": True,
+                "agent_id": agent_id,
+                "compliance_score": compliance_result["score"],
+                "skill_card": skill_card,
+                "registered_at": registration_data["registered_at"].isoformat()
+            }
+        
+        except Exception as e:
+            # Store error in memory for learning
+            await self.store_memory(
+                f"registration_error_{datetime.utcnow().timestamp()}",
+                {"error": str(e), "agent_id": agent_id, "timestamp": datetime.utcnow().isoformat()},
+                {"type": "error_log"}
+            )
+            logger.error(f"Agent registration failed: {e}")
+            return {'success': False, 'error': str(e)}
+    
+    async def _log_compliance_event(self, agent_id: str, event_type: str, event_data: Dict[str, Any]):
+        """Log compliance events to memory for tracking and analysis"""
+        try:
+            compliance_history = await self.retrieve_memory("compliance_history") or []
+            
+            event = {
+                "agent_id": agent_id,
+                "event_type": event_type,
+                "event_data": event_data,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            
+            compliance_history.append(event)
+            
+            # Keep only last 1000 events to prevent memory bloat
+            if len(compliance_history) > 1000:
+                compliance_history = compliance_history[-1000:]
+            
+            await self.store_memory("compliance_history", compliance_history, {"type": "compliance_log"})
+            
+        except Exception as e:
+            logger.error(f"Failed to log compliance event: {e}")
     
     async def _handle_agent_registration(self, message: Dict[str, Any]) -> Dict[str, Any]:
         """Handle agent registration with compliance checks"""

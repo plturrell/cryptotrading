@@ -368,8 +368,8 @@ class CodeSandbox:
                 try:
                     process.kill()
                     await process.wait()
-                except:
-                    pass
+                except (ProcessLookupError, OSError) as e:
+                    logger.debug(f"Process already terminated: {e}")
                 
                 return SandboxResult(
                     result=ExecutionResult.TIMEOUT,

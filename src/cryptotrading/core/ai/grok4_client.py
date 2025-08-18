@@ -15,6 +15,28 @@ from enum import Enum
 logger = logging.getLogger(__name__)
 
 
+class Grok4Error(Exception):
+    """Base exception for Grok4 client errors"""
+    pass
+
+
+class Grok4APIError(Grok4Error):
+    """API request failed with error status"""
+    def __init__(self, status_code: int, message: str):
+        self.status_code = status_code
+        super().__init__(f"Grok4 API error ({status_code}): {message}")
+
+
+class Grok4ParseError(Grok4Error):
+    """Failed to parse Grok4 response"""
+    pass
+
+
+class Grok4ConfigError(Grok4Error):
+    """Configuration error (missing API key, etc)"""
+    pass
+
+
 class AnalysisType(Enum):
     """Types of analysis Grok4 can perform"""
     SENTIMENT = "sentiment"
@@ -64,19 +86,24 @@ class Grok4Client:
             api_key: Grok4 API key (or from GROK4_API_KEY env var)
             base_url: Grok4 API base URL (or from GROK4_BASE_URL env var)
         """
-        self.api_key = api_key or os.getenv('GROK4_API_KEY')
+        self.api_key = api_key or os.getenv('XAI_API_KEY') or os.getenv('GROK4_API_KEY')
         self.base_url = base_url or os.getenv('GROK4_BASE_URL', 'https://api.x.ai/v1')
         
         # Require API key for real AI
         if not self.api_key:
-            raise ValueError("GROK4_API_KEY is required for real AI intelligence - no mock mode available")
+            raise Grok4ConfigError("XAI_API_KEY or GROK4_API_KEY is required for real AI intelligence - no mock mode available")
         
+        # Configure HTTP client with best practices
         self.client = httpx.AsyncClient(
-            timeout=30.0,
+            timeout=httpx.Timeout(30.0, connect=5.0),
+            limits=httpx.Limits(max_keepalive_connections=5, max_connections=10),
             headers={
-                'Authorization': f'Bearer {self.api_key}' if self.api_key else '',
-                'Content-Type': 'application/json'
-            }
+                'Authorization': f'Bearer {self.api_key}',
+                'Content-Type': 'application/json',
+                'User-Agent': 'CryptoTrading/1.0'
+            },
+            http2=True,  # Enable HTTP/2 for better performance
+            follow_redirects=True
         )
         
         # Cache for API responses
@@ -146,13 +173,25 @@ class Grok4Client:
                 data = response.json()
                 content = data['choices'][0]['message']['content']
                 
-                # Parse JSON response from Grok4
+                # Parse JSON response from Grok4 (handle markdown code blocks)
                 try:
+                    # Try direct parsing first
                     analysis_data = json.loads(content)
                     return [self._parse_grok_insight(item) for item in analysis_data['insights']]
                 except json.JSONDecodeError:
-                    logger.error("Failed to parse Grok4 JSON response")
-                    raise ValueError("Grok4 returned invalid JSON format")
+                    # Try extracting JSON from markdown code blocks
+                    try:
+                        start = content.find('{')
+                        end = content.rfind('}') + 1
+                        if start >= 0 and end > start:
+                            json_part = content[start:end]
+                            analysis_data = json.loads(json_part)
+                            return [self._parse_grok_insight(item) for item in analysis_data['insights']]
+                        else:
+                            raise ValueError("No JSON found in response")
+                    except json.JSONDecodeError:
+                        logger.error(f"Failed to parse Grok4 JSON response: {content[:500]}...")
+                        raise ValueError("Grok4 returned invalid JSON format")
             else:
                 logger.error(f"Grok4 API error: {response.status_code} - {response.text}")
                 raise RuntimeError(f"Grok4 API failed: {response.status_code}")
@@ -173,9 +212,6 @@ class Grok4Client:
         Returns:
             Risk assessment with recommendations
         """
-        if self.use_mock:
-            return await self._mock_risk_assessment(portfolio)
-        
         try:
             # Use real Grok4 chat API for risk assessment
             portfolio_summary = ', '.join([f"{k}: ${v:,.2f}" for k, v in portfolio.items()])
@@ -235,20 +271,32 @@ class Grok4Client:
                 data = response.json()
                 content = data['choices'][0]['message']['content']
                 
-                # Parse JSON response from Grok4
+                # Parse JSON response from Grok4 (handle markdown code blocks)
                 try:
+                    # Try direct parsing first
                     risk_data = json.loads(content)
                     return risk_data
                 except json.JSONDecodeError:
-                    logger.warning("Failed to parse Grok4 risk JSON response, using fallback")
-                    return await self._mock_risk_assessment(portfolio)
+                    # Try extracting JSON from markdown code blocks
+                    try:
+                        start = content.find('{')
+                        end = content.rfind('}') + 1
+                        if start >= 0 and end > start:
+                            json_part = content[start:end]
+                            risk_data = json.loads(json_part)
+                            return risk_data
+                        else:
+                            raise ValueError("No JSON found in response")
+                    except json.JSONDecodeError:
+                        logger.error(f"Failed to parse Grok4 risk JSON response: {content[:500]}...")
+                        raise ValueError("Grok4 returned invalid JSON format")
             else:
                 logger.error(f"Grok4 risk assessment error: {response.status_code}")
-                return await self._mock_risk_assessment(portfolio)
+                raise RuntimeError(f"Grok4 API failed: {response.status_code}")
                 
         except Exception as e:
             logger.error(f"Grok4 risk assessment failed: {e}")
-            return await self._mock_risk_assessment(portfolio)
+            raise
     
     async def predict_market_movement(self, symbols: List[str], 
                                     horizon: str = '1d') -> Dict[str, Dict[str, Any]]:
@@ -262,30 +310,83 @@ class Grok4Client:
         Returns:
             Predictions with confidence scores
         """
-        if self.use_mock:
-            return await self._mock_market_prediction(symbols)
-        
         try:
+            # Use real Grok4 chat API for market predictions
+            prompt = f"""Predict market movement for these cryptocurrency symbols: {', '.join(symbols)}
+            
+            Prediction horizon: {horizon}
+            
+            For each symbol, analyze:
+            - Current price trends and momentum
+            - Volume patterns and market activity
+            - Technical indicators and chart patterns
+            - Market sentiment and news impact
+            - Risk factors and potential catalysts
+            
+            Provide predictions with:
+            1. Direction (UP/DOWN/SIDEWAYS)
+            2. Confidence (0.0 to 1.0)
+            3. Expected magnitude (percentage change)
+            4. Key supporting factors
+            5. Risk factors to monitor
+            
+            Respond in JSON format:
+            {{
+              "predictions": {{
+                "BTC": {{
+                  "direction": "UP",
+                  "confidence": 0.75,
+                  "magnitude": 0.08,
+                  "key_factors": ["Institutional adoption", "Technical breakout"],
+                  "risk_factors": ["Market volatility", "Regulatory uncertainty"]
+                }}
+              }}
+            }}"""
+            
             payload = {
-                'symbols': symbols,
-                'horizon': horizon,
-                'include_confidence': True
+                'model': 'grok-2-1212',
+                'messages': [
+                    {'role': 'system', 'content': 'You are an expert cryptocurrency market analyst specializing in price prediction and trend analysis.'},
+                    {'role': 'user', 'content': prompt}
+                ],
+                'temperature': 0.2,
+                'max_tokens': 1500
             }
             
             response = await self.client.post(
-                f'{self.base_url}/predict/movement',
+                f'{self.base_url}/chat/completions',
                 json=payload
             )
             
             if response.status_code == 200:
-                return response.json()['predictions']
+                data = response.json()
+                content = data['choices'][0]['message']['content']
+                
+                try:
+                    # Try direct parsing first
+                    prediction_data = json.loads(content)
+                    return prediction_data['predictions']
+                except json.JSONDecodeError:
+                    # Try extracting JSON from markdown code blocks
+                    try:
+                        start = content.find('{')
+                        end = content.rfind('}') + 1
+                        if start >= 0 and end > start:
+                            json_part = content[start:end]
+                            prediction_data = json.loads(json_part)
+                            return prediction_data['predictions']
+                        else:
+                            raise ValueError("No JSON found in response")
+                    except json.JSONDecodeError:
+                        logger.error(f"Failed to parse Grok4 prediction JSON response: {content[:500]}...")
+                        raise ValueError("Grok4 returned invalid JSON format")
             else:
                 logger.error(f"Grok4 prediction error: {response.status_code}")
-                return await self._mock_market_prediction(symbols)
+                raise RuntimeError(f"Grok4 API failed: {response.status_code}")
                 
         except Exception as e:
             logger.error(f"Grok4 market prediction failed: {e}")
-            return await self._mock_market_prediction(symbols)
+            raise
     
     async def evaluate_trading_strategy(self, strategy_config: Dict[str, Any],
                                       historical_data: Optional[Dict[str, Any]] = None) -> StrategyAnalysis:
@@ -299,31 +400,84 @@ class Grok4Client:
         Returns:
             Strategy analysis with performance metrics
         """
-        if self.use_mock:
-            return await self._mock_strategy_evaluation(strategy_config)
-        
         try:
+            # Use real Grok4 chat API for strategy evaluation
+            strategy_summary = json.dumps(strategy_config, indent=2)
+            
+            prompt = f"""Evaluate this cryptocurrency trading strategy:
+            
+            Strategy Configuration:
+            {strategy_summary}
+            
+            Historical Data Available: {"Yes" if historical_data else "No"}
+            
+            Please provide a comprehensive analysis including:
+            1. Expected annual return (as decimal, e.g., 0.15 for 15%)
+            2. Risk score (0.0 = very low risk, 1.0 = very high risk)
+            3. Estimated Sharpe ratio
+            4. Expected maximum drawdown (as decimal)
+            5. Estimated win rate (as decimal)
+            6. Specific recommendations for improvement
+            7. Key risk factors to monitor
+            8. Confidence in your evaluation (0.0 to 1.0)
+            
+            Respond in JSON format:
+            {{
+              "strategy_name": "{strategy_config.get('name', 'Trading Strategy')}",
+              "expected_return": 0.15,
+              "risk_score": 0.4,
+              "sharpe_ratio": 1.2,
+              "max_drawdown": 0.12,
+              "win_rate": 0.65,
+              "recommendations": ["Improve risk management", "Optimize position sizing"],
+              "risk_factors": ["Market volatility exposure", "Correlation risk"],
+              "confidence": 0.8
+            }}"""
+            
             payload = {
-                'strategy': strategy_config,
-                'historical_data': historical_data,
-                'include_recommendations': True
+                'model': 'grok-2-1212',
+                'messages': [
+                    {'role': 'system', 'content': 'You are an expert quantitative analyst specializing in cryptocurrency trading strategy evaluation and risk assessment.'},
+                    {'role': 'user', 'content': prompt}
+                ],
+                'temperature': 0.2,
+                'max_tokens': 1500
             }
             
             response = await self.client.post(
-                f'{self.base_url}/evaluate/strategy',
+                f'{self.base_url}/chat/completions',
                 json=payload
             )
             
             if response.status_code == 200:
                 data = response.json()
-                return self._parse_strategy_analysis(data)
+                content = data['choices'][0]['message']['content']
+                
+                try:
+                    # Try direct parsing first
+                    strategy_data = json.loads(content)
+                    return self._parse_strategy_analysis(strategy_data)
+                except json.JSONDecodeError:
+                    # Try extracting JSON from markdown code blocks
+                    try:
+                        start = content.find('{')
+                        end = content.rfind('}') + 1
+                        if start >= 0 and end > start:
+                            json_part = content[start:end]
+                            strategy_data = json.loads(json_part)
+                            return self._parse_strategy_analysis(strategy_data)
+                        else:
+                            raise ValueError("No JSON found in response")
+                    except json.JSONDecodeError:
+                        logger.error(f"Failed to parse Grok4 strategy JSON response: {content[:500]}...")
+                        raise ValueError("Grok4 returned invalid JSON format")
             else:
                 logger.error(f"Grok4 strategy evaluation error: {response.status_code}")
-                return await self._mock_strategy_evaluation(strategy_config)
+                raise RuntimeError(f"Grok4 API failed: {response.status_code}")
                 
         except Exception as e:
             logger.error(f"Grok4 strategy evaluation failed: {e}")
-            return await self._mock_strategy_evaluation(strategy_config)
+            raise
     
     async def analyze_correlation_patterns(self, symbols: List[str],
                                          timeframe: str = '1d') -> Dict[str, Any]:
@@ -337,30 +491,83 @@ class Grok4Client:
         Returns:
             Correlation analysis with insights
         """
-        if self.use_mock:
-            return await self._mock_correlation_analysis(symbols)
-        
         try:
+            # Use real Grok4 chat API for correlation analysis
+            prompt = f"""Analyze correlation patterns between these cryptocurrency symbols: {', '.join(symbols)}
+            
+            Timeframe: {timeframe}
+            
+            Please provide a comprehensive correlation analysis including:
+            1. Correlation matrix between all symbol pairs
+            2. Identification of highest and lowest correlations
+            3. Diversification score for the portfolio
+            4. Market behavior clustering analysis
+            5. Recommendations for portfolio diversification
+            6. Risk factors related to correlation
+            7. Confidence in your analysis
+            
+            Respond in JSON format:
+            {{
+              "correlation_matrix": {{
+                "BTC": {{"BTC": 1.0, "ETH": 0.75}},
+                "ETH": {{"BTC": 0.75, "ETH": 1.0}}
+              }},
+              "insights": {{
+                "highest_correlation": {{"pair": "BTC-ETH", "correlation": 0.75}},
+                "diversification_score": 0.65,
+                "cluster_analysis": {{
+                  "num_clusters": 2,
+                  "cluster_stability": 0.8
+                }}
+              }},
+              "recommendations": ["Consider adding uncorrelated assets", "Monitor correlation during market stress"],
+              "confidence": 0.85
+            }}"""
+            
             payload = {
-                'symbols': symbols,
-                'timeframe': timeframe,
-                'analysis_depth': 'comprehensive'
+                'model': 'grok-2-1212',
+                'messages': [
+                    {'role': 'system', 'content': 'You are an expert quantitative analyst specializing in cryptocurrency correlation analysis and portfolio diversification.'},
+                    {'role': 'user', 'content': prompt}
+                ],
+                'temperature': 0.2,
+                'max_tokens': 1500
             }
             
             response = await self.client.post(
-                f'{self.base_url}/analyze/correlation',
+                f'{self.base_url}/chat/completions',
                 json=payload
             )
             
             if response.status_code == 200:
-                return response.json()
+                data = response.json()
+                content = data['choices'][0]['message']['content']
+                
+                try:
+                    # Try direct parsing first
+                    correlation_data = json.loads(content)
+                    return correlation_data
+                except json.JSONDecodeError:
+                    # Try extracting JSON from markdown code blocks
+                    try:
+                        start = content.find('{')
+                        end = content.rfind('}') + 1
+                        if start >= 0 and end > start:
+                            json_part = content[start:end]
+                            correlation_data = json.loads(json_part)
+                            return correlation_data
+                        else:
+                            raise ValueError("No JSON found in response")
+                    except json.JSONDecodeError:
+                        logger.error(f"Failed to parse Grok4 correlation JSON response: {content[:500]}...")
+                        raise ValueError("Grok4 returned invalid JSON format")
             else:
                 logger.error(f"Grok4 correlation analysis error: {response.status_code}")
-                return await self._mock_correlation_analysis(symbols)
+                raise RuntimeError(f"Grok4 API failed: {response.status_code}")
                 
         except Exception as e:
             logger.error(f"Grok4 correlation analysis failed: {e}")
-            return await self._mock_correlation_analysis(symbols)
+            raise
     
     def _parse_insight(self, data: Dict[str, Any]) -> MarketInsight:
         """Parse API response into MarketInsight object"""
@@ -400,157 +607,88 @@ class Grok4Client:
             confidence=data['confidence']
         )
     
-    # Mock implementations for development/testing
-    async def _mock_sentiment_analysis(self, symbols: List[str]) -> List[MarketInsight]:
-        """Mock sentiment analysis for testing"""
-        import random
-        await asyncio.sleep(0.1)  # Simulate API delay
-        
-        insights = []
-        for symbol in symbols:
-            score = random.uniform(0.3, 0.9)
-            recommendation = random.choice(['BUY', 'HOLD', 'SELL'])
-            risk_level = random.choice(['LOW', 'MEDIUM', 'HIGH'])
-            
-            insights.append(MarketInsight(
-                symbol=symbol,
-                analysis_type=AnalysisType.SENTIMENT,
-                score=score,
-                recommendation=recommendation,
-                reasoning=f"Mock analysis for {symbol}: Market sentiment appears {recommendation.lower()} based on technical indicators and news sentiment.",
-                risk_level=risk_level,
-                confidence=score
-            ))
-        
-        return insights
-    
-    async def _mock_risk_assessment(self, portfolio: Dict[str, float]) -> Dict[str, Any]:
-        """Mock risk assessment for testing"""
-        import random
-        await asyncio.sleep(0.1)
-        
-        total_value = sum(portfolio.values())
-        risk_score = random.uniform(0.2, 0.8)
-        
-        return {
-            'overall_risk_score': risk_score,
-            'risk_level': 'MEDIUM' if 0.3 < risk_score < 0.7 else ('HIGH' if risk_score >= 0.7 else 'LOW'),
-            'portfolio_value': total_value,
-            'diversification_score': random.uniform(0.5, 0.9),
-            'recommendations': [
-                "Consider rebalancing portfolio for better risk distribution",
-                "Monitor correlation between major positions",
-                "Set appropriate stop-loss levels"
-            ],
-            'risk_factors': [
-                "High correlation between crypto assets",
-                "Market volatility exposure",
-                "Concentration risk in top holdings"
-            ],
-            'confidence': 0.85
-        }
-    
-    async def _mock_market_prediction(self, symbols: List[str]) -> Dict[str, Dict[str, Any]]:
-        """Mock market prediction for testing"""
-        import random
-        await asyncio.sleep(0.1)
-        
-        predictions = {}
-        for symbol in symbols:
-            direction = random.choice(['UP', 'DOWN', 'SIDEWAYS'])
-            confidence = random.uniform(0.6, 0.9)
-            
-            predictions[symbol] = {
-                'direction': direction,
-                'confidence': confidence,
-                'magnitude': random.uniform(0.02, 0.15),  # 2-15% movement
-                'key_factors': [
-                    "Technical momentum indicators",
-                    "Market sentiment analysis",
-                    "Volume pattern analysis"
-                ],
-                'risk_factors': [
-                    "Market volatility",
-                    "External economic factors"
-                ]
-            }
-        
-        return predictions
-    
-    async def _mock_strategy_evaluation(self, strategy_config: Dict[str, Any]) -> StrategyAnalysis:
-        """Mock strategy evaluation for testing"""
-        import random
-        await asyncio.sleep(0.2)
-        
-        return StrategyAnalysis(
-            strategy_name=strategy_config.get('name', 'Unknown Strategy'),
-            expected_return=random.uniform(0.05, 0.25),  # 5-25% annual return
-            risk_score=random.uniform(0.3, 0.7),
-            sharpe_ratio=random.uniform(0.8, 2.5),
-            max_drawdown=random.uniform(0.05, 0.30),
-            win_rate=random.uniform(0.45, 0.75),
-            recommendations=[
-                "Strategy shows promising risk-adjusted returns",
-                "Consider position sizing adjustments",
-                "Monitor performance in different market conditions"
-            ],
-            risk_factors=[
-                "Strategy performance depends on market volatility",
-                "Correlation with broader market trends",
-                "Liquidity constraints in some positions"
-            ],
-            confidence=0.82
-        )
-    
-    async def _mock_correlation_analysis(self, symbols: List[str]) -> Dict[str, Any]:
-        """Mock correlation analysis for testing"""
-        import random
-        await asyncio.sleep(0.1)
-        
-        n = len(symbols)
-        correlation_matrix = {}
-        
-        for i, symbol1 in enumerate(symbols):
-            correlation_matrix[symbol1] = {}
-            for j, symbol2 in enumerate(symbols):
-                if i == j:
-                    correlation_matrix[symbol1][symbol2] = 1.0
-                else:
-                    # Generate realistic correlation values
-                    correlation_matrix[symbol1][symbol2] = random.uniform(-0.3, 0.8)
-        
-        return {
-            'correlation_matrix': correlation_matrix,
-            'insights': {
-                'highest_correlation': max([
-                    {'pair': f"{s1}-{s2}", 'correlation': correlation_matrix[s1][s2]}
-                    for s1 in symbols for s2 in symbols if s1 != s2
-                ], key=lambda x: x['correlation']),
-                'diversification_score': random.uniform(0.4, 0.8),
-                'cluster_analysis': {
-                    'num_clusters': min(3, len(symbols)),
-                    'cluster_stability': random.uniform(0.6, 0.9)
-                }
-            },
-            'recommendations': [
-                "Portfolio shows good diversification potential",
-                "Consider reducing correlation by adding uncorrelated assets",
-                "Monitor correlation changes during market stress"
-            ],
-            'confidence': 0.78
-        }
-    
     async def close(self):
         """Close the HTTP client"""
-        await self.client.aclose()
+        if self.client:
+            await self.client.aclose()
+            self.client = None
+    
+    async def __aenter__(self):
+        """Async context manager entry"""
+        return self
+    
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager exit - ensure cleanup"""
+        await self.close()
 
 
-# Singleton instance for easy access
-_grok4_client = None
+# Singleton instance with thread-safe initialization
+import asyncio
+from typing import Optional
+
+_grok4_client: Optional[Grok4Client] = None
+_grok4_lock = asyncio.Lock()
 
 async def get_grok4_client() -> Grok4Client:
-    """Get singleton Grok4 client instance"""
+    """
+    Get singleton Grok4 client instance with thread-safe initialization.
+    
+    Returns:
+        Grok4Client: Singleton instance of the Grok4 client
+        
+    Raises:
+        ValueError: If GROK4_API_KEY is not set
+    """
     global _grok4_client
+    
     if _grok4_client is None:
-        _grok4_client = Grok4Client()
+        async with _grok4_lock:
+            # Double-check pattern to prevent race conditions
+            if _grok4_client is None:
+                _grok4_client = Grok4Client()
+                logger.info("Grok4Client singleton instance created")
+    
     return _grok4_client
+
+async def close_grok4_client():
+    """
+    Close and cleanup the singleton Grok4 client instance.
+    Should be called during application shutdown.
+    """
+    global _grok4_client
+    
+    async with _grok4_lock:
+        if _grok4_client is not None:
+            await _grok4_client.close()
+            _grok4_client = None
+            logger.info("Grok4Client singleton instance closed")
+
+class Grok4ClientFactory:
+    """
+    Factory for creating Grok4Client instances with dependency injection support.
+    """
+    
+    @staticmethod
+    def create_client(api_key: Optional[str] = None, base_url: Optional[str] = None) -> Grok4Client:
+        """
+        Create a new Grok4Client instance.
+        
+        Args:
+            api_key: Optional API key override
+            base_url: Optional base URL override
+            
+        Returns:
+            Grok4Client: New client instance
+        """
+        return Grok4Client(api_key=api_key, base_url=base_url)
+    
+    @staticmethod
+    async def create_managed_client(api_key: Optional[str] = None, base_url: Optional[str] = None):
+        """
+        Create a Grok4Client instance for use with async context manager.
+        
+        Usage:
+            async with Grok4ClientFactory.create_managed_client() as client:
+                result = await client.analyze_market_sentiment(['BTC', 'ETH'])
+        """
+        return Grok4Client(api_key=api_key, base_url=base_url)

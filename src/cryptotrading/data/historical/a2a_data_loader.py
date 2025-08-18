@@ -51,8 +51,8 @@ class A2AHistoricalDataLoader:
         self.agent = StrandsAgent(tools=self._create_tools(), model=model)
         
         # Default configurations
-        self.default_crypto_symbols = ["BTC", "ETH", "BNB", "XRP", "ADA"]
-        self.default_fred_series = [
+        self.supported_crypto_symbols = ["BTC", "ETH", "BNB", "XRP", "ADA"]
+        self.supported_fred_series = [
             "DGS10", "T10Y2Y", "WALCL", "RRPONTSYD", "M2SL", "EFFR"
         ]
     
@@ -197,12 +197,12 @@ class A2AHistoricalDataLoader:
         tool_calls = []
         
         if "yahoo" in request.sources:
-            symbols = request.symbols or self.default_crypto_symbols
+            symbols = request.symbols or self.supported_crypto_symbols
             prompt_parts.append(f"Yahoo Finance symbols: {', '.join(symbols)}")
             tool_calls.append(f"load_yahoo_data({symbols}, '{request.start_date}', '{request.end_date}')")
         
         if "fred" in request.sources:
-            series = request.fred_series or self.default_fred_series
+            series = request.fred_series or self.supported_fred_series
             prompt_parts.append(f"FRED series: {', '.join(series)}")
             tool_calls.append(f"load_fred_data({series}, '{request.start_date}', '{request.end_date}')")
         

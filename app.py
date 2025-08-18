@@ -57,10 +57,18 @@ IS_VERCEL = is_vercel()
 # Load environment variables
 load_dotenv()
 
-# Initialize database
+# Initialize database with unified database
 try:
-    from cryptotrading.data.database import get_db
-    db = get_db()
+    from cryptotrading.infrastructure.database.unified_database import UnifiedDatabase
+    import asyncio
+    
+    # Initialize database synchronously for Flask startup
+    db = UnifiedDatabase()
+    # Run async initialization
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(db.initialize())
+    print("Database initialized successfully")
 except Exception as e:
     print(f"Database initialization warning: {e}")
     db = None
@@ -112,26 +120,9 @@ api = Api(
     doc='/api/'
 )
 
-# SAP UI5 routes
-@app.route('/')
-def index():
-    """Serve SAP UI5 application"""
-    return send_from_directory('webapp', 'index.html')
-
-@app.route('/manifest.json')
-def manifest():
-    """Serve SAP UI5 manifest"""
-    return send_from_directory('.', 'manifest.json')
-
-@app.route('/webapp/<path:filename>')
-def webapp_files(filename):
-    """Serve SAP UI5 webapp files"""
-    return send_from_directory('webapp', filename)
-
-@app.route('/health')
-def health():
-    """Health check endpoint"""
-    return {'status': 'healthy', 'platform': 'cryptotrading.com', 'version': '0.1.0'}
+# Register shared routes (SAP UI5 and health check)
+from cryptotrading.core.web.shared_routes import register_shared_routes
+register_shared_routes(app)
 
 # API endpoints
 
@@ -499,15 +490,172 @@ class GasPrice(Resource):
 @api.route('/api/market/overview')
 class MarketOverview(Resource):
     def get(self):
-        """Get market overview for multiple symbols"""
-        from cryptotrading.data.market_data import MarketDataAggregator
-        
-        symbols = request.args.get('symbols', 'bitcoin,ethereum,binancecoin').split(',')
-        
-        aggregator = MarketDataAggregator()
-        overview = aggregator.get_market_overview(symbols)
-        return overview
+        """Get real market overview for multiple symbols"""
+        try:
+            from cryptotrading.data.providers.real_only_provider import RealOnlyDataProvider
+            
+            symbols = request.args.get('symbols', 'BTC,ETH,BNB').split(',')
+            
+            # Use real data provider - no mocks
+            provider = RealOnlyDataProvider()
+            
+            # Run async in sync context
+            import asyncio
+            
+            async def get_overview():
+                results = {}
+                for symbol in symbols:
+                    try:
+                        price_data = await provider.get_real_time_price(symbol)
+                        results[symbol] = price_data
+                    except Exception as e:
+                        logger.warning(f"Failed to get price for {symbol}: {e}")
+                        continue
+                return results
+            
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            overview = loop.run_until_complete(get_overview())
+            
+            if not overview:
+                return {"error": "No market data available"}, 503
+            
+            return {
+                "symbols": list(overview.keys()),
+                "data": overview,
+                "timestamp": datetime.now().isoformat(),
+                "source": "real_only_provider"
+            }
+            
+        except Exception as e:
+            logger.error(f"Market overview failed: {e}")
+            return {"error": str(e)}, 500
 
+
+@api.route('/api/intelligent/trading/<string:symbol>')
+class IntelligentTradingDecision(Resource):
+    def post(self, symbol):
+        """Get intelligent trading decision using accumulated knowledge and AI"""
+        start_time = time.time()
+        
+        try:
+            data = api.payload or {}
+            
+            # Get market data and portfolio from request
+            market_data = data.get('market_data', {})
+            portfolio = data.get('portfolio', {'USD': 10000})
+            
+            # If no market data provided, get current data
+            if not market_data:
+                from cryptotrading.data.providers.real_only_provider import RealDataProvider
+                provider = RealDataProvider()
+                current_data = provider.get_current_price(symbol)
+                market_data = {
+                    'price': current_data.get('price', 0),
+                    'volume': current_data.get('volume', 0),
+                    'change_24h': current_data.get('change_24h', 0)
+                }
+            
+            # Run intelligent analysis
+            import asyncio
+            
+            async def get_intelligent_decision():
+                from cryptotrading.core.intelligence.intelligence_hub import get_intelligence_hub, IntelligenceContext
+                
+                hub = await get_intelligence_hub()
+                
+                context = IntelligenceContext(
+                    session_id=f"api_{int(time.time())}",
+                    symbol=symbol.upper(),
+                    market_data=market_data,
+                    portfolio=portfolio,
+                    timestamp=datetime.utcnow()
+                )
+                
+                return await hub.analyze_and_decide(context)
+            
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                combined_intelligence = loop.run_until_complete(get_intelligent_decision())
+                
+                duration_ms = (time.time() - start_time) * 1000
+                
+                return {
+                    'symbol': symbol.upper(),
+                    'recommendation': combined_intelligence.final_recommendation,
+                    'confidence': combined_intelligence.confidence,
+                    'reasoning': combined_intelligence.reasoning,
+                    'ai_insights_count': len(combined_intelligence.ai_insights),
+                    'mcts_decision': combined_intelligence.mcts_decision,
+                    'risk_assessment': combined_intelligence.risk_assessment,
+                    'duration_ms': duration_ms,
+                    'intelligence_type': 'accumulated_knowledge',
+                    'timestamp': datetime.utcnow().isoformat()
+                }
+                
+            except Exception as e:
+                logger.error(f"Intelligent analysis failed for {symbol}: {e}")
+                return {"error": f"Intelligence analysis failed: {str(e)}"}, 500
+                
+        except Exception as e:
+            logger.error(f"Intelligent trading request failed: {e}")
+            return {"error": str(e)}, 500
+
+@api.route('/api/intelligent/knowledge/<string:symbol>')
+class AccumulatedKnowledge(Resource):
+    def get(self, symbol):
+        """Get accumulated knowledge and performance for a symbol"""
+        try:
+            import asyncio
+            
+            async def get_knowledge():
+                from cryptotrading.core.intelligence.knowledge_accumulator import get_knowledge_accumulator
+                from cryptotrading.core.intelligence.decision_audit import get_audit_trail
+                
+                accumulator = await get_knowledge_accumulator()
+                audit_trail = get_audit_trail()
+                
+                # Get accumulated knowledge
+                session_id = f"knowledge_query_{int(time.time())}"
+                knowledge = await accumulator.get_accumulated_knowledge(session_id)
+                
+                # Get symbol-specific performance
+                performance = await audit_trail.get_performance_metrics(symbol, days=30)
+                
+                # Get recent lessons learned
+                lessons = await audit_trail.get_lessons_learned(symbol, days=7)
+                
+                return {
+                    'symbol': symbol.upper(),
+                    'total_interactions': knowledge.total_interactions,
+                    'success_patterns': len(knowledge.success_patterns),
+                    'failure_patterns': len(knowledge.failure_patterns),
+                    'market_insights': knowledge.market_insights.get(symbol.upper(), {}),
+                    'performance': {
+                        'total_decisions': performance.total_decisions,
+                        'success_rate': performance.success_rate,
+                        'avg_profit_per_decision': performance.avg_profit_per_decision,
+                        'total_profit_loss': performance.total_profit_loss
+                    },
+                    'recent_lessons': lessons[:5],  # Last 5 lessons
+                    'agent_performance': dict(knowledge.agent_performance),
+                    'confidence_calibration': knowledge.confidence_calibration
+                }
+            
+            try:
+                loop = asyncio.new_event_loop() 
+                asyncio.set_event_loop(loop)
+                result = loop.run_until_complete(get_knowledge())
+                return result
+                
+            except Exception as e:
+                logger.error(f"Knowledge retrieval failed: {e}")
+                return {"error": f"Knowledge retrieval failed: {str(e)}"}, 500
+                
+        except Exception as e:
+            logger.error(f"Knowledge request failed: {e}")
+            return {"error": str(e)}, 500
 
 @api.route('/api/market/historical/<string:symbol>')
 class HistoricalData(Resource):
@@ -781,14 +929,374 @@ class StoredSignals(Resource):
         except Exception as e:
             return {"error": str(e)}, 500
 
-# Error handlers
-@app.errorhandler(404)
-def not_found(error):
-    return {'error': 'Not found'}, 404
+# CLRS Analysis API Endpoints
+@api.route('/api/clrs/dependency-analysis')
+class CLRSDependencyAnalysis(Resource):
+    def post(self):
+        """Analyze code dependencies using CLRS graph algorithms"""
+        try:
+            from cryptotrading.infrastructure.analysis.clrs_tree_mcp_tools import CLRSMCPTools
+            from cryptotrading.infrastructure.analysis.glean_client import GleanClient
+            
+            data = api.payload
+            modules = data.get('modules', {})
+            
+            glean_client = GleanClient()
+            clrs_tools = CLRSMCPTools(glean_client)
+            
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            result = loop.run_until_complete(clrs_tools.analyze_dependency_graph(modules))
+            
+            return {
+                "analysis_type": "clrs_dependency_graph",
+                "algorithm": "dfs_topological_sort",
+                "timestamp": datetime.now().isoformat(),
+                **result
+            }
+        except Exception as e:
+            return {"error": f"CLRS dependency analysis failed: {str(e)}"}, 500
 
-@app.errorhandler(500)
-def internal_error(error):
-    return {'error': 'Internal server error'}, 500
+@api.route('/api/clrs/code-similarity')
+class CLRSCodeSimilarity(Resource):
+    def post(self):
+        """Analyze code similarity using CLRS string algorithms"""
+        try:
+            from cryptotrading.infrastructure.analysis.clrs_tree_mcp_tools import CLRSMCPTools
+            from cryptotrading.infrastructure.analysis.glean_client import GleanClient
+            
+            data = api.payload
+            code1 = data.get('code1', '')
+            code2 = data.get('code2', '')
+            
+            if not code1 or not code2:
+                return {"error": "Both code1 and code2 are required"}, 400
+            
+            glean_client = GleanClient()
+            clrs_tools = CLRSMCPTools(glean_client)
+            
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            result = loop.run_until_complete(clrs_tools.analyze_code_similarity(code1, code2))
+            
+            return {
+                "analysis_type": "clrs_code_similarity",
+                "algorithm": "longest_common_subsequence",
+                "timestamp": datetime.now().isoformat(),
+                **result
+            }
+        except Exception as e:
+            return {"error": f"CLRS similarity analysis failed: {str(e)}"}, 500
+
+@api.route('/api/clrs/sort-symbols')
+class CLRSSortSymbols(Resource):
+    def post(self):
+        """Sort code symbols using CLRS sorting algorithms"""
+        try:
+            from cryptotrading.infrastructure.analysis.clrs_tree_mcp_tools import CLRSMCPTools
+            from cryptotrading.infrastructure.analysis.glean_client import GleanClient
+            
+            data = api.payload
+            symbols = data.get('symbols', [])
+            sort_by = data.get('sort_by', 'usage')
+            algorithm = data.get('algorithm', 'quicksort')
+            
+            glean_client = GleanClient()
+            clrs_tools = CLRSMCPTools(glean_client)
+            
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            result = loop.run_until_complete(clrs_tools.sort_code_symbols(symbols, sort_by, algorithm))
+            
+            return {
+                "analysis_type": "clrs_symbol_sorting",
+                "timestamp": datetime.now().isoformat(),
+                **result
+            }
+        except Exception as e:
+            return {"error": f"CLRS symbol sorting failed: {str(e)}"}, 500
+
+@api.route('/api/clrs/search-symbols')
+class CLRSSearchSymbols(Resource):
+    def post(self):
+        """Search code symbols using CLRS binary search"""
+        try:
+            from cryptotrading.infrastructure.analysis.clrs_tree_mcp_tools import CLRSMCPTools
+            from cryptotrading.infrastructure.analysis.glean_client import GleanClient
+            
+            data = api.payload
+            symbols = data.get('symbols', [])
+            target = data.get('target', '')
+            
+            if not target:
+                return {"error": "Target symbol name is required"}, 400
+            
+            glean_client = GleanClient()
+            clrs_tools = CLRSMCPTools(glean_client)
+            
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            result = loop.run_until_complete(clrs_tools.search_code_symbols(symbols, target))
+            
+            return {
+                "analysis_type": "clrs_symbol_search",
+                "algorithm": "binary_search",
+                "timestamp": datetime.now().isoformat(),
+                **result
+            }
+        except Exception as e:
+            return {"error": f"CLRS symbol search failed: {str(e)}"}, 500
+
+@api.route('/api/clrs/call-path')
+class CLRSCallPath(Resource):
+    def post(self):
+        """Find shortest call path using Dijkstra's algorithm"""
+        try:
+            from cryptotrading.infrastructure.analysis.clrs_tree_mcp_tools import CLRSMCPTools
+            from cryptotrading.infrastructure.analysis.glean_client import GleanClient
+            
+            data = api.payload
+            call_graph = data.get('call_graph', {})
+            start_function = data.get('start_function', '')
+            end_function = data.get('end_function', '')
+            
+            if not start_function or not end_function:
+                return {"error": "Both start_function and end_function are required"}, 400
+            
+            glean_client = GleanClient()
+            clrs_tools = CLRSMCPTools(glean_client)
+            
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            result = loop.run_until_complete(clrs_tools.find_shortest_call_path(call_graph, start_function, end_function))
+            
+            return {
+                "analysis_type": "clrs_call_path",
+                "algorithm": "dijkstra",
+                "timestamp": datetime.now().isoformat(),
+                **result
+            }
+        except Exception as e:
+            return {"error": f"CLRS call path analysis failed: {str(e)}"}, 500
+
+@api.route('/api/clrs/pattern-matching')
+class CLRSPatternMatching(Resource):
+    def post(self):
+        """Find code patterns using KMP string matching"""
+        try:
+            from cryptotrading.infrastructure.analysis.clrs_tree_mcp_tools import CLRSMCPTools
+            from cryptotrading.infrastructure.analysis.glean_client import GleanClient
+            
+            data = api.payload
+            source_code = data.get('source_code', '')
+            patterns = data.get('patterns', [])
+            
+            if not source_code or not patterns:
+                return {"error": "Both source_code and patterns are required"}, 400
+            
+            glean_client = GleanClient()
+            clrs_tools = CLRSMCPTools(glean_client)
+            
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            result = loop.run_until_complete(clrs_tools.find_code_patterns(source_code, patterns))
+            
+            return {
+                "analysis_type": "clrs_pattern_matching",
+                "algorithm": "kmp",
+                "timestamp": datetime.now().isoformat(),
+                **result
+            }
+        except Exception as e:
+            return {"error": f"CLRS pattern matching failed: {str(e)}"}, 500
+
+# Tree Analysis API Endpoints
+@api.route('/api/tree/ast-analysis')
+class TreeASTAnalysis(Resource):
+    def post(self):
+        """Process AST structure using tree operations"""
+        try:
+            from cryptotrading.infrastructure.analysis.clrs_tree_mcp_tools import TreeMCPTools
+            from cryptotrading.infrastructure.analysis.glean_client import GleanClient
+            
+            data = api.payload
+            ast_data = data.get('ast_data', {})
+            operation = data.get('operation', 'get_depth')
+            
+            glean_client = GleanClient()
+            tree_tools = TreeMCPTools(glean_client)
+            
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            result = loop.run_until_complete(tree_tools.process_ast_structure(ast_data, operation, **data))
+            
+            return {
+                "analysis_type": "tree_ast_processing",
+                "timestamp": datetime.now().isoformat(),
+                **result
+            }
+        except Exception as e:
+            return {"error": f"Tree AST analysis failed: {str(e)}"}, 500
+
+@api.route('/api/tree/hierarchy-analysis')
+class TreeHierarchyAnalysis(Resource):
+    def post(self):
+        """Analyze hierarchical code structure"""
+        try:
+            from cryptotrading.infrastructure.analysis.clrs_tree_mcp_tools import TreeMCPTools
+            from cryptotrading.infrastructure.analysis.glean_client import GleanClient
+            
+            data = api.payload
+            codebase = data.get('codebase', {})
+            
+            glean_client = GleanClient()
+            tree_tools = TreeMCPTools(glean_client)
+            
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            result = loop.run_until_complete(tree_tools.analyze_code_hierarchy(codebase))
+            
+            return {
+                "analysis_type": "tree_hierarchy_analysis",
+                "timestamp": datetime.now().isoformat(),
+                **result
+            }
+        except Exception as e:
+            return {"error": f"Tree hierarchy analysis failed: {str(e)}"}, 500
+
+@api.route('/api/tree/structure-diff')
+class TreeStructureDiff(Resource):
+    def post(self):
+        """Compare two code structures and show differences"""
+        try:
+            from cryptotrading.infrastructure.analysis.clrs_tree_mcp_tools import TreeMCPTools
+            from cryptotrading.infrastructure.analysis.glean_client import GleanClient
+            
+            data = api.payload
+            old_structure = data.get('old_structure', {})
+            new_structure = data.get('new_structure', {})
+            
+            glean_client = GleanClient()
+            tree_tools = TreeMCPTools(glean_client)
+            
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            result = loop.run_until_complete(tree_tools.compare_code_structures(old_structure, new_structure))
+            
+            return {
+                "analysis_type": "tree_structure_diff",
+                "timestamp": datetime.now().isoformat(),
+                **result
+            }
+        except Exception as e:
+            return {"error": f"Tree structure diff failed: {str(e)}"}, 500
+
+@api.route('/api/tree/config-merge')
+class TreeConfigMerge(Resource):
+    def post(self):
+        """Merge configuration structures"""
+        try:
+            from cryptotrading.infrastructure.analysis.clrs_tree_mcp_tools import TreeMCPTools
+            from cryptotrading.infrastructure.analysis.glean_client import GleanClient
+            
+            data = api.payload
+            base_config = data.get('base_config', {})
+            override_config = data.get('override_config', {})
+            
+            glean_client = GleanClient()
+            tree_tools = TreeMCPTools(glean_client)
+            
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            result = loop.run_until_complete(tree_tools.merge_configurations(base_config, override_config))
+            
+            return {
+                "analysis_type": "tree_config_merge",
+                "timestamp": datetime.now().isoformat(),
+                **result
+            }
+        except Exception as e:
+            return {"error": f"Tree config merge failed: {str(e)}"}, 500
+
+# Enhanced Glean MCP Tools
+@api.route('/api/clrs/comprehensive-analysis')
+class CLRSComprehensiveAnalysis(Resource):
+    def post(self):
+        """Comprehensive analysis combining CLRS algorithms and Tree operations"""
+        try:
+            from cryptotrading.infrastructure.analysis.clrs_tree_mcp_tools import GleanAnalysisMCPTools
+            from cryptotrading.infrastructure.analysis.glean_client import GleanClient
+            
+            data = api.payload
+            codebase_data = data.get('codebase_data', {})
+            
+            glean_client = GleanClient()
+            analysis_tools = GleanAnalysisMCPTools(glean_client)
+            
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            result = loop.run_until_complete(analysis_tools.comprehensive_code_analysis(codebase_data))
+            
+            return {
+                "analysis_type": "clrs_comprehensive",
+                "timestamp": datetime.now().isoformat(),
+                **result
+            }
+        except Exception as e:
+            return {"error": f"CLRS comprehensive analysis failed: {str(e)}"}, 500
+
+@api.route('/api/clrs/optimization-recommendations')
+class CLRSOptimizationRecommendations(Resource):
+    def post(self):
+        """Get optimization recommendations using CLRS+Tree analysis"""
+        try:
+            from cryptotrading.infrastructure.analysis.clrs_tree_mcp_tools import GleanAnalysisMCPTools
+            from cryptotrading.infrastructure.analysis.glean_client import GleanClient
+            
+            data = api.payload
+            current_structure = data.get('current_structure', {})
+            optimization_goals = data.get('optimization_goals', ['reduce_complexity', 'improve_modularity'])
+            
+            glean_client = GleanClient()
+            analysis_tools = GleanAnalysisMCPTools(glean_client)
+            
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            result = loop.run_until_complete(analysis_tools.optimize_code_structure(current_structure, optimization_goals))
+            
+            return {
+                "analysis_type": "clrs_optimization",
+                "timestamp": datetime.now().isoformat(),
+                **result
+            }
+        except Exception as e:
+            return {"error": f"CLRS optimization analysis failed: {str(e)}"}, 500
+
+# Error handlers are registered by register_shared_routes()
 
 if __name__ == '__main__':
     # Development server

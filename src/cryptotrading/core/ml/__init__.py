@@ -4,7 +4,6 @@ Includes real models, training pipeline, and inference API
 """
 
 from .perplexity import PerplexityClient
-from .yfinance_client import get_yfinance_client
 from .models import CryptoPricePredictor, ModelRegistry, model_registry
 from .training import ModelTrainingPipeline, ModelEvaluator, training_pipeline, model_evaluator
 from .inference import (
@@ -30,8 +29,7 @@ from .feature_store import (
 
 __all__ = [
     # Legacy
-    'PerplexityClient', 
-    'get_yfinance_client',
+    'PerplexityClient',
     
     # Models
     'CryptoPricePredictor',

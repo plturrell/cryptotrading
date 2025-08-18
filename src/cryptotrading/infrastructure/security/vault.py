@@ -15,6 +15,8 @@ import base64
 import secrets
 from pathlib import Path
 
+from ...core.security.credentials_manager import CredentialsManager
+
 logger = logging.getLogger(__name__)
 
 @dataclass
@@ -61,6 +63,9 @@ class SecretManager:
         
         self.use_local = use_local
         self.local_secrets: Dict[str, Secret] = {}
+        
+        # Initialize database credentials manager
+        self.credentials_manager = CredentialsManager()
         
         if self.use_local:
             logger.warning("Using local secret storage - not suitable for production")
@@ -126,6 +131,16 @@ class SecretManager:
             metadata=metadata or {}
         )
         
+        # Also store in database for persistence
+        parts = key.split('/', 2)
+        if len(parts) >= 2:
+            service_name = parts[0]
+            credential_type = parts[1]
+            await self.credentials_manager.store_credential(
+                service_name, credential_type, value, 
+                metadata=metadata, expires_at=expires_at
+            )
+        
         if self.use_local:
             self.local_secrets[key] = secret
             self._save_local_vault()
@@ -136,6 +151,7 @@ class SecretManager:
     
     async def get_secret(self, key: str) -> Optional[str]:
         """Retrieve secret value"""
+        # Try vault first
         if self.use_local:
             secret = self.local_secrets.get(key)
             if secret:
@@ -145,9 +161,19 @@ class SecretManager:
                     self._save_local_vault()
                     return None
                 return secret.value
-            return None
         else:
-            return await self._get_vault_secret(key)
+            value = await self._get_vault_secret(key)
+            if value:
+                return value
+        
+        # Fallback to database credentials
+        parts = key.split('/', 2)
+        if len(parts) >= 2:
+            service_name = parts[0]
+            credential_type = parts[1]
+            return await self.credentials_manager.get_credential(service_name, credential_type)
+            
+        return None
     
     async def delete_secret(self, key: str):
         """Delete secret"""

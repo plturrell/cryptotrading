@@ -151,17 +151,21 @@ class CryptoPricePredictor:
         """Train production-grade models with hyperparameter optimization"""
         logger.info(f"Training production ensemble for {symbol} with {target_hours}h horizon")
         
-        # Get real market data
+        # Get data from database instead of direct market access
         try:
-            import yfinance as yf
-            ticker = yf.Ticker(f"{symbol}-USD" if symbol in ['BTC', 'ETH'] else symbol)
-            df = ticker.history(period="2y", interval="1h")
+            # For ML training, we'll use the data provider directly
+            # since training is typically done offline
+            from ...data.providers.real_only_provider import RealOnlyDataProvider
+            provider = RealOnlyDataProvider()
             
-            if df.empty:
-                raise ValueError(f"No data available for {symbol}")
+            # Get 2 years of hourly data
+            df = provider.get_historical_data(symbol, days=730)
+            
+            if df is None or df.empty:
+                raise ValueError(f"No data available for {symbol} in database")
                 
         except Exception as e:
-            logger.error(f"Failed to fetch data for {symbol}: {e}")
+            logger.error(f"Failed to fetch data for {symbol} from database: {e}")
             raise
         
         # Prepare data using production pipeline
@@ -267,7 +271,7 @@ class CryptoPricePredictor:
         return result
     
     def get_model(self, symbol: str) -> Any:
-        \"\"\"Get trained model for API compatibility\"\"\"
+        """Get trained model for API compatibility"""
         if self.is_trained:
             return self.production_model
         return None
@@ -304,50 +308,111 @@ class CryptoPricePredictor:
             for name, importance in sorted_features
         ]
     
-    def save(self):
-        """Save model to disk"""
-        # Save models
-        for name, model in self.models.items():
-            joblib.dump(model, self.model_path / f"{name}_model.pkl")
+    async def save(self):
+        """Save model to database using ML model registry"""
+        from .model_registry import get_model_registry
+        
+        try:
+            registry = await get_model_registry()
             
-        # Save scalers
-        for name, scaler in self.scalers.items():
-            joblib.dump(scaler, self.model_path / f"{name}_scaler.pkl")
+            # Combine all models and scalers into single object
+            model_data = {
+                'models': self.models,
+                'scalers': self.scalers,
+                'feature_importance': self.feature_importance,
+                'metadata': self.metadata
+            }
             
-        # Save metadata
-        with open(self.model_path / "metadata.json", "w") as f:
-            json.dump(self.metadata, f, indent=2)
+            # Serialize model data
+            model_bytes = joblib.dumps(model_data)
             
-        # Save feature importance
-        if self.feature_importance:
-            with open(self.model_path / "feature_importance.json", "w") as f:
-                json.dump(self.feature_importance, f, indent=2)
+            # Register in database
+            registry_id = await registry.register_model(
+                model_id=f"crypto_predictor_{self.model_type}",
+                version=self.version,
+                model_type=self.model_type,
+                model_data=model_bytes,
+                algorithm="ensemble",
+                parameters=self.metadata.get('parameters', {}),
+                training_metrics=self.metadata.get('performance_metrics', {}),
+                validation_metrics=self.metadata.get('validation_metrics', {})
+            )
+            
+            logger.info(f"Model saved to registry with ID: {registry_id}")
+            return registry_id
+            
+        except Exception as e:
+            logger.error(f"Failed to save model to registry: {e}")
+            # Fallback to file storage for development
+            if not self.model_path.exists():
+                self.model_path.mkdir(parents=True, exist_ok=True)
+            
+            for name, model in self.models.items():
+                joblib.dump(model, self.model_path / f"{name}_model.pkl")
+            for name, scaler in self.scalers.items():
+                joblib.dump(scaler, self.model_path / f"{name}_scaler.pkl")
+            
+            with open(self.model_path / "metadata.json", "w") as f:
+                json.dump(self.metadata, f, indent=2)
                 
         logger.info(f"Model saved to {self.model_path}")
     
-    def load(self):
-        """Load model from disk"""
-        # Load models
-        for model_file in self.model_path.glob("*_model.pkl"):
-            name = model_file.stem.replace("_model", "")
-            self.models[name] = joblib.load(model_file)
+    async def load(self):
+        """Load model from database using ML model registry"""
+        from .model_registry import get_model_registry
+        
+        try:
+            registry = await get_model_registry()
             
-        # Load scalers
-        for scaler_file in self.model_path.glob("*_scaler.pkl"):
-            name = scaler_file.stem.replace("_scaler", "")
-            self.scalers[name] = joblib.load(scaler_file)
+            # Load from registry
+            model_data = await registry.load_model(
+                f"crypto_predictor_{self.model_type}",
+                self.version
+            )
             
-        # Load metadata
-        with open(self.model_path / "metadata.json", "r") as f:
-            self.metadata = json.load(f)
-            
-        # Load feature importance
-        importance_file = self.model_path / "feature_importance.json"
-        if importance_file.exists():
-            with open(importance_file, "r") as f:
-                self.feature_importance = json.load(f)
+            if model_data:
+                # Deserialize model data
+                data = model_data if isinstance(model_data, dict) else joblib.loads(model_data)
                 
-        logger.info(f"Model loaded from {self.model_path}")
+                self.models = data.get('models', {})
+                self.scalers = data.get('scalers', {})
+                self.feature_importance = data.get('feature_importance', {})
+                self.metadata = data.get('metadata', self.metadata)
+                
+                logger.info(f"Model loaded from registry: {self.model_type} v{self.version}")
+                return True
+                
+        except Exception as e:
+            logger.error(f"Failed to load model from registry: {e}")
+            
+        # Fallback to file storage
+        if self.model_path.exists():
+            # Load models
+            for model_file in self.model_path.glob("*_model.pkl"):
+                name = model_file.stem.replace("_model", "")
+                self.models[name] = joblib.load(model_file)
+                
+            # Load scalers
+            for scaler_file in self.model_path.glob("*_scaler.pkl"):
+                name = scaler_file.stem.replace("_scaler", "")
+                self.scalers[name] = joblib.load(scaler_file)
+                
+            # Load metadata
+            metadata_file = self.model_path / "metadata.json"
+            if metadata_file.exists():
+                with open(metadata_file, "r") as f:
+                    self.metadata = json.load(f)
+                    
+            # Load feature importance
+            importance_file = self.model_path / "feature_importance.json"
+            if importance_file.exists():
+                with open(importance_file, "r") as f:
+                    self.feature_importance = json.load(f)
+                    
+            logger.info(f"Model loaded from {self.model_path}")
+            return True
+            
+        return False
 
 
 class ModelRegistry:

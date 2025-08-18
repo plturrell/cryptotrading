@@ -211,6 +211,13 @@ sap.ui.define([
         onTradingConsolePress: function() {
             var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
             oRouter.navTo("tradingConsole");
+        },
+        
+        onTechnicalAnalysisPress: function() {
+            var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+            oRouter.navTo("technicalAnalysis", {
+                symbol: "BTC-USD"
+            });
         }
     });
 });

@@ -15,10 +15,11 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 import asyncio
 
-from ..data.historical.yahoo_finance import YahooFinanceClient
+# Feature store should use database data, not direct market data clients
 from ..memory.optimized_cache import get_cache_manager
 from ..config.environment import get_processing_config, get_feature_flags
 from ..processing.parallel_executor import get_parallel_executor
+from .feature_cache import FeatureCachePersistence
 
 logger = logging.getLogger(__name__)
 
@@ -52,10 +53,15 @@ class FeatureStore:
     def __init__(self):
         self.features = {}
         self.cache_manager = get_cache_manager()
-        self.yahoo_client = YahooFinanceClient()
+        # Use database for feature data instead of direct market client
+        from ...infrastructure.database.unified_database import UnifiedDatabase
+        self.database = UnifiedDatabase()
         self.config = get_processing_config()
         self.flags = get_feature_flags()
         self.cache_ttl = self.flags.cache_ttl_seconds
+        
+        # Initialize feature cache persistence
+        self.feature_cache = FeatureCachePersistence(self.database)
         
         # Use environment-aware parallel executor
         if self.config['parallel_processing']:
@@ -206,7 +212,19 @@ class FeatureStore:
             if features is None:
                 features = list(self.features.keys())
             
-            # Check cache
+            # Check persistent feature cache first
+            timestamp = data.index[-1] if isinstance(data.index[-1], datetime) else datetime.now()
+            cached_features = await self.feature_cache.get_features(
+                symbol, features, timestamp, tolerance_hours=1
+            )
+            
+            if cached_features and len(cached_features) == len(features):
+                business_metrics.counter("feature_store.db_cache_hit", 1)
+                # Convert to DataFrame
+                result_df = pd.DataFrame([cached_features], index=[timestamp])
+                return result_df
+            
+            # Check in-memory cache
             cached_features = await self.cache_manager.get(
                 "features", symbol, features=sorted(features)
             )
@@ -223,7 +241,14 @@ class FeatureStore:
             # Create DataFrame
             result_df = pd.DataFrame(feature_data, index=data.index)
             
-            # Cache results
+            # Store in persistent feature cache
+            if not result_df.empty:
+                latest_features = result_df.iloc[-1].to_dict()
+                await self.feature_cache.store_features(
+                    symbol, latest_features, timestamp
+                )
+            
+            # Cache results in memory
             await self.cache_manager.set(
                 "features", symbol, result_df, 
                 ttl_seconds=self.cache_ttl, features=sorted(features)
@@ -470,10 +495,10 @@ class FeatureStore:
             end_date = datetime.now()
             start_date = end_date - timedelta(days=180)  # 6 months for feature computation
             
-            data = self.yahoo_client.get_historical_data(
-                symbol,
-                start_date.strftime('%Y-%m-%d'),
-                end_date.strftime('%Y-%m-%d'),
+            data = await self.database.get_historical_data(
+                symbol=symbol,
+                start_date=start_date.strftime('%Y-%m-%d'),
+                end_date=end_date.strftime('%Y-%m-%d'),
                 interval='1h'
             )
             

@@ -345,14 +345,23 @@ class ServiceRegistry:
                         ServiceStatus.UNHEALTHY
                     )
                     
-                await asyncio.sleep(10)  # Check every 10 seconds
+                # Use event-driven sleep that can be interrupted
+                try:
+                    await asyncio.sleep(10)  # Check every 10 seconds
+                except asyncio.CancelledError:
+                    logger.info(f"Health check loop cancelled for {service.service_name}")
+                    break
                 
     async def _cleanup_expired_services(self):
         """Remove expired services"""
         while self._running:
             try:
+                # Use event-driven sleep that can be interrupted
                 await asyncio.sleep(60)  # Run every minute
                 
+                if not self._running:
+                    break
+                    
                 # Clean local cache
                 expired_services = []
                 
@@ -364,6 +373,9 @@ class ServiceRegistry:
                 for service_name, instance_id in expired_services:
                     await self.deregister_service(service_name, instance_id)
                     
+            except asyncio.CancelledError:
+                logger.info("Cleanup task cancelled")
+                break
             except Exception as e:
                 logger.error(f"Error in cleanup task: {e}")
                 
@@ -376,8 +388,14 @@ class ServiceRegistry:
             # This would implement Redis keyspace notifications
             # For simplicity, we'll use periodic polling
             while self._running:
-                await asyncio.sleep(5)
-                # Poll for changes and notify watchers
+                try:
+                    await asyncio.sleep(5)
+                    if not self._running:
+                        break
+                    # Poll for changes and notify watchers
+                except asyncio.CancelledError:
+                    logger.info("Service watcher cancelled")
+                    break
                 
         except Exception as e:
             logger.error(f"Error watching service changes: {e}")

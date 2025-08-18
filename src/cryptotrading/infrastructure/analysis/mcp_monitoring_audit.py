@@ -13,11 +13,12 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Set, Tuple
 from dataclasses import dataclass, asdict
 from collections import defaultdict, deque
-import sqlite3
 from pathlib import Path
 
 from .mcp_agent_segregation import AgentContext, ResourceType, AccessLog
 from .mcp_auth_middleware import AuthenticationRequest, AuthenticationResponse
+from ...infrastructure.database.unified_database import UnifiedDatabase
+from ...core.logging.error_persistence import get_error_persistence
 
 logger = logging.getLogger(__name__)
 
@@ -65,59 +66,71 @@ class ComplianceReport:
 class MCPAuditLogger:
     """Comprehensive audit logging for MCP operations"""
     
-    def __init__(self, db_path: str = "data/mcp_audit.db"):
-        self.db_path = Path(db_path)
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+    def __init__(self, db: Optional[UnifiedDatabase] = None):
+        self.db = db or UnifiedDatabase()
         self._init_database()
         self.event_queue = deque(maxlen=10000)
         self.batch_size = 100
         self._background_task = None
+        self._error_logger = None
+        
+    async def _get_error_logger(self):
+        """Get error logger lazily"""
+        if self._error_logger is None:
+            self._error_logger = await get_error_persistence()
+        return self._error_logger
         
     def _init_database(self):
-        """Initialize audit database"""
-        with sqlite3.connect(self.db_path) as conn:
-            conn.executescript("""
-                CREATE TABLE IF NOT EXISTS access_logs (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    agent_id TEXT NOT NULL,
-                    tenant_id TEXT NOT NULL,
-                    resource_type TEXT NOT NULL,
-                    action TEXT NOT NULL,
-                    success BOOLEAN NOT NULL,
-                    reason TEXT,
-                    timestamp DATETIME NOT NULL,
-                    metadata TEXT
-                );
-                
-                CREATE TABLE IF NOT EXISTS security_events (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    event_id TEXT UNIQUE NOT NULL,
-                    event_type TEXT NOT NULL,
-                    severity TEXT NOT NULL,
-                    agent_id TEXT NOT NULL,
-                    tenant_id TEXT NOT NULL,
-                    resource_type TEXT,
-                    description TEXT NOT NULL,
-                    metadata TEXT,
-                    timestamp DATETIME NOT NULL,
-                    resolved BOOLEAN DEFAULT FALSE
-                );
-                
-                CREATE TABLE IF NOT EXISTS performance_metrics (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    metric_name TEXT NOT NULL,
-                    agent_id TEXT NOT NULL,
-                    tenant_id TEXT NOT NULL,
-                    value REAL NOT NULL,
-                    unit TEXT NOT NULL,
-                    timestamp DATETIME NOT NULL,
-                    tags TEXT
-                );
-                
-                CREATE INDEX IF NOT EXISTS idx_access_logs_tenant ON access_logs(tenant_id, timestamp);
-                CREATE INDEX IF NOT EXISTS idx_security_events_severity ON security_events(severity, timestamp);
-                CREATE INDEX IF NOT EXISTS idx_performance_metrics_tenant ON performance_metrics(tenant_id, metric_name, timestamp);
-            """)
+        """Initialize audit database tables"""
+        try:
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.executescript("""
+                    CREATE TABLE IF NOT EXISTS access_logs (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        agent_id TEXT NOT NULL,
+                        tenant_id TEXT NOT NULL,
+                        resource_type TEXT NOT NULL,
+                        action TEXT NOT NULL,
+                        success BOOLEAN NOT NULL,
+                        reason TEXT,
+                        timestamp DATETIME NOT NULL,
+                        metadata TEXT
+                    );
+                    
+                    CREATE TABLE IF NOT EXISTS security_events (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        event_id TEXT UNIQUE NOT NULL,
+                        event_type TEXT NOT NULL,
+                        severity TEXT NOT NULL,
+                        agent_id TEXT NOT NULL,
+                        tenant_id TEXT NOT NULL,
+                        resource_type TEXT,
+                        description TEXT NOT NULL,
+                        metadata TEXT,
+                        timestamp DATETIME NOT NULL,
+                        resolved BOOLEAN DEFAULT FALSE
+                    );
+                    
+                    CREATE TABLE IF NOT EXISTS performance_metrics (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        metric_name TEXT NOT NULL,
+                        agent_id TEXT NOT NULL,
+                        tenant_id TEXT NOT NULL,
+                        value REAL NOT NULL,
+                        unit TEXT NOT NULL,
+                        timestamp DATETIME NOT NULL,
+                        tags TEXT
+                    );
+                    
+                    CREATE INDEX IF NOT EXISTS idx_access_logs_tenant ON access_logs(tenant_id, timestamp);
+                    CREATE INDEX IF NOT EXISTS idx_security_events_severity ON security_events(severity, timestamp);
+                    CREATE INDEX IF NOT EXISTS idx_performance_metrics_tenant ON performance_metrics(tenant_id, metric_name, timestamp);
+                """)
+                conn.commit()
+        except Exception as e:
+            logger.error(f"Failed to initialize audit database: {e}")
+            raise
     
     async def log_access(self, access_log: AccessLog):
         """Log access attempt"""
@@ -151,21 +164,33 @@ class MCPAuditLogger:
         events_to_process = list(self.event_queue)
         self.event_queue.clear()
         
-        with sqlite3.connect(self.db_path) as conn:
-            for event_type, event_data in events_to_process:
-                try:
-                    if event_type == 'access_log':
-                        self._insert_access_log(conn, event_data)
-                    elif event_type == 'security_event':
-                        self._insert_security_event(conn, event_data)
-                    elif event_type == 'performance_metric':
-                        self._insert_performance_metric(conn, event_data)
-                except Exception as e:
-                    logger.error("Failed to insert %s: %s", event_type, e)
+        try:
+            with self.db.get_connection() as conn:
+                for event_type, event_data in events_to_process:
+                    try:
+                        if event_type == 'access_log':
+                            self._insert_access_log(conn, event_data)
+                        elif event_type == 'security_event':
+                            self._insert_security_event(conn, event_data)
+                        elif event_type == 'performance_metric':
+                            self._insert_performance_metric(conn, event_data)
+                    except Exception as e:
+                        logger.error(f"Failed to insert {event_type}: {e}")
+                        error_logger = await self._get_error_logger()
+                        await error_logger.log_exception(
+                            e, "mcp_audit_logger",
+                            context={"event_type": event_type, "event_data": str(event_data)}
+                        )
+                conn.commit()
+        except Exception as e:
+            logger.error(f"Failed to flush audit queue: {e}")
+            error_logger = await self._get_error_logger()
+            await error_logger.log_exception(e, "mcp_audit_logger")
     
-    def _insert_access_log(self, conn: sqlite3.Connection, log: AccessLog):
+    def _insert_access_log(self, conn, log: AccessLog):
         """Insert access log into database"""
-        conn.execute("""
+        cursor = conn.cursor()
+        cursor.execute("""
             INSERT INTO access_logs (agent_id, tenant_id, resource_type, action, success, reason, timestamp, metadata)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """, (
@@ -173,9 +198,10 @@ class MCPAuditLogger:
             log.success, log.reason, log.timestamp, json.dumps(log.metadata or {})
         ))
     
-    def _insert_security_event(self, conn: sqlite3.Connection, event: SecurityEvent):
+    def _insert_security_event(self, conn, event: SecurityEvent):
         """Insert security event into database"""
-        conn.execute("""
+        cursor = conn.cursor()
+        cursor.execute("""
             INSERT OR REPLACE INTO security_events 
             (event_id, event_type, severity, agent_id, tenant_id, resource_type, description, metadata, timestamp, resolved)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -185,9 +211,10 @@ class MCPAuditLogger:
             event.description, json.dumps(event.metadata), event.timestamp, event.resolved
         ))
     
-    def _insert_performance_metric(self, conn: sqlite3.Connection, metric: PerformanceMetric):
+    def _insert_performance_metric(self, conn, metric: PerformanceMetric):
         """Insert performance metric into database"""
-        conn.execute("""
+        cursor = conn.cursor()
+        cursor.execute("""
             INSERT INTO performance_metrics (metric_name, agent_id, tenant_id, value, unit, timestamp, tags)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (
@@ -199,35 +226,52 @@ class MCPAuditLogger:
         """Get access summary for tenant"""
         cutoff = datetime.utcnow() - timedelta(hours=hours)
         
-        with sqlite3.connect(self.db_path) as conn:
-            conn.row_factory = sqlite3.Row
-            
-            # Get access statistics
-            stats = conn.execute("""
-                SELECT 
-                    COUNT(*) as total_requests,
-                    SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as successful_requests,
-                    SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as failed_requests,
-                    COUNT(DISTINCT agent_id) as unique_agents,
-                    COUNT(DISTINCT resource_type) as resources_accessed
-                FROM access_logs 
-                WHERE tenant_id = ? AND timestamp > ?
-            """, (tenant_id, cutoff)).fetchone()
-            
-            # Get resource usage breakdown
-            resources = conn.execute("""
-                SELECT resource_type, COUNT(*) as requests
-                FROM access_logs 
-                WHERE tenant_id = ? AND timestamp > ?
-                GROUP BY resource_type
-                ORDER BY requests DESC
-            """, (tenant_id, cutoff)).fetchall()
-            
+        try:
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                
+                # Get access statistics
+                cursor.execute("""
+                    SELECT 
+                        COUNT(*) as total_requests,
+                        SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as successful_requests,
+                        SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as failed_requests,
+                        COUNT(DISTINCT agent_id) as unique_agents,
+                        COUNT(DISTINCT resource_type) as resources_accessed
+                    FROM access_logs 
+                    WHERE tenant_id = ? AND timestamp > ?
+                """, (tenant_id, cutoff))
+                stats = cursor.fetchone()
+                
+                # Get resource usage breakdown
+                cursor.execute("""
+                    SELECT resource_type, COUNT(*) as requests
+                    FROM access_logs 
+                    WHERE tenant_id = ? AND timestamp > ?
+                    GROUP BY resource_type
+                    ORDER BY requests DESC
+                """, (tenant_id, cutoff))
+                resources = cursor.fetchall()
+                
+                return {
+                    "tenant_id": tenant_id,
+                    "period_hours": hours,
+                    "statistics": {
+                        "total_requests": stats[0] or 0,
+                        "successful_requests": stats[1] or 0,
+                        "failed_requests": stats[2] or 0,
+                        "unique_agents": stats[3] or 0,
+                        "resources_accessed": stats[4] or 0
+                    },
+                    "resource_usage": [{"resource_type": row[0], "requests": row[1]} for row in resources]
+                }
+        except Exception as e:
+            logger.error(f"Failed to get tenant access summary: {e}")
             return {
                 "tenant_id": tenant_id,
                 "period_hours": hours,
-                "statistics": dict(stats),
-                "resource_usage": [dict(row) for row in resources]
+                "statistics": {},
+                "resource_usage": []
             }
     
     async def get_security_events(self, tenant_id: str = None, severity: str = None, hours: int = 24) -> List[Dict[str, Any]]:
@@ -247,11 +291,32 @@ class MCPAuditLogger:
         
         query += " ORDER BY timestamp DESC"
         
-        with sqlite3.connect(self.db_path) as conn:
-            conn.row_factory = sqlite3.Row
-            events = conn.execute(query, params).fetchall()
-            
-            return [dict(row) for row in events]
+        try:
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(query, params)
+                events = cursor.fetchall()
+                
+                result = []
+                for row in events:
+                    result.append({
+                        "id": row[0],
+                        "event_id": row[1],
+                        "event_type": row[2],
+                        "severity": row[3],
+                        "agent_id": row[4],
+                        "tenant_id": row[5],
+                        "resource_type": row[6],
+                        "description": row[7],
+                        "metadata": json.loads(row[8]) if row[8] else {},
+                        "timestamp": row[9],
+                        "resolved": bool(row[10])
+                    })
+                
+                return result
+        except Exception as e:
+            logger.error(f"Failed to get security events: {e}")
+            return []
 
 class MCPPerformanceMonitor:
     """Performance monitoring for MCP operations"""
@@ -324,37 +389,59 @@ class MCPPerformanceMonitor:
         """Get performance summary for tenant"""
         cutoff = datetime.utcnow() - timedelta(hours=hours)
         
-        with sqlite3.connect(self.audit_logger.db_path) as conn:
-            conn.row_factory = sqlite3.Row
-            
-            # Average response times by tool
-            response_times = conn.execute("""
-                SELECT 
-                    JSON_EXTRACT(tags, '$.tool') as tool,
-                    AVG(value) as avg_response_time,
-                    MAX(value) as max_response_time,
-                    COUNT(*) as operations
-                FROM performance_metrics 
-                WHERE tenant_id = ? AND metric_name = 'execution_time_ms' AND timestamp > ?
-                GROUP BY JSON_EXTRACT(tags, '$.tool')
-                ORDER BY avg_response_time DESC
-            """, (tenant_id, cutoff)).fetchall()
-            
-            # Memory usage statistics
-            memory_stats = conn.execute("""
-                SELECT 
-                    AVG(value) as avg_memory_mb,
-                    MAX(value) as max_memory_mb,
-                    COUNT(*) as measurements
-                FROM performance_metrics 
-                WHERE tenant_id = ? AND metric_name = 'memory_usage_mb' AND timestamp > ?
-            """, (tenant_id, cutoff)).fetchone()
-            
+        try:
+            with self.audit_logger.db.get_connection() as conn:
+                cursor = conn.cursor()
+                
+                # Average response times by tool
+                cursor.execute("""
+                    SELECT 
+                        JSON_EXTRACT(tags, '$.tool') as tool,
+                        AVG(value) as avg_response_time,
+                        MAX(value) as max_response_time,
+                        COUNT(*) as operations
+                    FROM performance_metrics 
+                    WHERE tenant_id = ? AND metric_name = 'execution_time_ms' AND timestamp > ?
+                    GROUP BY JSON_EXTRACT(tags, '$.tool')
+                    ORDER BY avg_response_time DESC
+                """, (tenant_id, cutoff))
+                response_times = cursor.fetchall()
+                
+                # Memory usage statistics
+                cursor.execute("""
+                    SELECT 
+                        AVG(value) as avg_memory_mb,
+                        MAX(value) as max_memory_mb,
+                        COUNT(*) as measurements
+                    FROM performance_metrics 
+                    WHERE tenant_id = ? AND metric_name = 'memory_usage_mb' AND timestamp > ?
+                """, (tenant_id, cutoff))
+                memory_stats = cursor.fetchone()
+                
+                return {
+                    "tenant_id": tenant_id,
+                    "period_hours": hours,
+                    "response_times": [
+                        {
+                            "tool": row[0],
+                            "avg_response_time": row[1],
+                            "max_response_time": row[2],
+                            "operations": row[3]
+                        } for row in response_times
+                    ],
+                    "memory_usage": {
+                        "avg_memory_mb": memory_stats[0] if memory_stats[0] else 0,
+                        "max_memory_mb": memory_stats[1] if memory_stats[1] else 0,
+                        "measurements": memory_stats[2] if memory_stats[2] else 0
+                    }
+                }
+        except Exception as e:
+            logger.error(f"Failed to get tenant performance summary: {e}")
             return {
                 "tenant_id": tenant_id,
                 "period_hours": hours,
-                "response_times": [dict(row) for row in response_times],
-                "memory_usage": dict(memory_stats) if memory_stats else {}
+                "response_times": [],
+                "memory_usage": {}
             }
 
 class MCPComplianceReporter:
@@ -368,111 +455,190 @@ class MCPComplianceReporter:
         period_start = datetime.utcnow() - timedelta(days=period_days)
         period_end = datetime.utcnow()
         
-        with sqlite3.connect(self.audit_logger.db_path) as conn:
-            conn.row_factory = sqlite3.Row
+        try:
+            with self.audit_logger.db.get_connection() as conn:
+                cursor = conn.cursor()
+                
+                # Access statistics
+                cursor.execute("""
+                    SELECT 
+                        COUNT(*) as total_requests,
+                        SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as successful_requests,
+                        SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as failed_requests
+                    FROM access_logs 
+                    WHERE tenant_id = ? AND timestamp BETWEEN ? AND ?
+                """, (tenant_id, period_start, period_end))
+                access_stats = cursor.fetchone()
+                
+                # Security violations
+                cursor.execute("""
+                    SELECT COUNT(*) as violations
+                    FROM security_events 
+                    WHERE tenant_id = ? AND severity IN ('HIGH', 'CRITICAL') AND timestamp BETWEEN ? AND ?
+                """, (tenant_id, period_start, period_end))
+                security_violations = cursor.fetchone()
+                
+                # Cross-tenant access attempts
+                cursor.execute("""
+                    SELECT COUNT(*) as attempts
+                    FROM access_logs 
+                    WHERE agent_id LIKE ? AND success = 0 AND reason = 'CROSS_TENANT_ACCESS' AND timestamp BETWEEN ? AND ?
+                """, (f"%{tenant_id}%", period_start, period_end))
+                cross_tenant_attempts = cursor.fetchone()
+                
+                # Quota violations
+                cursor.execute("""
+                    SELECT COUNT(*) as violations
+                    FROM access_logs 
+                    WHERE tenant_id = ? AND success = 0 AND reason LIKE '%QUOTA%' AND timestamp BETWEEN ? AND ?
+                """, (tenant_id, period_start, period_end))
+                quota_violations = cursor.fetchone()
             
-            # Access statistics
-            access_stats = conn.execute("""
-                SELECT 
-                    COUNT(*) as total_requests,
-                    SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as successful_requests,
-                    SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as failed_requests
-                FROM access_logs 
-                WHERE tenant_id = ? AND timestamp BETWEEN ? AND ?
-            """, (tenant_id, period_start, period_end)).fetchone()
+            # Calculate compliance score
+            total_requests = access_stats[0] or 1
+            successful_requests = access_stats[1] or 0
+            violations = security_violations[0] or 0
+            cross_tenant = cross_tenant_attempts[0] or 0
+            quota_viol = quota_violations[0] or 0
             
-            # Security violations
-            security_violations = conn.execute("""
-                SELECT COUNT(*) as violations
-                FROM security_events 
-                WHERE tenant_id = ? AND severity IN ('HIGH', 'CRITICAL') AND timestamp BETWEEN ? AND ?
-            """, (tenant_id, period_start, period_end)).fetchone()
+            compliance_score = max(0, 100 - (violations * 10) - (cross_tenant * 5) - (quota_viol * 2))
+            compliance_score *= (successful_requests / total_requests)
             
-            # Cross-tenant access attempts
-            cross_tenant_attempts = conn.execute("""
-                SELECT COUNT(*) as attempts
-                FROM access_logs 
-                WHERE agent_id LIKE ? AND success = 0 AND reason = 'CROSS_TENANT_ACCESS' AND timestamp BETWEEN ? AND ?
-            """, (f"%{tenant_id}%", period_start, period_end)).fetchone()
+            # Generate recommendations
+            recommendations = []
+            if violations > 0:
+                recommendations.append("Review and address security violations")
+            if cross_tenant > 0:
+                recommendations.append("Strengthen tenant isolation controls")
+            if quota_viol > 5:
+                recommendations.append("Review and adjust resource quotas")
+            if compliance_score < 90:
+                recommendations.append("Implement additional monitoring and controls")
             
-            # Quota violations
-            quota_violations = conn.execute("""
-                SELECT COUNT(*) as violations
-                FROM access_logs 
-                WHERE tenant_id = ? AND success = 0 AND reason LIKE '%QUOTA%' AND timestamp BETWEEN ? AND ?
-            """, (tenant_id, period_start, period_end)).fetchone()
-        
-        # Calculate compliance score
-        total_requests = access_stats["total_requests"] or 1
-        successful_requests = access_stats["successful_requests"] or 0
-        violations = security_violations["violations"] or 0
-        cross_tenant = cross_tenant_attempts["attempts"] or 0
-        quota_viol = quota_violations["violations"] or 0
-        
-        compliance_score = max(0, 100 - (violations * 10) - (cross_tenant * 5) - (quota_viol * 2))
-        compliance_score *= (successful_requests / total_requests)
-        
-        # Generate recommendations
-        recommendations = []
-        if violations > 0:
-            recommendations.append("Review and address security violations")
-        if cross_tenant > 0:
-            recommendations.append("Strengthen tenant isolation controls")
-        if quota_viol > 5:
-            recommendations.append("Review and adjust resource quotas")
-        if compliance_score < 90:
-            recommendations.append("Implement additional monitoring and controls")
-        
-        return ComplianceReport(
-            report_id=f"compliance_{tenant_id}_{int(time.time())}",
-            tenant_id=tenant_id,
-            period_start=period_start,
-            period_end=period_end,
-            total_requests=total_requests,
-            successful_requests=successful_requests,
-            failed_requests=access_stats["failed_requests"] or 0,
-            security_violations=violations,
-            cross_tenant_attempts=cross_tenant,
-            quota_violations=quota_viol,
-            compliance_score=compliance_score,
-            recommendations=recommendations
-        )
+            return ComplianceReport(
+                report_id=f"compliance_{tenant_id}_{int(time.time())}",
+                tenant_id=tenant_id,
+                period_start=period_start,
+                period_end=period_end,
+                total_requests=total_requests,
+                successful_requests=successful_requests,
+                failed_requests=access_stats[2] or 0,
+                security_violations=violations,
+                cross_tenant_attempts=cross_tenant,
+                quota_violations=quota_viol,
+                compliance_score=compliance_score,
+                recommendations=recommendations
+            )
+        except Exception as e:
+            logger.error(f"Failed to generate compliance report: {e}")
+            return ComplianceReport(
+                report_id=f"compliance_{tenant_id}_{int(time.time())}",
+                tenant_id=tenant_id,
+                period_start=period_start,
+                period_end=period_end,
+                total_requests=0,
+                successful_requests=0,
+                failed_requests=0,
+                security_violations=0,
+                cross_tenant_attempts=0,
+                quota_violations=0,
+                compliance_score=0,
+                recommendations=["Unable to generate report due to error"]
+            )
     
     async def export_audit_trail(self, tenant_id: str, period_days: int = 30) -> Dict[str, Any]:
         """Export complete audit trail for tenant"""
         period_start = datetime.utcnow() - timedelta(days=period_days)
         
-        with sqlite3.connect(self.audit_logger.db_path) as conn:
-            conn.row_factory = sqlite3.Row
+        try:
+            with self.audit_logger.db.get_connection() as conn:
+                cursor = conn.cursor()
+                
+                # Access logs
+                cursor.execute("""
+                    SELECT * FROM access_logs 
+                    WHERE tenant_id = ? AND timestamp > ?
+                    ORDER BY timestamp DESC
+                """, (tenant_id, period_start))
+                access_logs = cursor.fetchall()
+                
+                # Security events
+                cursor.execute("""
+                    SELECT * FROM security_events 
+                    WHERE tenant_id = ? AND timestamp > ?
+                    ORDER BY timestamp DESC
+                """, (tenant_id, period_start))
+                security_events = cursor.fetchall()
+                
+                # Performance metrics
+                cursor.execute("""
+                    SELECT * FROM performance_metrics 
+                    WHERE tenant_id = ? AND timestamp > ?
+                    ORDER BY timestamp DESC
+                """, (tenant_id, period_start))
+                performance_metrics = cursor.fetchall()
             
-            # Access logs
-            access_logs = conn.execute("""
-                SELECT * FROM access_logs 
-                WHERE tenant_id = ? AND timestamp > ?
-                ORDER BY timestamp DESC
-            """, (tenant_id, period_start)).fetchall()
-            
-            # Security events
-            security_events = conn.execute("""
-                SELECT * FROM security_events 
-                WHERE tenant_id = ? AND timestamp > ?
-                ORDER BY timestamp DESC
-            """, (tenant_id, period_start)).fetchall()
-            
-            # Performance metrics
-            performance_metrics = conn.execute("""
-                SELECT * FROM performance_metrics 
-                WHERE tenant_id = ? AND timestamp > ?
-                ORDER BY timestamp DESC
-            """, (tenant_id, period_start)).fetchall()
-        
+            return {
+                "tenant_id": tenant_id,
+                "export_timestamp": datetime.utcnow().isoformat(),
+                "period_start": period_start.isoformat(),
+                "access_logs": [self._format_access_log(row) for row in access_logs],
+                "security_events": [self._format_security_event(row) for row in security_events],
+                "performance_metrics": [self._format_performance_metric(row) for row in performance_metrics]
+            }
+        except Exception as e:
+            logger.error(f"Failed to export audit trail: {e}")
+            return {
+                "tenant_id": tenant_id,
+                "export_timestamp": datetime.utcnow().isoformat(),
+                "period_start": period_start.isoformat(),
+                "access_logs": [],
+                "security_events": [],
+                "performance_metrics": [],
+                "error": str(e)
+            }
+    
+    def _format_access_log(self, row):
+        """Format access log row"""
         return {
-            "tenant_id": tenant_id,
-            "export_timestamp": datetime.utcnow().isoformat(),
-            "period_start": period_start.isoformat(),
-            "access_logs": [dict(row) for row in access_logs],
-            "security_events": [dict(row) for row in security_events],
-            "performance_metrics": [dict(row) for row in performance_metrics]
+            "id": row[0],
+            "agent_id": row[1],
+            "tenant_id": row[2],
+            "resource_type": row[3],
+            "action": row[4],
+            "success": bool(row[5]),
+            "reason": row[6],
+            "timestamp": row[7],
+            "metadata": json.loads(row[8]) if row[8] else {}
+        }
+    
+    def _format_security_event(self, row):
+        """Format security event row"""
+        return {
+            "id": row[0],
+            "event_id": row[1],
+            "event_type": row[2],
+            "severity": row[3],
+            "agent_id": row[4],
+            "tenant_id": row[5],
+            "resource_type": row[6],
+            "description": row[7],
+            "metadata": json.loads(row[8]) if row[8] else {},
+            "timestamp": row[9],
+            "resolved": bool(row[10])
+        }
+    
+    def _format_performance_metric(self, row):
+        """Format performance metric row"""
+        return {
+            "id": row[0],
+            "metric_name": row[1],
+            "agent_id": row[2],
+            "tenant_id": row[3],
+            "value": row[4],
+            "unit": row[5],
+            "timestamp": row[6],
+            "tags": json.loads(row[7]) if row[7] else {}
         }
 
 # Global instances

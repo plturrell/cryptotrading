@@ -5,7 +5,7 @@ This module provides comprehensive data ingestion capabilities for cryptocurrenc
 trading factors with validation, quality checks, and parallel processing.
 """
 
-from .enhanced_orchestrator import (
+from .data_orchestrator import (
     EnhancedDataIngestionOrchestrator,
     IngestionConfig,
     ingest_comprehensive_crypto_data

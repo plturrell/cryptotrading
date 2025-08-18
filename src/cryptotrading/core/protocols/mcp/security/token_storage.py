@@ -187,16 +187,17 @@ class RedisTokenStorage(TokenStorage):
 
 
 class DatabaseTokenStorage(TokenStorage):
-    """Database-based token revocation storage (SQLite/PostgreSQL)"""
+    """Database-based token revocation storage using UnifiedDatabase"""
     
-    def __init__(self, db_connection):
+    def __init__(self, db=None):
         """
         Initialize database token storage
         
         Args:
-            db_connection: Database connection or connection string
+            db: UnifiedDatabase instance (optional, creates new if None)
         """
-        self.db_connection = db_connection
+        from ....infrastructure.database.unified_database import UnifiedDatabase
+        self.db = db or UnifiedDatabase()
         self._initialized = False
     
     async def _initialize_tables(self):
@@ -205,22 +206,25 @@ class DatabaseTokenStorage(TokenStorage):
             return
         
         try:
-            # Create table for revoked tokens
-            create_table_sql = """
-            CREATE TABLE IF NOT EXISTS revoked_tokens (
-                token_hash VARCHAR(64) PRIMARY KEY,
-                revoked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                expires_at TIMESTAMP,
-                metadata JSON
-            );
-            
-            CREATE INDEX IF NOT EXISTS idx_revoked_tokens_expires 
-            ON revoked_tokens(expires_at);
-            """
-            
-            # Execute using your database client
-            # This would integrate with your existing UnifiedDatabase
-            await self.db_connection.execute(create_table_sql)
+            # Create table for revoked tokens using UnifiedDatabase
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS revoked_tokens (
+                        token_hash VARCHAR(64) PRIMARY KEY,
+                        revoked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        expires_at TIMESTAMP,
+                        metadata TEXT
+                    )
+                """)
+                
+                cursor.execute("""
+                    CREATE INDEX IF NOT EXISTS idx_revoked_tokens_expires 
+                    ON revoked_tokens(expires_at)
+                """)
+                
+                conn.commit()
             
             self._initialized = True
             logger.info("Initialized revoked tokens table")
@@ -234,26 +238,24 @@ class DatabaseTokenStorage(TokenStorage):
         await self._initialize_tables()
         
         try:
-            insert_sql = """
-            INSERT OR REPLACE INTO revoked_tokens 
-            (token_hash, revoked_at, expires_at, metadata)
-            VALUES (?, ?, ?, ?)
-            """
-            
             metadata = {
                 "revoked_by": "mcp_security_system",
                 "reason": "manual_revocation"
             }
             
-            await self.db_connection.execute(
-                insert_sql,
-                (
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT OR REPLACE INTO revoked_tokens 
+                    (token_hash, revoked_at, expires_at, metadata)
+                    VALUES (?, ?, ?, ?)
+                """, (
                     token_hash,
                     datetime.utcnow(),
                     expires_at,
                     json.dumps(metadata)
-                )
-            )
+                ))
+                conn.commit()
             
             logger.info(f"Token revoked in database: {token_hash[:8]}...")
             return True
@@ -409,8 +411,7 @@ class TokenStorageManager:
         if self.storage_backend == "redis":
             self.storage = RedisTokenStorage()
         elif self.storage_backend == "database":
-            if not db_connection:
-                raise ValueError("Database connection required for database storage backend")
+            # Use UnifiedDatabase for database storage
             self.storage = DatabaseTokenStorage(db_connection)
         else:
             # Fallback to in-memory

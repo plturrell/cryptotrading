@@ -11,7 +11,7 @@ from dataclasses import dataclass
 import pandas as pd
 import numpy as np
 
-from .strands_enhanced import strand_tool, ToolPriority, EnhancedStrandsAgent
+from .strands_orchestrator import strand_tool, ToolPriority, EnhancedStrandsAgent
 
 class StrandsToolsAgent(EnhancedStrandsAgent):
     """
@@ -243,31 +243,46 @@ class StrandsToolsAgent(EnhancedStrandsAgent):
         return health_data
     
     # Helper methods
-    def _calculate_opportunity_score(self, market_data: Dict[str, Any]) -> float:
-        """Calculate opportunity score for market scanning"""
+    async def _calculate_opportunity_score(self, market_data: Dict[str, Any]) -> float:
+        """Calculate opportunity score using MCP tools"""
+        try:
+            # Delegate to data analysis MCP tools
+            from ...infrastructure.mcp.data_analysis_mcp_tools import data_analysis_mcp_tools
+            
+            result = await data_analysis_mcp_tools.handle_tool_call(
+                "calculate_opportunity_score",
+                {"market_data": market_data}
+            )
+            
+            if result.get("success", False):
+                return result["result"]
+            else:
+                # Fallback calculation
+                return self._fallback_opportunity_score(market_data)
+        except Exception:
+            return self._fallback_opportunity_score(market_data)
+    
+    def _fallback_opportunity_score(self, market_data: Dict[str, Any]) -> float:
+        """Fallback opportunity score calculation"""
         score = 0.0
-        
-        # Volume score (higher is better)
         volume = market_data.get("volume_24h", 0)
-        if volume > 10000000:  # 10M+
+        if volume > 10000000:
             score += 30
-        elif volume > 1000000:  # 1M+
+        elif volume > 1000000:
             score += 20
-        elif volume > 100000:   # 100K+
+        elif volume > 100000:
             score += 10
         
-        # Volatility score (moderate is better)
         change = abs(market_data.get("change_24h", 0))
-        if 2 <= change <= 8:  # 2-8% change is optimal
+        if 2 <= change <= 8:
             score += 40
         elif change < 2:
             score += 20
         
-        # Trend score
         if market_data.get("change_24h", 0) > 0:
             score += 30
         
-        return min(score, 100)  # Cap at 100
+        return min(score, 100)
     
     def _calculate_risk_score(self, risk_data: Dict[str, Any]) -> float:
         """Calculate comprehensive risk score"""

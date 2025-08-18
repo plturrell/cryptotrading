@@ -721,8 +721,8 @@ class A2ATransportManager:
                         try:
                             self.connections[agent_id].close()
                             await self.connections[agent_id].wait_closed()
-                        except:
-                            pass
+                        except (ConnectionError, OSError) as e:
+                            self.local_logger.debug(f"Connection already closed for {agent_id}: {e}")
                         del self.connections[agent_id]
                     
                     self.local_logger.info(f"Cleaned up stale agent: {agent_id}")
@@ -817,8 +817,8 @@ class A2ATransportManager:
         if self.service_registry:
             try:
                 await self.service_registry.unregister_service(self.agent_id)
-            except:
-                pass
+            except Exception as e:
+                self.local_logger.warning(f"Failed to unregister service: {e}")
         
         self.local_logger.info("A2A transport shutdown complete")
     

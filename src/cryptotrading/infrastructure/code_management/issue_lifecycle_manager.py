@@ -430,8 +430,8 @@ class IssueLifecycleManager:
         
         return age_buckets
     
-    async def cleanup_old_issues(self, days_threshold: int = 90) -> int:
-        """Clean up old closed/rejected issues"""
+    async def purge_expired_issues(self, days_threshold: int = 90) -> int:
+        """Purge expired closed/rejected issues"""
         cleaned_count = 0
         
         try:
