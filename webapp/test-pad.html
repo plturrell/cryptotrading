@@ -253,7 +253,7 @@
         async function testCDN() {
             console.log('Testing OpenUI5 CDN accessibility...');
             try {
-                const cdnUrl = 'https://sapui5.hana.ondemand.com/1.108.0/resources/sap-ui-version.json';
+                const cdnUrl = '/resources/sap-ui-version.json';
                 const response = await fetch(cdnUrl);
                 
                 if (response.ok) {
@@ -278,11 +278,10 @@
                 // Create script element for UI5
                 const script = document.createElement('script');
                 script.id = 'sap-ui-bootstrap';
-                script.src = 'https://sapui5.hana.ondemand.com/1.108.0/resources/sap-ui-core.js';
+                script.src = '/resources/sap-ui-core.js';
                 script.setAttribute('data-sap-ui-theme', 'sap_horizon_dark');
                 script.setAttribute('data-sap-ui-libs', 'sap.m');
                 script.setAttribute('data-sap-ui-async', 'true');
-                script.setAttribute('crossorigin', 'anonymous');
                 
                 script.onload = () => {
                     console.log('UI5 script loaded');

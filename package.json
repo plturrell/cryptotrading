@@ -53,7 +53,12 @@
     "@vercel/kv": "^2.0.0"
   },
   "ui5": {
-    "dependencies": []
+    "dependencies": [
+      "@openui5/sap.ui.core",
+      "@openui5/sap.m",
+      "@openui5/sap.f",
+      "@openui5/themelib_sap_horizon"
+    ]
   },
   "engines": {
     "node": ">=16.0.0",
