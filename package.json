@@ -6,7 +6,7 @@
   "scripts": {
     "start": "ui5 serve --config ui5.yaml --port 8080",
     "start:local": "ui5 serve --config ui5-local.yaml",
-    "build": "ui5 build --config ui5.yaml --dest dist",
+    "build": "ui5 build --config ui5.yaml --dest dist --all",
     "build:prod": "ui5 build --config ui5.yaml --dest dist --include-task=generateVersionInfo",
     "deploy": "npm run build:prod && ./build-deploy.sh",
     "lint": "eslint webapp/ --ext .js",
