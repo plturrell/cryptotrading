@@ -8,7 +8,8 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional
 import logging
 
-from ..infrastructure.monitoring import get_logger, get_business_metrics, trace_context, ErrorSeverity, ErrorCategory
+from ..infrastructure.monitoring import get_logger, get_business_metrics, trace_context
+from ..infrastructure.monitoring.error_tracker import ErrorSeverity, ErrorCategory
 from ..core.ai import AIGatewayClient
 from ..core.ml.perplexity import PerplexityClient
 
@@ -16,12 +17,14 @@ logger = get_logger("services.ai")
 
 
 class AIAnalysisService:
-    """Service for AI analysis operations"""
+    """Enhanced Service for AI analysis operations using Grok4 intelligence"""
     
     def __init__(self):
-        self.ai_gateway = AIGatewayClient()
+        self.ai_gateway = AIGatewayClient()  # Now powered by Grok4!
         self.perplexity = PerplexityClient()
         self.business_metrics = get_business_metrics()
+        
+        logger.info("AIAnalysisService initialized with Grok4 intelligence backend")
     
     async def analyze_market(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Perform AI market analysis using Claude-4-Sonnet"""
@@ -217,4 +220,115 @@ class AIAnalysisService:
                 span.set_attribute("error_message", str(e))
                 
                 logger.error(f"Sentiment analysis failed: {e}")
+                raise
+    
+    async def predict_market_movements(self, symbols: List[str], 
+                                     horizon: str = '1d') -> Dict[str, Any]:
+        """Predict market movements using Grok4's prediction engine"""
+        start_time = time.time()
+        
+        with trace_context("grok4_market_prediction") as span:
+            try:
+                span.set_attribute("service", "market_prediction")
+                span.set_attribute("ai.model", "grok4")
+                span.set_attribute("symbols", ','.join(symbols))
+                span.set_attribute("horizon", horizon)
+                
+                logger.info(f"Predicting market movements for {symbols} ({horizon})")
+                
+                predictions = self.ai_gateway.predict_market_movements(symbols, horizon)
+                
+                duration_ms = (time.time() - start_time) * 1000
+                self.business_metrics.track_ai_operation(
+                    operation="market_prediction",
+                    model="grok4",
+                    symbol=','.join(symbols),
+                    success=True,
+                    duration_ms=duration_ms
+                )
+                
+                span.set_attribute("success", "true")
+                span.set_attribute("predictions_count", len(predictions) if isinstance(predictions, dict) else 0)
+                
+                logger.info("Market movement predictions completed")
+                
+                return {
+                    'predictions': predictions,
+                    'symbols': symbols,
+                    'horizon': horizon,
+                    'model': 'grok4',
+                    'duration_ms': duration_ms,
+                    'timestamp': datetime.utcnow().isoformat()
+                }
+                
+            except Exception as e:
+                duration_ms = (time.time() - start_time) * 1000
+                self.business_metrics.track_ai_operation(
+                    operation="market_prediction",
+                    model="grok4",
+                    symbol=','.join(symbols),
+                    success=False,
+                    duration_ms=duration_ms
+                )
+                
+                span.set_attribute("error", "true")
+                span.set_attribute("error_message", str(e))
+                
+                logger.error(f"Market movement prediction failed: {e}")
+                raise
+    
+    async def analyze_correlations(self, symbols: List[str], 
+                                 timeframe: str = '1d') -> Dict[str, Any]:
+        """Analyze correlation patterns using Grok4's correlation analysis"""
+        start_time = time.time()
+        
+        with trace_context("grok4_correlation_analysis") as span:
+            try:
+                span.set_attribute("service", "correlation_analysis")
+                span.set_attribute("ai.model", "grok4")
+                span.set_attribute("symbols", ','.join(symbols))
+                span.set_attribute("timeframe", timeframe)
+                
+                logger.info(f"Analyzing correlations for {symbols} ({timeframe})")
+                
+                correlations = self.ai_gateway.analyze_correlations(symbols, timeframe)
+                
+                duration_ms = (time.time() - start_time) * 1000
+                self.business_metrics.track_ai_operation(
+                    operation="correlation_analysis",
+                    model="grok4",
+                    symbol=','.join(symbols),
+                    success=True,
+                    duration_ms=duration_ms
+                )
+                
+                span.set_attribute("success", "true")
+                span.set_attribute("diversification_score", 
+                                 correlations.get('insights', {}).get('diversification_score', 0))
+                
+                logger.info("Correlation analysis completed")
+                
+                return {
+                    'correlations': correlations,
+                    'symbols': symbols,
+                    'timeframe': timeframe,
+                    'model': 'grok4',
+                    'duration_ms': duration_ms,
+                    'timestamp': datetime.utcnow().isoformat()
+                }
+                
+            except Exception as e:
+                duration_ms = (time.time() - start_time) * 1000
+                self.business_metrics.track_ai_operation(
+                    operation="correlation_analysis",
+                    model="grok4",
+                    symbol=','.join(symbols),
+                    success=False,
+                    duration_ms=duration_ms
+                )
+                
+                span.set_attribute("error", "true")
+                span.set_attribute("error_message", str(e))
+                
+                logger.error(f"Correlation analysis failed: {e}")
                 raise

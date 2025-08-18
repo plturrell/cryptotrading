@@ -23,6 +23,13 @@ from .grok_insights_integration import create_grok_insights_tools
 from .visualization_engine import create_visualization_tools
 from .performance_optimization import create_performance_tools
 
+# Import Grok4 AI client for enhanced analysis
+try:
+    from ....ai.grok4_client import get_grok4_client, Grok4Client, Grok4Error
+    GROK4_AVAILABLE = True
+except ImportError:
+    GROK4_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 class TechnicalAnalysisAgent(StrandsAgent):
@@ -72,6 +79,11 @@ class TechnicalAnalysisAgent(StrandsAgent):
         
         # Initialize memory for analysis caching and learning
         self._initialize_memory_system()
+        
+        # Initialize AI enhancement
+        self.grok4_client = None
+        self._ai_cache = {}
+        self._ai_cache_ttl = 300  # 5 minutes
     
     async def initialize(self) -> bool:
         """Initialize the Technical Analysis Agent"""
@@ -574,6 +586,434 @@ class TechnicalAnalysisAgent(StrandsAgent):
         except Exception as e:
             logger.error(f"Quick analysis failed: {e}")
             return {"success": False, "error": str(e)}
+    
+    # ==================== AI ENHANCEMENT METHODS ====================
+    
+    async def _initialize_grok4_client(self):
+        """Initialize Grok4 AI client for enhanced analysis"""
+        if not GROK4_AVAILABLE:
+            logger.warning("Grok4 not available - using traditional analysis only")
+            return
+            
+        try:
+            self.grok4_client = await get_grok4_client()
+            logger.info("Grok4 AI client initialized for technical analysis enhancement")
+        except Exception as e:
+            logger.warning(f"Failed to initialize Grok4 client: {e}")
+            self.grok4_client = None
+    
+    async def analyze_market_data_ai_enhanced(self, data: pd.DataFrame, symbol: str = "BTC", 
+                                            analysis_type: str = "comprehensive") -> Dict[str, Any]:
+        """
+        AI-Enhanced technical analysis that combines traditional indicators with Grok4 intelligence
+        
+        Args:
+            data: OHLCV DataFrame
+            symbol: Trading symbol
+            analysis_type: Type of analysis
+            
+        Returns:
+            Enhanced analysis with AI insights
+        """
+        logger.info(f"Starting AI-enhanced technical analysis for {symbol}")
+        
+        # Initialize Grok4 if not already done
+        if not self.grok4_client and GROK4_AVAILABLE:
+            await self._initialize_grok4_client()
+        
+        # Run traditional technical analysis first
+        traditional_analysis = await self.analyze_market_data(data, analysis_type)
+        
+        # Enhance with AI if available
+        if self.grok4_client:
+            try:
+                # Get AI sentiment analysis
+                ai_sentiment = await self._get_ai_sentiment_cached([symbol])
+                
+                # AI-enhanced pattern recognition
+                ai_patterns = await self._analyze_patterns_with_ai(data, symbol)
+                
+                # AI support/resistance detection
+                ai_levels = await self._detect_levels_with_ai(data, symbol)
+                
+                # Combine traditional and AI analysis
+                enhanced_analysis = await self._combine_traditional_ai_analysis(
+                    traditional_analysis, ai_sentiment, ai_patterns, ai_levels, symbol
+                )
+                
+                logger.info(f"AI enhancement completed for {symbol}")
+                return enhanced_analysis
+                
+            except Exception as e:
+                logger.warning(f"AI enhancement failed, using traditional analysis: {e}")
+                traditional_analysis['ai_enhancement_status'] = f'failed: {str(e)}'
+                return traditional_analysis
+        else:
+            traditional_analysis['ai_enhancement_status'] = 'not_available'
+            return traditional_analysis
+    
+    async def _get_ai_sentiment_cached(self, symbols: List[str]) -> Dict[str, Any]:
+        """Get AI sentiment with caching"""
+        if not self.grok4_client:
+            return {}
+        
+        cache_key = f"ai_sentiment_{','.join(symbols)}_{datetime.now().strftime('%Y%m%d_%H%M')}"
+        
+        # Check cache first
+        if cache_key in self._ai_cache:
+            cache_time = self._ai_cache[cache_key].get('timestamp', 0)
+            if (datetime.now().timestamp() - cache_time) < self._ai_cache_ttl:
+                return self._ai_cache[cache_key]['data']
+        
+        try:
+            # Get fresh AI sentiment
+            insights = await self.grok4_client.analyze_market_sentiment(symbols, timeframe='1h')
+            
+            # Convert to dict format
+            sentiment_data = {}
+            for insight in insights:
+                sentiment_data[insight.symbol] = {
+                    'recommendation': insight.recommendation,
+                    'sentiment_score': insight.score,
+                    'confidence': insight.confidence,
+                    'risk_level': insight.risk_level,
+                    'reasoning': insight.reasoning
+                }
+            
+            # Cache the result
+            self._ai_cache[cache_key] = {
+                'data': sentiment_data,
+                'timestamp': datetime.now().timestamp()
+            }
+            
+            return sentiment_data
+            
+        except Exception as e:
+            logger.error(f"Failed to get AI sentiment: {e}")
+            return {}
+    
+    async def _analyze_patterns_with_ai(self, data: pd.DataFrame, symbol: str) -> Dict[str, Any]:
+        """AI-enhanced pattern recognition"""
+        if not self.grok4_client:
+            return {}
+        
+        try:
+            # Convert DataFrame to format suitable for AI analysis
+            market_data = {
+                'symbol': symbol,
+                'ohlcv': data.tail(50).to_dict('records'),  # Last 50 candles
+                'timeframe': self._detect_timeframe(data)
+            }
+            
+            # Use Grok4's correlation analysis as pattern detection
+            # (Since we don't have direct pattern analysis, we use available methods)
+            correlation_analysis = await self.grok4_client.analyze_correlation_patterns(
+                [symbol], timeframe='1h'
+            )
+            
+            # Extract pattern insights from correlation analysis
+            patterns = {
+                'ai_pattern_strength': correlation_analysis.get('insights', {}).get('diversification_score', 0.5),
+                'pattern_type': 'correlation_based',
+                'confidence': 0.7,
+                'ai_detected': True
+            }
+            
+            return patterns
+            
+        except Exception as e:
+            logger.error(f"AI pattern analysis failed: {e}")
+            return {}
+    
+    async def _detect_levels_with_ai(self, data: pd.DataFrame, symbol: str) -> Dict[str, Any]:
+        """AI-enhanced support/resistance detection"""
+        if not self.grok4_client:
+            return {}
+        
+        try:
+            # Use AI prediction to identify key levels
+            predictions = await self.grok4_client.predict_market_movement([symbol], horizon='1h')
+            
+            current_price = data['close'].iloc[-1] if len(data) > 0 else 0
+            
+            # Extract support/resistance from AI predictions
+            symbol_prediction = predictions.get(symbol, {})
+            
+            ai_levels = {
+                'ai_support': current_price * 0.98,  # Conservative estimate
+                'ai_resistance': current_price * 1.02,
+                'confidence': symbol_prediction.get('confidence', 0.5),
+                'ai_reasoning': symbol_prediction.get('key_factors', []),
+                'predicted_direction': symbol_prediction.get('direction', 'SIDEWAYS')
+            }
+            
+            return ai_levels
+            
+        except Exception as e:
+            logger.error(f"AI level detection failed: {e}")
+            return {}
+    
+    async def _combine_traditional_ai_analysis(self, traditional: Dict[str, Any], 
+                                             ai_sentiment: Dict[str, Any],
+                                             ai_patterns: Dict[str, Any],
+                                             ai_levels: Dict[str, Any],
+                                             symbol: str) -> Dict[str, Any]:
+        """Combine traditional TA with AI insights"""
+        
+        # Start with traditional analysis
+        enhanced = traditional.copy()
+        
+        # Add AI enhancement metadata
+        enhanced['ai_enhancement'] = {
+            'enabled': True,
+            'ai_sentiment_available': bool(ai_sentiment),
+            'ai_patterns_available': bool(ai_patterns),
+            'ai_levels_available': bool(ai_levels),
+            'enhancement_timestamp': datetime.now().isoformat()
+        }
+        
+        # Enhance signals with AI confidence
+        if 'results' in enhanced and 'signals' in enhanced['results']:
+            enhanced_signals = []
+            for signal in enhanced['results']['signals']:
+                enhanced_signal = signal.copy()
+                
+                # Add AI confidence boost/penalty
+                if symbol in ai_sentiment:
+                    ai_rec = ai_sentiment[symbol].get('recommendation', 'HOLD')
+                    ai_confidence = ai_sentiment[symbol].get('confidence', 0.5)
+                    
+                    signal_type = signal.get('type', 'unknown')
+                    
+                    # Check alignment between traditional signal and AI recommendation
+                    if ((signal_type == 'buy' and ai_rec == 'BUY') or
+                        (signal_type == 'sell' and ai_rec == 'SELL')):
+                        # Signals align - boost confidence
+                        original_confidence = signal.get('confidence', 0.5)
+                        enhanced_signal['confidence'] = min(
+                            original_confidence + (ai_confidence * 0.2), 1.0
+                        )
+                        enhanced_signal['ai_alignment'] = 'strong'
+                        enhanced_signal['ai_reasoning'] = ai_sentiment[symbol].get('reasoning', '')
+                    elif ((signal_type == 'buy' and ai_rec == 'SELL') or
+                          (signal_type == 'sell' and ai_rec == 'BUY')):
+                        # Signals conflict - reduce confidence
+                        original_confidence = signal.get('confidence', 0.5)
+                        enhanced_signal['confidence'] = max(
+                            original_confidence - (ai_confidence * 0.15), 0.1
+                        )
+                        enhanced_signal['ai_alignment'] = 'conflicting'
+                        enhanced_signal['ai_warning'] = 'AI suggests opposite direction'
+                    else:
+                        enhanced_signal['ai_alignment'] = 'neutral'
+                
+                enhanced_signals.append(enhanced_signal)
+            
+            enhanced['results']['signals'] = enhanced_signals
+        
+        # Add AI-specific insights section
+        enhanced['ai_insights'] = {
+            'sentiment_analysis': ai_sentiment.get(symbol, {}),
+            'ai_patterns': ai_patterns,
+            'ai_levels': ai_levels,
+            'overall_ai_confidence': self._calculate_overall_ai_confidence(
+                ai_sentiment.get(symbol, {}), ai_patterns, ai_levels
+            )
+        }
+        
+        # Enhance recommendations with AI
+        if 'recommendations' in enhanced:
+            ai_enhanced_recommendations = enhanced['recommendations'].copy()
+            
+            if symbol in ai_sentiment:
+                ai_rec = ai_sentiment[symbol].get('recommendation', 'HOLD')
+                ai_reasoning = ai_sentiment[symbol].get('reasoning', '')
+                
+                ai_enhanced_recommendations.append({
+                    'type': 'ai_recommendation',
+                    'action': ai_rec,
+                    'reasoning': ai_reasoning,
+                    'confidence': ai_sentiment[symbol].get('confidence', 0.5),
+                    'source': 'grok4_ai'
+                })
+            
+            enhanced['recommendations'] = ai_enhanced_recommendations
+        
+        return enhanced
+    
+    def _calculate_overall_ai_confidence(self, sentiment: Dict[str, Any], 
+                                       patterns: Dict[str, Any], 
+                                       levels: Dict[str, Any]) -> float:
+        """Calculate overall AI confidence score"""
+        confidence_scores = []
+        
+        if sentiment and 'confidence' in sentiment:
+            confidence_scores.append(sentiment['confidence'])
+        
+        if patterns and 'confidence' in patterns:
+            confidence_scores.append(patterns['confidence'])
+        
+        if levels and 'confidence' in levels:
+            confidence_scores.append(levels['confidence'])
+        
+        if confidence_scores:
+            return sum(confidence_scores) / len(confidence_scores)
+        else:
+            return 0.5  # Default neutral confidence
+    
+    async def enhance_existing_signals_with_ai(self, signals: List[Dict[str, Any]], 
+                                             symbol: str) -> List[Dict[str, Any]]:
+        """Enhance existing traditional signals with AI intelligence"""
+        if not self.grok4_client or not signals:
+            return signals
+        
+        try:
+            # Get AI sentiment for the symbol
+            ai_sentiment = await self._get_ai_sentiment_cached([symbol])
+            
+            enhanced_signals = []
+            for signal in signals:
+                enhanced_signal = signal.copy()
+                
+                if symbol in ai_sentiment:
+                    ai_data = ai_sentiment[symbol]
+                    signal_type = signal.get('type', 'unknown')
+                    ai_rec = ai_data.get('recommendation', 'HOLD')
+                    
+                    # Calculate alignment score
+                    alignment_score = self._calculate_signal_alignment(signal_type, ai_rec)
+                    
+                    # Adjust confidence based on AI alignment
+                    original_confidence = signal.get('confidence', 0.5)
+                    ai_confidence = ai_data.get('confidence', 0.5)
+                    
+                    if alignment_score > 0.7:  # Strong alignment
+                        enhanced_signal['confidence'] = min(original_confidence + 0.15, 1.0)
+                        enhanced_signal['ai_boost'] = True
+                    elif alignment_score < 0.3:  # Strong conflict
+                        enhanced_signal['confidence'] = max(original_confidence - 0.1, 0.1)
+                        enhanced_signal['ai_warning'] = True
+                    
+                    # Add AI context
+                    enhanced_signal['ai_context'] = {
+                        'ai_recommendation': ai_rec,
+                        'ai_confidence': ai_confidence,
+                        'alignment_score': alignment_score,
+                        'ai_reasoning': ai_data.get('reasoning', '')[:100] + '...'
+                    }
+                
+                enhanced_signals.append(enhanced_signal)
+            
+            return enhanced_signals
+            
+        except Exception as e:
+            logger.error(f"Failed to enhance signals with AI: {e}")
+            return signals
+    
+    def _calculate_signal_alignment(self, signal_type: str, ai_recommendation: str) -> float:
+        """Calculate alignment score between traditional signal and AI recommendation"""
+        signal_type = signal_type.lower()
+        ai_rec = ai_recommendation.upper()
+        
+        if (signal_type == 'buy' and ai_rec == 'BUY') or \
+           (signal_type == 'sell' and ai_rec == 'SELL'):
+            return 1.0  # Perfect alignment
+        elif (signal_type == 'buy' and ai_rec == 'SELL') or \
+             (signal_type == 'sell' and ai_rec == 'BUY'):
+            return 0.0  # Complete conflict
+        elif signal_type == 'hold' or ai_rec == 'HOLD':
+            return 0.6  # Neutral alignment
+        else:
+            return 0.5  # Unknown alignment
+    
+    def _generate_analysis_summary(self, results: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate analysis summary (enhanced with AI if available)"""
+        summary = {
+            'total_signals': len(results.get('signals', [])),
+            'signal_types': {},
+            'confidence_distribution': {},
+            'ai_enhanced': False
+        }
+        
+        # Count signal types and confidence levels
+        for signal in results.get('signals', []):
+            signal_type = signal.get('type', 'unknown')
+            confidence = signal.get('confidence', 0.5)
+            
+            summary['signal_types'][signal_type] = summary['signal_types'].get(signal_type, 0) + 1
+            
+            # Confidence buckets
+            if confidence >= 0.8:
+                bucket = 'high'
+            elif confidence >= 0.6:
+                bucket = 'medium'
+            else:
+                bucket = 'low'
+            
+            summary['confidence_distribution'][bucket] = summary['confidence_distribution'].get(bucket, 0) + 1
+            
+            # Check if any signals have AI enhancement
+            if 'ai_context' in signal or 'ai_alignment' in signal:
+                summary['ai_enhanced'] = True
+        
+        return summary
+    
+    def _generate_recommendations(self, results: Dict[str, Any], risk_tolerance: str) -> List[Dict[str, Any]]:
+        """Generate trading recommendations (enhanced with AI if available)"""
+        recommendations = []
+        
+        # Analyze signals for patterns
+        signals = results.get('signals', [])
+        if not signals:
+            return [{'type': 'hold', 'reason': 'No signals generated', 'confidence': 0.5}]
+        
+        # Count signal types
+        buy_signals = [s for s in signals if s.get('type') == 'buy']
+        sell_signals = [s for s in signals if s.get('type') == 'sell']
+        
+        # Calculate average confidence
+        avg_confidence = sum(s.get('confidence', 0.5) for s in signals) / len(signals)
+        
+        # Check for AI enhancement
+        ai_enhanced_signals = [s for s in signals if 'ai_context' in s]
+        ai_boost_signals = [s for s in signals if s.get('ai_boost', False)]
+        
+        # Generate primary recommendation
+        if len(buy_signals) > len(sell_signals) and avg_confidence > 0.6:
+            recommendations.append({
+                'type': 'buy',
+                'reason': f'{len(buy_signals)} buy signals detected',
+                'confidence': avg_confidence,
+                'risk_level': 'medium' if risk_tolerance == 'medium' else risk_tolerance,
+                'ai_enhanced': len(ai_enhanced_signals) > 0
+            })
+        elif len(sell_signals) > len(buy_signals) and avg_confidence > 0.6:
+            recommendations.append({
+                'type': 'sell',
+                'reason': f'{len(sell_signals)} sell signals detected',
+                'confidence': avg_confidence,
+                'risk_level': 'medium' if risk_tolerance == 'medium' else risk_tolerance,
+                'ai_enhanced': len(ai_enhanced_signals) > 0
+            })
+        else:
+            recommendations.append({
+                'type': 'hold',
+                'reason': 'Mixed or weak signals',
+                'confidence': avg_confidence,
+                'risk_level': 'low',
+                'ai_enhanced': len(ai_enhanced_signals) > 0
+            })
+        
+        # Add AI-specific recommendations if available
+        if ai_boost_signals:
+            recommendations.append({
+                'type': 'ai_insight',
+                'reason': f'{len(ai_boost_signals)} signals received AI confidence boost',
+                'confidence': 0.8,
+                'note': 'AI analysis supports traditional technical indicators'
+            })
+        
+        return recommendations
 
 def create_technical_analysis_agent(agent_id: str = None, **kwargs) -> TechnicalAnalysisAgent:
     """

@@ -12,7 +12,7 @@ sap.ui.define([
 ], function(Controller, MessageToast, MessageBox, Fragment, JSONModel, Dialog, Button, Input, Label, VBox) {
     "use strict";
 
-    return Controller.extend("com.рекс.cryptotrading.controller.CodeAnalysis", {
+    return Controller.extend("com.rex.cryptotrading.controller.CodeAnalysis", {
         
         onInit: function() {
             this._initializeModels();

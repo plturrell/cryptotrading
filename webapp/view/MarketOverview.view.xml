@@ -1,5 +1,5 @@
 <mvc:View
-    controllerName="com.рекс.cryptotrading.controller.MarketOverview"
+    controllerName="com.rex.cryptotrading.controller.MarketOverview"
     displayBlock="true"
     xmlns="sap.m"
     xmlns:mvc="sap.ui.core.mvc"

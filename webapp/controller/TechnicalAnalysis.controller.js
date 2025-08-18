@@ -8,7 +8,7 @@ sap.ui.define([
 ], function (Controller, JSONModel, MessageToast, MessageBox, History, Spreadsheet) {
     "use strict";
 
-    return Controller.extend("com.рекс.cryptotrading.controller.TechnicalAnalysis", {
+    return Controller.extend("com.rex.cryptotrading.controller.TechnicalAnalysis", {
 
         onInit: function () {
             this._initializeModel();

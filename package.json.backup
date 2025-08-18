@@ -1,0 +1,80 @@
+{
+  "name": "com-rex-trading-launchpad",
+  "version": "1.0.0",
+  "description": "rex.com - Professional Crypto Trading Platform - SAP Fiori Launchpad",
+  "main": "app.py",
+  "scripts": {
+    "start": "ui5 serve --config ui5.yaml --port 8080",
+    "start:local": "ui5 serve --config ui5-local.yaml",
+    "build": "ui5 build --config ui5.yaml --dest dist --all",
+    "build:prod": "ui5 build --config ui5.yaml --dest dist --include-task=generateVersionInfo",
+    "deploy": "npm run build:prod && ./build-deploy.sh",
+    "lint": "eslint webapp/ --ext .js",
+    "lint:fix": "eslint webapp/ --ext .js --fix",
+    "test": "npm run lint && karma start",
+    "test:watch": "karma start --auto-watch --no-single-run",
+    "serve:dist": "ui5 serve --config ui5.yaml --port 8080 --h2",
+    "clean": "rimraf dist coverage .nyc_output",
+    "precommit": "npm run lint && npm run test",
+    "dev": "concurrently \"python3 app.py\" \"npm run start\"",
+    "ui5:add": "ui5 add",
+    "ui5:tree": "ui5 tree",
+    "ui5:versions": "ui5 versions"
+  },
+  "keywords": [
+    "sap",
+    "ui5",
+    "fiori",
+    "launchpad",
+    "crypto",
+    "trading",
+    "enterprise"
+  ],
+  "author": "rex.com",
+  "license": "MIT",
+  "devDependencies": {
+    "@sap-ux/eslint-plugin-fiori-tools": "^0.6.0",
+    "@sap-ux/project-access": "^1.30.10",
+    "@sap-ux/yaml": "^0.17.0",
+    "@sap/eslint-config": "^0.4.0",
+    "@sap/eslint-plugin-ui5-jsdocs": "^2.0.8",
+    "@ui5/builder": "^4.0.9",
+    "@ui5/cli": "^4.0.9",
+    "@ui5/fs": "^4.0.1",
+    "@ui5/logger": "^4.0.1",
+    "@ui5/project": "^4.0.4",
+    "@ui5/server": "^4.0.6",
+    "@vercel/kv": "^2.0.0",
+    "concurrently": "^7.6.0",
+    "eslint": "^9.0.0",
+    "karma": "^6.4.0",
+    "karma-chrome-launcher": "^3.1.0",
+    "karma-coverage": "^2.2.0",
+    "rimraf": "^3.0.2"
+  },
+  "ui5": {
+    "dependencies": [
+      "@openui5/sap.ui.core",
+      "@openui5/sap.m",
+      "@openui5/sap.f",
+      "@openui5/themelib_sap_horizon"
+    ]
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rex-trading/crypto-launchpad.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rex-trading/crypto-launchpad/issues"
+  },
+  "homepage": "https://rex.com",
+  "dependencies": {
+    "@sap-ux/ui5-middleware-fe-mockserver": "^2.2.105",
+    "@sap/ux-ui5-fe-mockserver-middleware": "^1.6.5",
+    "@sap/ux-ui5-tooling": "^1.18.5"
+  }
+}

@@ -1,5 +1,5 @@
 <mvc:View
-    controllerName="com.рекс.cryptotrading.controller.Launchpad"
+    controllerName="com.rex.cryptotrading.controller.Launchpad"
     displayBlock="true"
     xmlns="sap.m"
     xmlns:mvc="sap.ui.core.mvc"
@@ -24,7 +24,7 @@
                                 </layoutData>
                             </Button>
                             <Image src="/webapp/img/logo.png" width="40px" height="40px"/>
-                            <Title text="рекс.com Trading Platform" level="H2"/>
+                            <Title text="rex.com Trading Platform" level="H2"/>
                             <ToolbarSpacer/>
                             <Button icon="sap-icon://search" type="Transparent"/>
                             <Button icon="sap-icon://bell" type="Transparent" press="onNotificationPress">
@@ -136,7 +136,7 @@
                             
                             <f:items>
                                 <!-- SAP Standard Tiles - Bound to Component Model -->
-                                <core:Fragment fragmentName="com.рекс.cryptotrading.fragment.TileGrid" type="XML"/>
+                                <core:Fragment fragmentName="com.rex.cryptotrading.fragment.TileGrid" type="XML"/>
                             </f:items>
                         </f:GridContainer>
                     </content>
