@@ -21,6 +21,9 @@ from .specialized.technical_analysis.technical_analysis_agent import TechnicalAn
 from .specialized.ml_agent import MLAgent
 from .specialized.strands_glean_agent import StrandsGleanAgent
 from .specialized.mcts_calculation_agent import MCTSCalculationAgent
+from .specialized.trading_algorithm_agent import TradingAlgorithmAgent
+from .specialized.data_analysis_agent import DataAnalysisAgent
+from .specialized.feature_store_agent import FeatureStoreAgent
 from ..protocols.a2a.a2a_protocol import A2A_CAPABILITIES, MessageType, AgentStatus
 
 logger = logging.getLogger(__name__)
@@ -46,6 +49,9 @@ class AgentType(Enum):
     MCTS_CALCULATION = "mcts_calculation"
     HISTORICAL_DATA_LOADER = "historical_data_loader"
     DATABASE_MANAGER = "database_manager"
+    TRADING_ALGORITHM = "trading_algorithm"
+    DATA_ANALYSIS = "data_analysis"
+    FEATURE_STORE = "feature_store"
 
 @dataclass
 class AgentHealthMetrics:
@@ -188,6 +194,30 @@ class MCPAgentLifecycleManager:
                 dependencies=["agent-manager-001", "ml_agent"],
                 auto_start=True,
                 health_check_interval=120.0
+            ),
+            "trading_algorithm_agent": AgentConfiguration(
+                agent_id="trading_algorithm_agent",
+                agent_type=AgentType.TRADING_ALGORITHM,
+                agent_class=TradingAlgorithmAgent,
+                dependencies=["agent-manager-001", "mcts_calculation_agent"],
+                auto_start=False,  # Manual start required - analysis only
+                health_check_interval=60.0
+            ),
+            "data_analysis_agent": AgentConfiguration(
+                agent_id="data_analysis_agent",
+                agent_type=AgentType.DATA_ANALYSIS,
+                agent_class=DataAnalysisAgent,
+                dependencies=["agent-manager-001"],
+                auto_start=True,
+                health_check_interval=60.0
+            ),
+            "feature_store_agent": AgentConfiguration(
+                agent_id="feature_store_agent",
+                agent_type=AgentType.FEATURE_STORE,
+                agent_class=FeatureStoreAgent,
+                dependencies=["agent-manager-001", "data_analysis_agent"],
+                auto_start=True,
+                health_check_interval=90.0
             )
         }
         

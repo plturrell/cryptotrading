@@ -1,18 +1,20 @@
 {
-    "_version": "1.49.0",
+    "_version": "1.120.0",
     "sap.app": {
-        "id": "com.rex.trading.launchpad",
+        "id": "com.rex.cryptotrading",
         "type": "application",
         "i18n": "i18n/i18n.properties",
+        "title": "{{appTitle}}",
+        "description": "{{appDescription}}",
         "applicationVersion": {
             "version": "1.0.0"
         },
-        "title": "rex.com - SAP Fiori Launchpad",
-        "description": "Professional Crypto Trading Platform - SAP Fiori Launchpad",
-        "tags": {
-            "keywords": ["crypto", "trading", "fiori", "launchpad", "sap"]
-        },
         "ach": "FIN-FSCM-TRM",
+        "sourceTemplate": {
+            "id": "@sap/generator-fiori:basic",
+            "version": "1.11.0",
+            "toolsId": "crypto-trading-enterprise"
+        },
         "crossNavigation": {
             "inbounds": {
                 "launchpad": {
@@ -75,234 +77,395 @@
         },
         "dataSources": {
             "mainService": {
-                "uri": "/api/odata/v4/CryptoService/",
-                "type": "OData",
-                "settings": {
-                    "annotations": ["annotation"],
-                    "localUri": "localService/metadata.xml",
-                    "odataVersion": "4.0",
-                    "operationMode": "Server",
-                    "autoExpandSelect": true,
-                    "earlyRequests": true,
-                    "refreshAfterChange": false
-                }
-            },
-            "tradingServiceOData": {
-                "uri": "/api/odata/v4/MarketAnalysisService/",
+                "uri": "/api/v1/crypto/",
                 "type": "OData",
                 "settings": {
                     "odataVersion": "4.0",
-                    "operationMode": "Server",
-                    "autoExpandSelect": true,
-                    "earlyRequests": true,
-                    "refreshAfterChange": false
+                    "localUri": "localService/metadata.xml"
                 }
             },
-            "codeAnalysisServiceOData": {
-                "uri": "/api/odata/v4/CodeAnalysisService/",
+            "marketDataService": {
+                "uri": "/api/v1/market/",
                 "type": "OData",
                 "settings": {
-                    "odataVersion": "4.0",
-                    "operationMode": "Server",
-                    "autoExpandSelect": true,
-                    "earlyRequests": true,
-                    "refreshAfterChange": false
+                    "odataVersion": "4.0"
                 }
-            },
-            "annotation": {
-                "uri": "localService/annotation.xml",
-                "type": "ODataAnnotation"
-            },
-            "offlineService": {
-                "uri": "/api/odata/v4/CryptoService/",
-                "type": "OData",
-                "settings": {
-                    "odataVersion": "4.0",
-                    "operationMode": "Client",
-                    "serviceUrlParams": {
-                        "sap-client": "100"
-                    }
-                }
-            },
-            "marketData": {
-                "uri": "/api/market/data",
-                "type": "REST"
-            },
-            "walletService": {
-                "uri": "/api/wallet/balance",
-                "type": "REST"
             },
             "tradingService": {
-                "uri": "/api/trading/status",
+                "uri": "/api/v1/trading/",
+                "type": "OData",
+                "settings": {
+                    "odataVersion": "4.0"
+                }
+            },
+            "portfolioService": {
+                "uri": "/api/v1/portfolio/",
+                "type": "OData",
+                "settings": {
+                    "odataVersion": "4.0"
+                }
+            },
+            "analyticsService": {
+                "uri": "/api/v1/analytics/",
+                "type": "OData",
+                "settings": {
+                    "odataVersion": "4.0"
+                }
+            },
+            "riskService": {
+                "uri": "/api/v1/risk/",
+                "type": "OData",
+                "settings": {
+                    "odataVersion": "4.0"
+                }
+            },
+            "walletService": {
+                "uri": "/api/wallet/",
                 "type": "REST"
+            },
+            "webSocketService": {
+                "uri": "/ws/market-data",
+                "type": "WebSocket"
             }
         }
     },
     "sap.ui": {
         "technology": "UI5",
         "icons": {
-            "icon": "sap-icon://business-objects-experience",
-            "favIcon": "favicon.ico",
-            "phone": "sap-icon://business-objects-experience",
-            "phone@2": "sap-icon://business-objects-experience",
-            "tablet": "sap-icon://business-objects-experience",
-            "tablet@2": "sap-icon://business-objects-experience"
+            "icon": "sap-icon://business-card",
+            "favIcon": "",
+            "phone": "",
+            "phone@2": "",
+            "tablet": "",
+            "tablet@2": ""
         },
         "deviceTypes": {
             "desktop": true,
             "tablet": true,
             "phone": true
-        },
-        "supportedThemes": [
-            "sap_fiori_3",
-            "sap_fiori_3_dark",
-            "sap_fiori_3_hcb",
-            "sap_fiori_3_hcw"
-        ]
+        }
     },
     "sap.ui5": {
-        "flexEnabled": false,
+        "flexEnabled": true,
+        "config": {
+            "sapFiori2Adaptation": true
+        },
+        "rootView": {
+            "viewName": "com.rex.cryptotrading.view.App",
+            "type": "XML",
+            "async": true,
+            "id": "app"
+        },
         "dependencies": {
-            "minUI5Version": "1.84.0",
+            "minUI5Version": "1.120.0",
             "libs": {
                 "sap.m": {},
                 "sap.ui.core": {},
                 "sap.f": {},
+                "sap.ushell": {},
+                "sap.ui.fl": {},
+                "sap.ui.comp": {},
+                "sap.ui.table": {},
+                "sap.uxap": {},
                 "sap.ui.layout": {},
-                "sap.fe.core": {},
-                "sap.suite.ui.commons": {}
-            }
-        },
-        "models": {
-            "": {
-                "dataSource": "mainService",
-                "type": "sap.ui.model.odata.v4.ODataModel",
-                "settings": {
-                    "synchronizationMode": "None",
-                    "operationMode": "Server",
-                    "autoExpandSelect": true,
-                    "earlyRequests": true,
-                    "refreshAfterChange": false,
-                    "updateGroupId": "$auto",
-                    "groupId": "$auto"
-                }
-            },
-            "trading": {
-                "dataSource": "tradingServiceOData",
-                "type": "sap.ui.model.odata.v4.ODataModel",
-                "settings": {
-                    "synchronizationMode": "None",
-                    "operationMode": "Server",
-                    "autoExpandSelect": true,
-                    "earlyRequests": true,
-                    "refreshAfterChange": false,
-                    "updateGroupId": "$auto",
-                    "groupId": "$auto"
-                }
-            },
-            "codeAnalysis": {
-                "dataSource": "codeAnalysisServiceOData",
-                "type": "sap.ui.model.odata.v4.ODataModel",
-                "settings": {
-                    "synchronizationMode": "None",
-                    "operationMode": "Server",
-                    "autoExpandSelect": true,
-                    "earlyRequests": true,
-                    "refreshAfterChange": false,
-                    "updateGroupId": "$auto",
-                    "groupId": "$auto"
-                }
-            },
-            "offline": {
-                "dataSource": "offlineService",
-                "type": "sap.ui.model.odata.v4.ODataModel",
-                "settings": {
-                    "synchronizationMode": "None",
-                    "operationMode": "Client",
-                    "autoExpandSelect": false,
-                    "earlyRequests": false,
-                    "refreshAfterChange": true
-                }
-            },
-            "i18n": {
-                "type": "sap.ui.model.resource.ResourceModel",
-                "settings": {
-                    "bundleName": "com.rex.trading.launchpad.i18n.i18n"
-                }
+                "sap.viz": {},
+                "sap.suite.ui.microchart": {},
+                "sap.ui.unified": {}
             }
         },
         "contentDensities": {
             "compact": true,
             "cozy": true
         },
+        "models": {
+            "i18n": {
+                "type": "sap.ui.model.resource.ResourceModel",
+                "settings": {
+                    "bundleName": "com.rex.cryptotrading.i18n.i18n",
+                    "supportedLocales": ["en", "de", "fr", "es", "zh", "ja"],
+                    "fallbackLocale": "en"
+                }
+            },
+            "": {
+                "dataSource": "mainService",
+                "preload": true,
+                "settings": {
+                    "operationMode": "Server",
+                    "synchronizationMode": "None",
+                    "groupId": "$auto",
+                    "autoExpandSelect": true,
+                    "earlyRequests": true
+                }
+            },
+            "@i18n": {
+                "type": "sap.ui.model.resource.ResourceModel",
+                "uri": "i18n/i18n.properties"
+            },
+            "marketData": {
+                "dataSource": "marketDataService",
+                "preload": true,
+                "settings": {
+                    "operationMode": "Server",
+                    "synchronizationMode": "None",
+                    "groupId": "$auto",
+                    "autoExpandSelect": true,
+                    "earlyRequests": true
+                }
+            },
+            "trading": {
+                "dataSource": "tradingService",
+                "preload": true,
+                "settings": {
+                    "operationMode": "Server",
+                    "synchronizationMode": "None",
+                    "groupId": "$auto",
+                    "autoExpandSelect": true,
+                    "earlyRequests": false
+                }
+            },
+            "portfolio": {
+                "dataSource": "portfolioService",
+                "preload": true,
+                "settings": {
+                    "operationMode": "Server",
+                    "synchronizationMode": "None",
+                    "groupId": "$auto",
+                    "autoExpandSelect": true,
+                    "earlyRequests": false
+                }
+            },
+            "analytics": {
+                "dataSource": "analyticsService",
+                "preload": false,
+                "settings": {
+                    "operationMode": "Server",
+                    "synchronizationMode": "None",
+                    "groupId": "$auto",
+                    "autoExpandSelect": true,
+                    "earlyRequests": false
+                }
+            },
+            "risk": {
+                "dataSource": "riskService",
+                "preload": false,
+                "settings": {
+                    "operationMode": "Server",
+                    "synchronizationMode": "None",
+                    "groupId": "$auto",
+                    "autoExpandSelect": true,
+                    "earlyRequests": false
+                }
+            }
+        },
         "resources": {
-            "css": [{
-                "uri": "css/style.css"
-            }]
+            "css": [
+                {
+                    "uri": "css/designTokens.css"
+                },
+                {
+                    "uri": "css/sharedComponents.css"
+                },
+                {
+                    "uri": "css/style.css"
+                },
+                {
+                    "uri": "css/loadingStates.css"
+                },
+                {
+                    "uri": "css/tradingTheme.css"
+                }
+            ]
         },
         "routing": {
             "config": {
                 "routerClass": "sap.m.routing.Router",
                 "viewType": "XML",
-                "async": true,
                 "viewPath": "com.rex.cryptotrading.view",
+                "controlId": "navContainer",
                 "controlAggregation": "pages",
-                "controlId": "app"
+                "transition": "slide",
+                "bypassed": {
+                    "target": "notFound"
+                },
+                "async": true
             },
-            "routes": [{
-                "name": "launchpad",
-                "pattern": "",
-                "target": ["launchpad"]
-            }, {
-                "name": "market",
-                "pattern": "market",
-                "target": ["market"]
-            }, {
-                "name": "portfolio",
-                "pattern": "portfolio",
-                "target": ["portfolio"]
-            }, {
-                "name": "trading",
-                "pattern": "trading",
-                "target": ["trading"]
-            }, {
-                "name": "technicalAnalysis",
-                "pattern": "technical-analysis/{symbol}",
-                "target": ["technicalAnalysis"]
-            }],
+            "routes": [
+                {
+                    "name": "dashboard",
+                    "pattern": "",
+                    "target": "dashboard"
+                },
+                {
+                    "name": "market",
+                    "pattern": "market",
+                    "target": "market"
+                },
+                {
+                    "name": "marketDetail",
+                    "pattern": "market/{symbol}",
+                    "target": "marketDetail"
+                },
+                {
+                    "name": "portfolio",
+                    "pattern": "portfolio",
+                    "target": "portfolio"
+                },
+                {
+                    "name": "trading",
+                    "pattern": "trading",
+                    "target": "trading"
+                },
+                {
+                    "name": "tradingDetail",
+                    "pattern": "trading/{pair}",
+                    "target": "tradingDetail"
+                },
+                {
+                    "name": "analytics",
+                    "pattern": "analytics",
+                    "target": "analytics"
+                },
+                {
+                    "name": "risk",
+                    "pattern": "risk",
+                    "target": "risk"
+                },
+                {
+                    "name": "wallet",
+                    "pattern": "wallet",
+                    "target": "wallet"
+                },
+                {
+                    "name": "settings",
+                    "pattern": "settings",
+                    "target": "settings"
+                },
+                {
+                    "name": "alerts",
+                    "pattern": "alerts",
+                    "target": "alerts"
+                },
+                {
+                    "name": "history",
+                    "pattern": "history",
+                    "target": "history"
+                }
+            ],
             "targets": {
-                "launchpad": {
+                "dashboard": {
                     "viewType": "XML",
-                    "viewName": "Launchpad"
+                    "viewName": "Dashboard",
+                    "viewLevel": 1
                 },
                 "market": {
                     "viewType": "XML",
-                    "viewName": "Market"
+                    "viewName": "Market",
+                    "viewLevel": 2
+                },
+                "marketDetail": {
+                    "viewType": "XML",
+                    "viewName": "MarketDetail",
+                    "viewLevel": 3
                 },
                 "portfolio": {
                     "viewType": "XML",
-                    "viewName": "Portfolio"
+                    "viewName": "Portfolio",
+                    "viewLevel": 2
                 },
                 "trading": {
                     "viewType": "XML",
-                    "viewName": "Trading"
+                    "viewName": "Trading",
+                    "viewLevel": 2
                 },
-                "technicalAnalysis": {
+                "tradingDetail": {
                     "viewType": "XML",
-                    "viewName": "TechnicalAnalysis"
+                    "viewName": "TradingDetail",
+                    "viewLevel": 3
+                },
+                "analytics": {
+                    "viewType": "XML",
+                    "viewName": "Analytics",
+                    "viewLevel": 2
+                },
+                "risk": {
+                    "viewType": "XML",
+                    "viewName": "Risk",
+                    "viewLevel": 2
+                },
+                "wallet": {
+                    "viewType": "XML",
+                    "viewName": "Wallet",
+                    "viewLevel": 2
+                },
+                "settings": {
+                    "viewType": "XML",
+                    "viewName": "Settings",
+                    "viewLevel": 2
+                },
+                "alerts": {
+                    "viewType": "XML",
+                    "viewName": "Alerts",
+                    "viewLevel": 2
+                },
+                "history": {
+                    "viewType": "XML",
+                    "viewName": "History",
+                    "viewLevel": 2
+                },
+                "notFound": {
+                    "viewType": "XML",
+                    "viewName": "NotFound",
+                    "viewLevel": 1
                 }
             }
         }
     },
-    "sap.platform.hcp": {
-        "uri": ""
-    },
     "sap.fiori": {
-        "registrationIds": ["F4375"],
-        "archeType": "analytical"
+        "registrationIds": ["F0001"],
+        "archeType": "transactional"
     },
     "sap.cloud": {
         "public": true,
-        "service": "com.rex.trading.launchpad"
+        "service": "com.rex.cryptotrading"
+    },
+    "sap.platform.cf": {
+        "ui5VersionNumber": "1.120.0"
+    },
+    "sap.flp": {
+        "type": "application"
+    },
+    "sap.card": {
+        "type": "analytical",
+        "configuration": {
+            "destinations": {
+                "CryptoService": {
+                    "name": "CryptoService"
+                }
+            }
+        }
+    },
+    "sap.pwa": {
+        "enabled": true,
+        "appShortName": "Crypto Trading",
+        "appName": "Enterprise Crypto Trading Platform",
+        "description": "Professional cryptocurrency trading and portfolio management platform",
+        "startUrl": "./",
+        "scope": "./",
+        "display": "standalone",
+        "orientation": "portrait-primary",
+        "themeColor": "#0070f2",
+        "backgroundColor": "#ffffff",
+        "icons": [
+            {
+                "src": "./resources/pwa/icon-192.png",
+                "sizes": "192x192",
+                "type": "image/png"
+            },
+            {
+                "src": "./resources/pwa/icon-512.png",
+                "sizes": "512x512",
+                "type": "image/png"
+            }
+        ]
     }
 }

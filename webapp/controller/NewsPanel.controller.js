@@ -1,15 +1,17 @@
 sap.ui.define([
-    "sap/ui/core/mvc/Controller",
+    "./BaseController",
     "sap/ui/model/json/JSONModel",
     "sap/m/MessageToast",
     "sap/m/MessageBox",
     "sap/ui/core/Fragment"
-], function (Controller, JSONModel, MessageToast, MessageBox, Fragment) {
+], function (BaseController, JSONModel, MessageToast, MessageBox, Fragment) {
     "use strict";
 
-    return Controller.extend("com.rex.cryptotrading.controller.NewsPanel", {
+    return BaseController.extend("com.rex.cryptotrading.controller.NewsPanel", {
 
         onInit: function () {
+            // Call parent onInit
+            BaseController.prototype.onInit.apply(this, arguments);
             // Initialize model
             var oModel = new JSONModel({
                 articles: [],

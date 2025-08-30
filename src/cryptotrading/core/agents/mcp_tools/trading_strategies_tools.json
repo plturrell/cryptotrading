@@ -1,0 +1,578 @@
+{
+  "name": "trading-strategies",
+  "version": "1.0.0",
+  "description": "MCP tools for crypto trading strategy ANALYSIS and SIGNAL GENERATION (no actual trading)",
+  "tools": {
+    "grid_trading": {
+      "create": {
+        "description": "Generate grid trading signals at regular price intervals",
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol (e.g., BTC/USDT)"
+          },
+          "investment": {
+            "type": "number",
+            "description": "Total investment amount"
+          },
+          "grid_levels": {
+            "type": "integer",
+            "description": "Number of grid levels",
+            "default": 10
+          },
+          "spacing_percentage": {
+            "type": "number",
+            "description": "Grid spacing as percentage",
+            "default": 0.02
+          }
+        },
+        "returns": {
+          "type": "object",
+          "properties": {
+            "grid_id": "string",
+            "buy_orders": "array",
+            "sell_orders": "array",
+            "center_price": "number"
+          }
+        }
+      },
+      "rebalance": {
+        "description": "Rebalance grid when price moves significantly",
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol"
+          },
+          "threshold": {
+            "type": "number",
+            "description": "Rebalance threshold percentage",
+            "default": 0.05
+          }
+        }
+      },
+      "monitor": {
+        "description": "Monitor grid trading performance",
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol"
+          }
+        },
+        "returns": {
+          "type": "object",
+          "properties": {
+            "filled_orders": "integer",
+            "total_profit": "number",
+            "active_orders": "integer"
+          }
+        }
+      }
+    },
+    "dca": {
+      "execute": {
+        "description": "Generate signals for a Dollar-Cost Averaging purchase",
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Purchase amount",
+            "optional": true
+          },
+          "smart_adjust": {
+            "type": "boolean",
+            "description": "Enable smart DCA adjustments",
+            "default": true
+          }
+        }
+      },
+      "smart_adjust": {
+        "description": "Calculate smart DCA adjustments based on market conditions",
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol"
+          }
+        },
+        "returns": {
+          "type": "object",
+          "properties": {
+            "multiplier": "number",
+            "rsi": "number",
+            "sentiment": "object",
+            "recommended_amount": "number"
+          }
+        }
+      },
+      "schedule": {
+        "description": "Schedule recurring DCA purchases",
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol"
+          },
+          "frequency_hours": {
+            "type": "integer",
+            "description": "Purchase frequency in hours",
+            "default": 24
+          }
+        }
+      }
+    },
+    "arbitrage": {
+      "scan": {
+        "description": "Scan for arbitrage opportunities across exchanges",
+        "parameters": {
+          "symbols": {
+            "type": "array",
+            "items": "string",
+            "description": "List of symbols to scan"
+          },
+          "exchanges": {
+            "type": "array",
+            "items": "string",
+            "description": "List of exchanges to check",
+            "default": ["binance", "coinbase", "kraken"]
+          }
+        },
+        "returns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "symbol": "string",
+              "buy_exchange": "string",
+              "sell_exchange": "string",
+              "spread": "number",
+              "profit_percentage": "number"
+            }
+          }
+        }
+      },
+      "execute": {
+        "description": "Generate signals for an arbitrage trade",
+        "parameters": {
+          "opportunity": {
+            "type": "object",
+            "description": "Arbitrage opportunity object from scan"
+          }
+        }
+      },
+      "monitor": {
+        "description": "Monitor arbitrage performance",
+        "returns": {
+          "type": "object",
+          "properties": {
+            "active_opportunities": "integer",
+            "total_profit": "number",
+            "success_rate": "number"
+          }
+        }
+      }
+    },
+    "momentum": {
+      "scan": {
+        "description": "Scan for momentum trading opportunities",
+        "parameters": {
+          "symbols": {
+            "type": "array",
+            "items": "string",
+            "description": "List of symbols to scan"
+          },
+          "lookback_periods": {
+            "type": "integer",
+            "description": "Number of periods to analyze",
+            "default": 20
+          }
+        },
+        "returns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "symbol": "string",
+              "action": "string",
+              "confidence": "number",
+              "trend_strength": "number"
+            }
+          }
+        }
+      },
+      "enter": {
+        "description": "Enter a momentum trade",
+        "parameters": {
+          "signal": {
+            "type": "object",
+            "description": "Trading signal from scan"
+          }
+        }
+      },
+      "trail_stop": {
+        "description": "Update trailing stop for momentum position",
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol"
+          },
+          "trail_percentage": {
+            "type": "number",
+            "description": "Trailing stop percentage",
+            "default": 0.05
+          }
+        }
+      }
+    },
+    "mean_reversion": {
+      "identify": {
+        "description": "Identify mean reversion opportunities",
+        "parameters": {
+          "symbols": {
+            "type": "array",
+            "items": "string",
+            "description": "List of symbols to analyze"
+          },
+          "z_score_threshold": {
+            "type": "number",
+            "description": "Z-score threshold for signals",
+            "default": 2.5
+          }
+        }
+      },
+      "trade": {
+        "description": "Generate signals for mean reversion trade",
+        "parameters": {
+          "signal": {
+            "type": "object",
+            "description": "Trading signal from identify"
+          }
+        }
+      },
+      "pairs_trading": {
+        "description": "Generate signals for pairs trading strategy",
+        "parameters": {
+          "pair1": {
+            "type": "string",
+            "description": "First symbol in pair"
+          },
+          "pair2": {
+            "type": "string",
+            "description": "Second symbol in pair"
+          },
+          "correlation_min": {
+            "type": "number",
+            "description": "Minimum correlation required",
+            "default": 0.8
+          }
+        }
+      }
+    },
+    "scalping": {
+      "scan": {
+        "description": "Scan for scalping opportunities",
+        "parameters": {
+          "symbols": {
+            "type": "array",
+            "items": "string",
+            "description": "List of symbols to scan"
+          },
+          "min_volume_usd": {
+            "type": "number",
+            "description": "Minimum volume in USD",
+            "default": 10000
+          }
+        }
+      },
+      "execute": {
+        "description": "Generate signals for a scalping trade",
+        "parameters": {
+          "opportunity": {
+            "type": "object",
+            "description": "Scalping opportunity from scan"
+          }
+        }
+      },
+      "monitor": {
+        "description": "Monitor scalping performance",
+        "returns": {
+          "type": "object",
+          "properties": {
+            "win_rate": "number",
+            "profit_factor": "number",
+            "trades_per_hour": "number"
+          }
+        }
+      }
+    },
+    "market_making": {
+      "quote": {
+        "description": "Generate market making quotes",
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol"
+          },
+          "spread_percentage": {
+            "type": "number",
+            "description": "Bid-ask spread percentage",
+            "default": 0.002
+          },
+          "dynamic_spread": {
+            "type": "boolean",
+            "description": "Enable dynamic spread adjustment",
+            "default": true
+          }
+        }
+      },
+      "adjust": {
+        "description": "Adjust market making parameters",
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol"
+          }
+        }
+      },
+      "inventory_manage": {
+        "description": "Manage inventory levels",
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol"
+          },
+          "target_inventory": {
+            "type": "number",
+            "description": "Target inventory level"
+          }
+        }
+      }
+    },
+    "breakout": {
+      "detect": {
+        "description": "Detect potential breakout patterns",
+        "parameters": {
+          "symbols": {
+            "type": "array",
+            "items": "string",
+            "description": "List of symbols to analyze"
+          },
+          "lookback_periods": {
+            "type": "integer",
+            "description": "Number of periods for pattern detection",
+            "default": 50
+          }
+        }
+      },
+      "confirm": {
+        "description": "Confirm breakout with validation",
+        "parameters": {
+          "breakout": {
+            "type": "object",
+            "description": "Breakout object from detect"
+          },
+          "confirmation_bars": {
+            "type": "integer",
+            "description": "Number of bars for confirmation",
+            "default": 3
+          }
+        }
+      },
+      "trade": {
+        "description": "Generate signals for breakout trade",
+        "parameters": {
+          "confirmation": {
+            "type": "object",
+            "description": "Confirmation object from confirm"
+          }
+        }
+      }
+    },
+    "ml_predictive": {
+      "predict": {
+        "description": "Generate ML predictions for price movement",
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol"
+          },
+          "horizon_hours": {
+            "type": "integer",
+            "description": "Prediction horizon in hours",
+            "default": 24
+          }
+        },
+        "returns": {
+          "type": "object",
+          "properties": {
+            "prediction": "number",
+            "confidence": "number",
+            "action": "string",
+            "feature_importance": "object"
+          }
+        }
+      },
+      "train": {
+        "description": "Train ML models on historical data",
+        "parameters": {
+          "symbols": {
+            "type": "array",
+            "items": "string",
+            "description": "List of symbols to train on"
+          },
+          "features": {
+            "type": "array",
+            "items": "string",
+            "description": "Feature list for training",
+            "default": ["price", "volume", "rsi", "macd", "sentiment"]
+          }
+        }
+      },
+      "backtest": {
+        "description": "Backtest ML predictions",
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol"
+          },
+          "start_date": {
+            "type": "string",
+            "description": "Start date for backtest (YYYY-MM-DD)"
+          },
+          "end_date": {
+            "type": "string",
+            "description": "End date for backtest (YYYY-MM-DD)"
+          }
+        }
+      }
+    },
+    "multi_strategy": {
+      "allocate": {
+        "description": "Dynamically allocate capital across strategies",
+        "parameters": {
+          "allocation_mode": {
+            "type": "string",
+            "description": "Allocation mode (dynamic/fixed)",
+            "default": "dynamic"
+          },
+          "risk_parity": {
+            "type": "boolean",
+            "description": "Use risk parity allocation",
+            "default": true
+          }
+        }
+      },
+      "optimize": {
+        "description": "Optimize strategy parameters",
+        "returns": {
+          "type": "object",
+          "properties": {
+            "optimized_strategies": "integer",
+            "results": "object"
+          }
+        }
+      },
+      "switch": {
+        "description": "Switch strategies based on market conditions",
+        "parameters": {
+          "market_condition": {
+            "type": "string",
+            "enum": ["trending_up", "trending_down", "ranging", "high_volatility", "low_volatility"],
+            "description": "Current market condition"
+          }
+        }
+      }
+    },
+    "risk_management": {
+      "calculate": {
+        "description": "Calculate comprehensive risk metrics",
+        "parameters": {
+          "portfolio": {
+            "type": "object",
+            "description": "Portfolio object with positions"
+          }
+        },
+        "returns": {
+          "type": "object",
+          "properties": {
+            "var_95": "number",
+            "cvar_95": "number",
+            "max_drawdown": "number",
+            "sharpe_ratio": "number"
+          }
+        }
+      },
+      "position_size": {
+        "description": "Calculate optimal position size",
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Trading pair symbol"
+          },
+          "entry_price": {
+            "type": "number",
+            "description": "Entry price"
+          },
+          "stop_loss": {
+            "type": "number",
+            "description": "Stop loss price"
+          }
+        }
+      },
+      "portfolio_optimize": {
+        "description": "Optimize portfolio allocation using Modern Portfolio Theory",
+        "parameters": {
+          "symbols": {
+            "type": "array",
+            "items": "string",
+            "description": "List of symbols for portfolio"
+          },
+          "target_return": {
+            "type": "number",
+            "description": "Target annual return",
+            "default": 0.1
+          }
+        }
+      }
+    }
+  },
+  "capabilities": {
+    "strategies": [
+      "grid_trading",
+      "dollar_cost_averaging",
+      "arbitrage",
+      "momentum_trend",
+      "mean_reversion",
+      "scalping",
+      "market_making",
+      "breakout_trading",
+      "ml_predictive",
+      "multi_strategy_hybrid"
+    ],
+    "risk_management": [
+      "position_sizing",
+      "portfolio_optimization",
+      "var_calculation",
+      "drawdown_protection"
+    ],
+    "market_analysis": [
+      "technical_indicators",
+      "sentiment_analysis",
+      "pattern_recognition",
+      "ml_predictions"
+    ],
+    "execution": [
+      "limit_orders",
+      "market_orders",
+      "stop_loss",
+      "take_profit",
+      "trailing_stops"
+    ]
+  },
+  "requirements": {
+    "data_sources": ["yahoo_finance", "coingecko"],
+    "purpose": "strategy_analysis_only",
+    "actual_trading": false,
+    "note": "This system generates trading signals for analysis - no real trading capabilities"
+  }
+}

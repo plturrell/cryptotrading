@@ -1,79 +1,173 @@
 sap.ui.define([
-    "sap/ui/core/mvc/Controller",
+    "./BaseController",
     "sap/m/MessageToast",
     "sap/m/MessageBox"
-], function (Controller, MessageToast, MessageBox) {
+], function (BaseController, MessageToast, MessageBox) {
     "use strict";
 
-    return Controller.extend("com.rex.cryptotrading.controller.App", {
+    return BaseController.extend("com.rex.cryptotrading.controller.App", {
 
         onInit: function () {
-            // Set tile model
-            var oView = this.getView();
-            var oModel = this.getOwnerComponent().getModel("app");
-            var aTiles = oModel.getProperty("/tiles");
+            BaseController.prototype.onInit.apply(this, arguments);
             
-            // Bind tiles to grid container
-            var oGridContainer = this.byId("gridContainer");
-            aTiles.forEach(function(oTile) {
-                var oGenericTile = new sap.m.GenericTile({
-                    header: oTile.title,
-                    subheader: oTile.subtitle,
-                    press: this.onTilePress.bind(this),
-                    frameType: "TwoByOne"
-                });
-                
-                oGenericTile.data("route", oTile.route);
-                
-                var oTileContent = new sap.m.TileContent({
-                    content: new sap.m.NumericContent({
-                        value: oTile.number,
-                        scale: oTile.unit,
-                        state: oTile.state,
-                        icon: oTile.icon
-                    })
-                });
-                
-                oGenericTile.addTileContent(oTileContent);
-                
-                oGenericTile.setLayoutData(new sap.f.GridContainerItemLayoutData({
-                    columns: 4,
-                    rows: 2
-                }));
-                
-                oGridContainer.addItem(oGenericTile);
-            }.bind(this));
-
-            // Start real-time updates
-            this._startRealtimeUpdates();
+            // Initialize app model
+            this._initializeAppModel();
+            
+            // Set up routing
+            this._setupRouting();
+            
+            // Initialize services
+            this._initializeServices();
+            
+            // Set up WebSocket connections
+            this._setupWebSocketConnections();
+            
+            // Initialize navigation
+            this._initializeNavigation();
         },
 
-        onTilePress: function (oEvent) {
-            var oTile = oEvent.getSource();
-            var sRoute = oTile.data("route");
+        _initializeAppModel: function () {
+            const oAppModel = new sap.ui.model.json.JSONModel({
+                busy: false,
+                selectedKey: "home",
+                user: {
+                    initials: "CT"
+                },
+                wallet: {
+                    connected: false,
+                    address: "",
+                    balance: "0.0000"
+                },
+                networkStatus: {
+                    text: "Mainnet",
+                    icon: "sap-icon://connected"
+                },
+                notificationCount: "3"
+            });
             
-            if (sRoute) {
-                var oRouter = this.getOwnerComponent().getRouter();
-                
-                // For now, show message since routes aren't implemented yet
-                MessageToast.show("Navigating to " + oTile.getHeader());
-                
-                // When routes are ready:
-                // oRouter.navTo(sRoute);
+            this.getView().setModel(oAppModel, "app");
+        },
+
+        _setupRouting: function () {
+            const oRouter = this.getRouter();
+            oRouter.attachRouteMatched(this._onRouteMatched, this);
+        },
+
+        _initializeServices: function () {
+            // Initialize ServiceRegistry and ExtensionManager
+            const oComponent = this.getOwnerComponent();
+            const oServiceRegistry = oComponent.getServiceRegistry();
+            const oExtensionManager = oComponent.getExtensionManager();
+            
+            if (oServiceRegistry) {
+                // Services are already initialized in Component.js
+                this.getLogger().info("ServiceRegistry initialized with services", oServiceRegistry.getRegisteredServices());
+            }
+            
+            if (oExtensionManager) {
+                // Extensions are already loaded in Component.js
+                this.getLogger().info("ExtensionManager initialized with plugins", oExtensionManager.getRegisteredPlugins());
+            }
+        },
+
+        _setupWebSocketConnections: function () {
+            // WebSocket setup is handled in Component.js
+            this.getLogger().info("WebSocket connections managed by Component");
+        },
+
+        _initializeNavigation: function () {
+            // Set default navigation
+            const oRouter = this.getRouter();
+            oRouter.navTo("dashboard");
+        },
+
+        _onRouteMatched: function (oEvent) {
+            const sRouteName = oEvent.getParameter("name");
+            const oAppModel = this.getView().getModel("app");
+            
+            // Update selected navigation key based on route
+            let sSelectedKey = "home";
+            switch (sRouteName) {
+                case "dashboard":
+                    sSelectedKey = "home";
+                    break;
+                case "market":
+                    sSelectedKey = "marketOverview";
+                    break;
+                case "trading":
+                    sSelectedKey = "trading";
+                    break;
+                case "analytics":
+                    sSelectedKey = "technicalAnalysis";
+                    break;
+                case "portfolio":
+                    sSelectedKey = "portfolio";
+                    break;
+                case "news":
+                    sSelectedKey = "news";
+                    break;
+                case "risk":
+                    sSelectedKey = "risk";
+                    break;
+                case "settings":
+                    sSelectedKey = "settings";
+                    break;
+            }
+            
+            oAppModel.setProperty("/selectedKey", sSelectedKey);
+        },
+
+        // Navigation handlers
+        onSideNavButtonPress: function () {
+            const oToolPage = this.byId("toolPage");
+            const bSideExpanded = oToolPage.getSideExpanded();
+            oToolPage.setSideExpanded(!bSideExpanded);
+        },
+
+        onItemSelect: function (oEvent) {
+            const oItem = oEvent.getParameter("item");
+            const sKey = oItem.getKey();
+            
+            // Navigate based on selected key
+            switch (sKey) {
+                case "home":
+                    this.navTo("dashboard");
+                    break;
+                case "marketOverview":
+                    this.navTo("market");
+                    break;
+                case "trading":
+                    this.navTo("trading");
+                    break;
+                case "technicalAnalysis":
+                    this.navTo("analytics");
+                    break;
+                case "portfolio":
+                    this.navTo("portfolio");
+                    break;
+                case "news":
+                    this.navTo("news");
+                    break;
+                case "risk":
+                    this.navTo("risk");
+                    break;
+                case "settings":
+                    this.navTo("settings");
+                    break;
             }
         },
 
         onWalletPress: function () {
-            var oModel = this.getOwnerComponent().getModel("app");
-            var bConnected = oModel.getProperty("/wallet/connected");
+            const oModel = this.getView().getModel("app");
+            const bConnected = oModel.getProperty("/wallet/connected");
             
             if (!bConnected) {
                 // Connect to MetaMask
                 this._connectWallet();
             } else {
                 // Show wallet details
-                var sAddress = oModel.getProperty("/wallet/address");
-                var fBalance = oModel.getProperty("/wallet/balance");
+                const sAddress = oModel.getProperty("/wallet/address");
+                const fBalance = oModel.getProperty("/wallet/balance");
                 
                 MessageBox.information(
                     "Address: " + sAddress + "\n" +
@@ -83,6 +177,10 @@ sap.ui.define([
                     }
                 );
             }
+        },
+
+        onNotificationPress: function () {
+            MessageToast.show("Notifications clicked");
         },
 
         onAvatarPress: function () {
@@ -95,7 +193,7 @@ sap.ui.define([
                 window.ethereum.request({ method: 'eth_requestAccounts' })
                     .then(function(accounts) {
                         if (accounts.length > 0) {
-                            var oModel = this.getOwnerComponent().getModel("app");
+                            const oModel = this.getView().getModel("app");
                             oModel.setProperty("/wallet/address", accounts[0]);
                             oModel.setProperty("/wallet/connected", true);
                             
@@ -105,7 +203,7 @@ sap.ui.define([
                                 params: [accounts[0], 'latest']
                             }).then(function(balance) {
                                 // Convert from wei to ETH
-                                var ethBalance = parseInt(balance, 16) / 1e18;
+                                const ethBalance = parseInt(balance, 16) / 1e18;
                                 oModel.setProperty("/wallet/balance", ethBalance.toFixed(4));
                             });
                             
@@ -117,73 +215,6 @@ sap.ui.define([
                     });
             } else {
                 MessageBox.warning("Please install MetaMask to connect your wallet");
-            }
-        },
-
-        _startRealtimeUpdates: function () {
-            // Update market data every 30 seconds
-            setInterval(function() {
-                this._updateMarketData();
-            }.bind(this), 30000);
-
-            // Update other tiles
-            this._updateDEXData();
-            this._updateAISignals();
-        },
-
-        _updateMarketData: function () {
-            fetch('/api/market/overview?symbols=bitcoin,ethereum,binancecoin')
-                .then(function(response) {
-                    return response.json();
-                })
-                .then(function(data) {
-                    if (data.symbols && data.symbols.bitcoin) {
-                        var oGridContainer = this.byId("gridContainer");
-                        var oMarketTile = oGridContainer.getItems()[0];
-                        
-                        if (oMarketTile) {
-                            var oNumericContent = oMarketTile.getTileContent()[0].getContent();
-                            oNumericContent.setValue(Math.round(data.symbols.bitcoin.prices.average).toLocaleString());
-                            oNumericContent.setState("Success");
-                        }
-                    }
-                }.bind(this))
-                .catch(function(error) {
-                    console.error("Error updating market data:", error);
-                });
-        },
-
-        _updateDEXData: function () {
-            fetch('/api/market/dex/trending')
-                .then(function(response) {
-                    return response.json();
-                })
-                .then(function(data) {
-                    if (data.data && data.data.length > 0) {
-                        var oGridContainer = this.byId("gridContainer");
-                        var oDEXTile = oGridContainer.getItems()[4];
-                        
-                        if (oDEXTile) {
-                            var oNumericContent = oDEXTile.getTileContent()[0].getContent();
-                            oNumericContent.setValue(data.data.length);
-                            oNumericContent.setState("Success");
-                        }
-                    }
-                }.bind(this))
-                .catch(function(error) {
-                    console.error("Error updating DEX data:", error);
-                });
-        },
-
-        _updateAISignals: function () {
-            // Simulate AI signals for now
-            var oGridContainer = this.byId("gridContainer");
-            var oAITile = oGridContainer.getItems()[3];
-            
-            if (oAITile) {
-                var oNumericContent = oAITile.getTileContent()[0].getContent();
-                oNumericContent.setValue("3");
-                oNumericContent.setState("Warning");
             }
         }
     });

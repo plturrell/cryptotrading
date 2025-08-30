@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 import uuid
 
 from ..strands import StrandsAgent
-from ...protocols.a2a.a2a_protocol import A2A_CAPABILITIES, MessageType, AgentStatus
+from ...protocols.a2a.a2a_protocol import A2A_CAPABILITIES, MessageType, AgentStatus, A2AMessage
 try:
     from ....infrastructure.analysis.mcp_agent_segregation import (
         get_segregation_manager,
@@ -118,6 +118,12 @@ class AgentManagerAgent(StrandsAgent):
         # Register with A2A protocol
         capabilities = A2A_CAPABILITIES.get(agent_id, [])
         A2AAgentRegistry.register_agent(agent_id, capabilities, self)
+        
+        # Initialize MCP tools
+        self.mcp_tools = self._initialize_mcp_tools()
+        
+        # Blockchain integration
+        self.blockchain_registry = None  # Will be initialized when needed
     
     async def initialize(self) -> bool:
         """Initialize the Agent Manager"""
@@ -764,6 +770,96 @@ class AgentManagerAgent(StrandsAgent):
                 'violations': [v for v in compliance['violations'] if skill_card_id in v]
             }
         }
+    
+    def _initialize_mcp_tools(self) -> Dict[str, Any]:
+        """Initialize MCP tools for Agent Manager."""
+        return {
+            "register_agent": self._mcp_register_agent,
+            "validate_compliance": self._mcp_validate_compliance,
+            "enforce_mcp_segregation": self._mcp_enforce_mcp_segregation,
+            "generate_skill_card": self._mcp_generate_skill_card,
+            "blockchain_register": self._mcp_blockchain_register,
+            "manage_lifecycle": self._mcp_manage_lifecycle,
+            "query_registry": self._mcp_query_registry,
+            "audit_compliance": self._mcp_audit_compliance,
+            "monitor_health": self._mcp_monitor_health
+        }
+    
+    async def _mcp_register_agent(
+        self,
+        agent_id: str,
+        agent_type: str,
+        capabilities: List[str],
+        mcp_tools: List[str],
+        skill_card: Dict[str, Any],
+        blockchain_register: bool = True
+    ) -> Dict[str, Any]:
+        """MCP tool: Register agent with full A2A compliance."""
+        try:
+            registration_data = {
+                "agent_id": agent_id,
+                "agent_type": agent_type,
+                "capabilities": capabilities,
+                "mcp_tools": mcp_tools,
+                "skill_card": skill_card
+            }
+            
+            result = await self.register_agent(registration_data)
+            
+            if result["success"] and blockchain_register:
+                blockchain_result = await self._mcp_blockchain_register(
+                    agent_id=agent_id,
+                    skill_card=skill_card
+                )
+                result["blockchain_tx"] = blockchain_result.get("transaction_hash")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"MCP register_agent failed: {e}")
+            return {"status": "error", "error": str(e)}
+    
+    async def _mcp_blockchain_register(
+        self,
+        agent_id: str,
+        skill_card: Dict[str, Any],
+        registry_contract: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """MCP tool: Register agent on blockchain."""
+        try:
+            # In production, this would submit to blockchain
+            # For now, simulate the response
+            tx_hash = f"0x{agent_id[:8]}...{datetime.utcnow().timestamp():.0f}"
+            
+            logger.info(f"Agent {agent_id} registered on blockchain: {tx_hash}")
+            
+            return {
+                "transaction_hash": tx_hash,
+                "block_number": 12345678,
+                "registry_address": registry_contract or "0x0000...default",
+                "gas_used": 150000
+            }
+            
+        except Exception as e:
+            logger.error(f"Blockchain registration failed: {e}")
+            return {"status": "error", "error": str(e)}
+    
+    async def process_mcp_tool_invocation(self, message: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Process MCP tool invocation messages."""
+        tool_name = message.get("tool")
+        parameters = message.get("parameters", {})
+        
+        if tool_name in self.mcp_tools:
+            result = await self.mcp_tools[tool_name](**parameters)
+            
+            return {
+                "type": "MCP_TOOL_RESPONSE",
+                "sender": self.agent_id,
+                "receiver": message.get("sender"),
+                "payload": result
+            }
+        
+        return None
 
 # Factory function
 async def create_agent_manager() -> AgentManagerAgent:

@@ -899,9 +899,9 @@
     "Draft_DraftIsProcessedByMe": "Návrh v spracovaní od (ja)"
   },
   "sl": {
-    "CreatedBy": "Ustvaril uporabnik",
-    "CreatedAt": "Ustvarjeno dne",
-    "ChangedBy": "Spremenil uporabnik",
+    "CreatedBy": "Kreiral",
+    "CreatedAt": "Kreirano dne",
+    "ChangedBy": "Spremenil",
     "ChangedAt": "Spremenjeno dne",
     "Currency": "Valuta",
     "CurrencyCode": "Koda valute",

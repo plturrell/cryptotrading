@@ -206,16 +206,32 @@ A2A_CAPABILITIES = {
         'analyze_dependencies', 'calculate_impact_analysis', 'generate_quality_report',
         'code_analysis', 'quality_metrics', 'code_smells', 'dependency_analysis',
         'impact_analysis', 'quality_reporting'
+    ],
+    'trading_algorithm_agent': [
+        'grid_trading', 'dollar_cost_averaging', 'arbitrage_detection', 'momentum_trading',
+        'mean_reversion', 'scalping', 'market_making', 'breakout_trading', 'ml_predictions',
+        'multi_strategy_management', 'risk_management', 'portfolio_optimization',
+        'signal_generation', 'strategy_analysis', 'backtesting'
+    ],
+    'data_analysis_agent': [
+        'data_processing', 'statistical_analysis', 'pattern_recognition', 'anomaly_detection',
+        'correlation_analysis', 'trend_analysis', 'data_quality_assessment', 'feature_extraction',
+        'data_visualization', 'report_generation'
+    ],
+    'feature_store_agent': [
+        'feature_storage', 'feature_retrieval', 'feature_versioning', 'feature_validation',
+        'feature_transformation', 'feature_serving', 'metadata_management', 'lineage_tracking',
+        'feature_monitoring', 'feature_discovery'
     ]
 }
 
 # Message routing table - Updated with Specialized Agents
 A2A_ROUTING = {
-    MessageType.DATA_LOAD_REQUEST: ['historical_data_loader_agent', 'database_agent'],
-    MessageType.ANALYSIS_REQUEST: ['technical_analysis_agent', 'ml_agent', 'strands_glean_agent', 'feature_store_agent', 'data_analysis_agent', 'technical_analysis_skills_agent', 'ml_models_agent', 'code_quality_agent', 'clrs_algorithms_agent'],
-    MessageType.DATA_QUERY: ['database_agent'],
-    MessageType.TRADE_EXECUTION: ['database_agent'],
-    MessageType.WORKFLOW_REQUEST: ['agent_manager_agent'],
+    MessageType.DATA_LOAD_REQUEST: ['historical_data_loader_agent', 'database_agent', 'feature_store_agent'],
+    MessageType.ANALYSIS_REQUEST: ['technical_analysis_agent', 'ml_agent', 'strands_glean_agent', 'feature_store_agent', 'data_analysis_agent', 'technical_analysis_skills_agent', 'ml_models_agent', 'code_quality_agent', 'clrs_algorithms_agent', 'trading_algorithm_agent'],
+    MessageType.DATA_QUERY: ['database_agent', 'feature_store_agent'],
+    MessageType.TRADE_EXECUTION: ['trading_algorithm_agent'],  # Note: Generates signals only, no actual execution
+    MessageType.WORKFLOW_REQUEST: ['agent_manager_agent', 'trading_algorithm_agent'],
     MessageType.WORKFLOW_STATUS: ['agent_manager_agent'],
     MessageType.HEARTBEAT: ['agent_manager_agent'],
     

@@ -1,46 +1,26 @@
 sap.ui.define([
-    "sap/ui/core/mvc/Controller",
+    "./BaseController",
     "sap/m/MessageToast",
     "sap/m/Dialog",
     "sap/m/Button",
     "sap/m/Text",
     "sap/ui/core/Fragment",
     "sap/ui/model/json/JSONModel"
-], function(Controller, MessageToast, Dialog, Button, Text, Fragment, JSONModel) {
+], function(BaseController, MessageToast, Dialog, Button, Text, Fragment, JSONModel) {
     "use strict";
 
-    return Controller.extend("com.rex.cryptotrading.controller.Launchpad", {
+    return BaseController.extend("com.rex.cryptotrading.controller.Launchpad", {
         
         onInit: function() {
-            // Very defensive initialization
+            // Call parent onInit
+            BaseController.prototype.onInit.apply(this, arguments);
+            
             try {
-                console.log("Launchpad controller onInit started");
-                
-                // Wait for models to be available before proceeding
-                var that = this;
-                var checkModels = function() {
-                    try {
-                        var oComponent = that.getOwnerComponent();
-                        var oAppModel = oComponent ? oComponent.getModel("app") : null;
-                        
-                        if (oAppModel) {
-                            console.log("App model is available");
-                            that._initializeController();
-                        } else {
-                            console.log("Waiting for app model...");
-                            setTimeout(checkModels, 100);
-                        }
-                    } catch (e) {
-                        console.warn("Model check failed, retrying:", e.message);
-                        setTimeout(checkModels, 100);
-                    }
-                };
-                
-                // Start checking for models
-                setTimeout(checkModels, 10);
+                // Initialize controller-specific properties
+                this._initializeController();
                 
             } catch (e) {
-                console.error("Controller onInit error:", e);
+                this.handleError(e, "Controller initialization failed");
             }
         },
         
@@ -130,13 +110,11 @@ sap.ui.define([
             
             MessageToast.show("Opening " + (sTitle || "Application") + "...");
             
-            // Navigate to the appropriate view
+            // Navigate using BaseController method
             try {
-                var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
-                oRouter.navTo(sTilePress);
+                this.navTo(sTilePress);
             } catch (e) {
-                console.error("Navigation error:", e);
-                MessageToast.show("Navigation failed: " + e.message);
+                this.handleError(e, "Navigation failed");
             }
         },
         
@@ -240,62 +218,51 @@ sap.ui.define([
         },
         
         _updateWalletBalance: function(address) {
-            var that = this;
-            
-            // Use modern data manager approach
-            jQuery.ajax({
-                url: "/api/wallet/balance",
-                type: "POST",
-                contentType: "application/json",
-                data: JSON.stringify({ address: address }),
-                success: function(data) {
-                    // Update wallet model
-                    var oWalletModel = sap.ui.getCore().getModel("wallet");
-                    if (data && data.balances) {
-                        oWalletModel.setProperty("/balances", data.balances);
-                        
-                        // Publish balance updated event
-                        that._oEventBusManager.publishBalanceUpdated(data.balances);
-                    }
+            // Use BaseController's secure request method
+            this.makeSecureRequest("/api/wallet/balance", {
+                method: "POST",
+                body: JSON.stringify({ address: address })
+            }).then(function(data) {
+                // Update wallet model
+                var oWalletModel = sap.ui.getCore().getModel("wallet");
+                if (data && data.balances) {
+                    oWalletModel.setProperty("/balances", data.balances);
                     
-                    // Keep legacy model update
-                    var oModel = that.getView().getModel("app");
-                    if (data.balance) {
-                        oModel.setProperty("/wallet/balance", data.balance.ETH);
+                    // Publish balance updated event
+                    if (this._oEventBusManager && this._oEventBusManager.publishBalanceUpdated) {
+                        this._oEventBusManager.publishBalanceUpdated(data.balances);
                     }
-                }.bind(this),
-                error: function() {
-                    console.error("Failed to update wallet balance");
                 }
-            });
+                
+                // Keep legacy model update
+                var oModel = this.getView().getModel("app");
+                if (data.balance) {
+                    oModel.setProperty("/wallet/balance", data.balance.ETH);
+                }
+            }.bind(this)).catch(function(error) {
+                this.handleError(error, "Failed to update wallet balance");
+            }.bind(this));
         },
         
         onPortfolioPress: function() {
-            var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
-            oRouter.navTo("portfolio");
+            this.navTo("portfolio");
         },
         
         onCodeAnalysisPress: function() {
-            var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
-            oRouter.navTo("codeAnalysis");
+            this.navTo("codeAnalysis");
         },
         
         onTradingConsolePress: function() {
-            var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
-            oRouter.navTo("tradingConsole");
+            this.navTo("trading");
         },
         
         onTechnicalAnalysisPress: function() {
-            var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
-            oRouter.navTo("technicalAnalysis", {
-                symbol: "BTC-USD"
-            });
+            this.navTo("analytics");
         },
         
         // Additional press handlers for static tiles
         onMarketOverviewPress: function() {
-            var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
-            oRouter.navTo("market");
+            this.navTo("market");
         },
         
         onMLPredictionsPress: function() {

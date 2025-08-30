@@ -1,17 +1,19 @@
 sap.ui.define([
-    "sap/ui/core/mvc/Controller",
+    "./BaseController",
     "sap/ui/model/json/JSONModel",
     "sap/m/MessageToast",
     "sap/m/MessageBox"
-], function (Controller, JSONModel, MessageToast, MessageBox) {
+], function (BaseController, JSONModel, MessageToast, MessageBox) {
     "use strict";
 
-    return Controller.extend("com.rex.trading.controller.Login", {
+    return BaseController.extend("com.rex.cryptotrading.controller.Login", {
         
         /**
          * Controller initialization
          */
         onInit: function () {
+            // Call parent onInit
+            BaseController.prototype.onInit.apply(this, arguments);
             // Initialize models
             this._initModels();
             

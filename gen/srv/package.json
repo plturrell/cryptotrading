@@ -1,49 +1,140 @@
 {
-  "name": "com-rex-trading-launchpad",
+  "name": "cryptotrading-platform",
   "version": "1.0.0",
-  "description": "rex.com - Professional Crypto Trading Platform - SAP Fiori Launchpad",
-  "main": "app.py",
+  "description": "Professional Crypto Trading Platform - SAP CAP with Fiori Frontend",
+  "main": "srv/server.js",
   "scripts": {
-    "start": "ui5 serve --port 8080",
-    "start:simple": "ui5 serve --config ui5-simple.yaml --port 8080",
-    "build": "ui5 build --dest dist --all",
-    "build:prod": "ui5 build --dest dist --minify",
-    "clean": "rimraf dist node_modules/.cache",
-    "lint": "eslint webapp/ --ext .js",
-    "dev": "concurrently \"python3 app.py\" \"npm run start\""
+    "// === Core Development Scripts ===": "",
+    "start": "cds-serve",
+    "watch": "cds watch",
+    "build": "cds build && npm run build:ui",
+    "build:ui": "cd webapp && ui5 build --config=ui5.yaml --clean-dest --dest ../dist",
+    "deploy": "cds deploy",
+    "// === Development & Setup ===": "",
+    "dev": "concurrently \"npm run watch\" \"npm run start:ui\"",
+    "start:ui": "ui5 serve --config=webapp/ui5.yaml --open webapp/index.html",
+    "clean": "rimraf dist/ coverage/ .nyc_output/ gen/",
+    "// === Testing ===": "",
+    "test": "jest --config test/jest.config.js",
+    "test:unit": "jest --config test/jest.config.js test/unit",
+    "test:integration": "jest --config test/jest.config.js test/integration",
+    "test:coverage": "jest --config test/jest.config.js --coverage",
+    "// === Quality & Security ===": "",
+    "lint": "eslint webapp srv",
+    "lint:fix": "eslint webapp srv --fix",
+    "security:audit": "npm audit",
+    "// === Database ===": "",
+    "db:setup": "cds deploy --to sqlite:db.sqlite",
+    "db:migrate": "cds deploy",
+    "// === Specialized Scripts ===": "",
+    "health:check": "curl -f http://localhost:4004/health || exit 1",
+    "docs:generate": "cds compile srv --to openapi > docs/api.json"
   },
   "keywords": [
-    "sap",
-    "ui5",
+    "sap-cap",
+    "crypto-trading",
     "fiori",
-    "launchpad",
-    "crypto",
-    "trading",
-    "enterprise"
+    "enterprise",
+    "blockchain",
+    "trading-platform",
+    "real-time-data",
+    "risk-management"
   ],
-  "author": "rex.com",
-  "license": "MIT",
+  "author": "Crypto Trading Team",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": "^18 || ^20",
+    "npm": ">=9.0.0"
+  },
+  "dependencies": {
+    "@cap-js/sqlite": "^1.11.1",
+    "@sap/cds": "^8.5.0",
+    "@sap/logging": "^7.0.0",
+    "axios": "^1.11.0",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "ethers": "^6.15.0",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
+    "ioredis": "^5.3.2",
+    "joi": "^17.11.0",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.4",
+    "socket.io": "^4.8.1",
+    "uuid": "^9.0.1",
+    "web3": "^4.2.2",
+    "winston": "^3.11.0",
+    "ws": "^8.14.2"
+  },
   "devDependencies": {
+    "@sap/ux-ui5-tooling": "^1.18.5",
+    "@ui5/builder": "^4.0.9",
     "@ui5/cli": "^4.0.9",
-    "@ui5/builder": "^4.0.9", 
-    "@ui5/server": "^4.0.6",
-    "@ui5/project": "^4.0.4",
     "@ui5/fs": "^4.0.1",
     "@ui5/logger": "^4.0.1",
+    "@ui5/project": "^4.0.4",
+    "@ui5/server": "^4.0.6",
+    "concurrently": "^7.6.0",
     "eslint": "^8.57.0",
+    "jest": "^29.7.0",
     "rimraf": "^3.0.2",
-    "concurrently": "^7.6.0"
+    "sqlite3": "^5.1.6",
+    "supertest": "^6.3.3"
+  },
+  "cds": {
+    "requires": {
+      "db": {
+        "kind": "sqlite",
+        "credentials": {
+          "database": "db.sqlite"
+        },
+        "[production]": {
+          "kind": "hana-cloud"
+        }
+      },
+      "auth": {
+        "[development]": {
+          "kind": "mocked",
+          "users": {
+            "trader": {
+              "tenant": "crypto",
+              "roles": ["authenticated-user", "Trader"]
+            },
+            "admin": {
+              "tenant": "crypto", 
+              "roles": ["authenticated-user", "Admin"]
+            }
+          }
+        }
+      },
+      "marketDataService": {
+        "kind": "rest",
+        "credentials": {
+          "url": "${MARKET_DATA_URL}",
+          "timeout": 30000
+        }
+      },
+      "blockchainService": {
+        "kind": "rest",
+        "credentials": {
+          "url": "${BLOCKCHAIN_RPC_URL}",
+          "timeout": 30000
+        }
+      }
+    },
+    "features": {
+      "assert_integrity": "db"
+    }
   },
   "ui5": {
     "dependencies": [
       "@openui5/sap.ui.core",
-      "@openui5/sap.m", 
+      "@openui5/sap.m",
       "@openui5/sap.f",
+      "@openui5/sap.tnt",
       "@openui5/themelib_sap_horizon"
     ]
-  },
-  "engines": {
-    "node": ">=16.0.0",
-    "npm": ">=8.0.0"
   }
 }

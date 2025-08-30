@@ -1,16 +1,19 @@
 sap.ui.define([
-    "sap/ui/core/mvc/Controller",
+    "./BaseController",
     "sap/ui/model/json/JSONModel",
     "sap/m/MessageToast",
     "sap/m/MessageBox",
     "sap/ui/core/routing/History",
     "sap/ui/export/Spreadsheet"
-], function (Controller, JSONModel, MessageToast, MessageBox, History, Spreadsheet) {
+], function (BaseController, JSONModel, MessageToast, MessageBox, History, Spreadsheet) {
     "use strict";
 
-    return Controller.extend("com.rex.cryptotrading.controller.TechnicalAnalysis", {
+    return BaseController.extend("com.rex.cryptotrading.controller.TechnicalAnalysis", {
 
         onInit: function () {
+            // Call parent onInit
+            BaseController.prototype.onInit.apply(this, arguments);
+            
             // Initialize OData model for Trading Service
             this._oTradingModel = this.getOwnerComponent().getModel("trading");
             

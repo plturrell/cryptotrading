@@ -1,0 +1,302 @@
+{
+  "name": "agent-manager-mcp-tools",
+  "version": "1.0.0",
+  "description": "MCP tools for A2A Agent Manager - handles registration, compliance, and lifecycle management",
+  "tools": {
+    "register_agent": {
+      "description": "Register a new agent with A2A network and blockchain",
+      "parameters": {
+        "agent_id": {
+          "type": "string",
+          "description": "Unique identifier for the agent"
+        },
+        "agent_type": {
+          "type": "string",
+          "description": "Type of agent (e.g., trading_algorithm, data_analysis)"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": "string",
+          "description": "List of agent capabilities"
+        },
+        "mcp_tools": {
+          "type": "array",
+          "items": "string",
+          "description": "MCP tools the agent requires"
+        },
+        "skill_card": {
+          "type": "object",
+          "description": "Agent skill card with metadata"
+        },
+        "blockchain_register": {
+          "type": "boolean",
+          "description": "Register on blockchain",
+          "default": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "registration_id": "string",
+          "compliance_score": "number",
+          "blockchain_tx": "string",
+          "status": "string"
+        }
+      }
+    },
+    "validate_compliance": {
+      "description": "Validate A2A compliance for an agent",
+      "parameters": {
+        "agent_id": {
+          "type": "string",
+          "description": "Agent to validate"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": "string",
+          "description": "Capabilities to validate"
+        },
+        "mcp_tools": {
+          "type": "array",
+          "items": "string",
+          "description": "MCP tools to check for segregation"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "compliant": "boolean",
+          "score": "number",
+          "violations": "array",
+          "recommendations": "array"
+        }
+      }
+    },
+    "enforce_mcp_segregation": {
+      "description": "Enforce MCP tool segregation for an agent",
+      "parameters": {
+        "agent_id": {
+          "type": "string",
+          "description": "Agent ID"
+        },
+        "requested_tools": {
+          "type": "array",
+          "items": "string",
+          "description": "Tools requested by agent"
+        },
+        "agent_capabilities": {
+          "type": "array",
+          "items": "string",
+          "description": "Agent's declared capabilities"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "approved_tools": "array",
+          "denied_tools": "array",
+          "reason": "string"
+        }
+      }
+    },
+    "generate_skill_card": {
+      "description": "Generate A2A compliant skill card for an agent",
+      "parameters": {
+        "agent_id": {
+          "type": "string",
+          "description": "Agent ID"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": "string",
+          "description": "Agent capabilities"
+        },
+        "performance_metrics": {
+          "type": "object",
+          "description": "Agent performance data",
+          "optional": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "skill_card": "object",
+          "validation_status": "string",
+          "compliance_level": "string"
+        }
+      }
+    },
+    "blockchain_register": {
+      "description": "Register agent on blockchain",
+      "parameters": {
+        "agent_id": {
+          "type": "string",
+          "description": "Agent to register"
+        },
+        "skill_card": {
+          "type": "object",
+          "description": "Agent skill card"
+        },
+        "registry_contract": {
+          "type": "string",
+          "description": "Blockchain registry contract address",
+          "optional": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "transaction_hash": "string",
+          "block_number": "number",
+          "registry_address": "string",
+          "gas_used": "number"
+        }
+      }
+    },
+    "manage_lifecycle": {
+      "description": "Manage agent lifecycle (start, stop, restart)",
+      "parameters": {
+        "agent_id": {
+          "type": "string",
+          "description": "Agent to manage"
+        },
+        "action": {
+          "type": "string",
+          "enum": ["start", "stop", "restart", "health_check"],
+          "description": "Lifecycle action"
+        },
+        "force": {
+          "type": "boolean",
+          "description": "Force action even if unhealthy",
+          "default": false
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "status": "string",
+          "health": "object",
+          "message": "string"
+        }
+      }
+    },
+    "query_registry": {
+      "description": "Query agent registry (local and blockchain)",
+      "parameters": {
+        "filter": {
+          "type": "object",
+          "description": "Query filters",
+          "properties": {
+            "agent_type": "string",
+            "capabilities": "array",
+            "status": "string",
+            "blockchain_only": "boolean"
+          },
+          "optional": true
+        }
+      },
+      "returns": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "agent_id": "string",
+            "status": "string",
+            "capabilities": "array",
+            "blockchain_address": "string"
+          }
+        }
+      }
+    },
+    "audit_compliance": {
+      "description": "Audit all agents for A2A compliance",
+      "parameters": {
+        "include_blockchain": {
+          "type": "boolean",
+          "description": "Include blockchain verification",
+          "default": true
+        },
+        "detailed_report": {
+          "type": "boolean",
+          "description": "Generate detailed compliance report",
+          "default": false
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "compliant_agents": "array",
+          "non_compliant_agents": "array",
+          "total_score": "number",
+          "report": "object"
+        }
+      }
+    },
+    "configure_network": {
+      "description": "Configure A2A network settings",
+      "parameters": {
+        "network_config": {
+          "type": "object",
+          "description": "Network configuration",
+          "properties": {
+            "discovery_enabled": "boolean",
+            "heartbeat_interval": "number",
+            "max_agents": "number",
+            "blockchain_network": "string"
+          }
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "status": "string",
+          "applied_config": "object"
+        }
+      }
+    },
+    "monitor_health": {
+      "description": "Monitor health of all registered agents",
+      "parameters": {
+        "include_metrics": {
+          "type": "boolean",
+          "description": "Include performance metrics",
+          "default": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "healthy_agents": "array",
+          "unhealthy_agents": "array",
+          "metrics": "object",
+          "recommendations": "array"
+        }
+      }
+    }
+  },
+  "capabilities": {
+    "registration": [
+      "a2a_registration",
+      "blockchain_registration",
+      "skill_card_generation",
+      "compliance_validation"
+    ],
+    "management": [
+      "lifecycle_management",
+      "health_monitoring",
+      "performance_tracking",
+      "network_configuration"
+    ],
+    "compliance": [
+      "mcp_segregation",
+      "a2a_compliance",
+      "audit_reporting",
+      "violation_detection"
+    ],
+    "blockchain": [
+      "smart_contract_interaction",
+      "registry_management",
+      "transaction_tracking"
+    ]
+  }
+}

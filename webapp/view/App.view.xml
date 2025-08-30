@@ -1,82 +1,122 @@
 <mvc:View
     controllerName="com.rex.cryptotrading.controller.App"
     xmlns:mvc="sap.ui.core.mvc"
-    displayBlock="true"
     xmlns="sap.m"
-    xmlns:f="sap.f">
+    xmlns:tnt="sap.tnt"
+    displayBlock="true">
+    
     <Shell id="shell">
-        <App id="app">
+        <App id="app" busy="{app>/busy}" busyIndicatorDelay="0">
             <pages>
-                <f:ShellBar
-                    title="рекс.com - Crypto Trading Platform"
-                    secondTitle="Professional AI-Powered Trading"
-                    showNavButton="false"
-                    showCopilot="true"
-                    showSearch="true"
-                    showNotifications="true"
-                    notificationsNumber="2">
-                    <f:profile>
-                        <f:Avatar
-                            src="sap-icon://person-placeholder"
-                            displaySize="XS"
-                            press="onAvatarPress"/>
-                    </f:profile>
-                    <f:additionalContent>
-                        <OverflowToolbarButton
-                            icon="sap-icon://wallet"
-                            text="{= ${app>/wallet/connected} ? 'Wallet Connected' : 'Connect Wallet' }"
-                            type="{= ${app>/wallet/connected} ? 'Accept' : 'Default' }"
-                            press="onWalletPress"/>
-                    </f:additionalContent>
-                </f:ShellBar>
-                <Page
-                    showHeader="false"
-                    enableScrolling="true"
-                    class="sapUiContentPadding">
-                    <content>
-                        <f:GridContainer
-                            id="gridContainer"
-                            snapToRow="true">
-                            <f:layout>
-                                <f:GridContainerSettings
-                                    rowSize="5rem"
-                                    columnSize="5rem"
-                                    gap="1rem"/>
-                            </f:layout>
-                            <f:layoutXS>
-                                <f:GridContainerSettings
-                                    rowSize="5rem"
-                                    columnSize="5rem"
-                                    gap="0.5rem"/>
-                            </f:layoutXS>
-                            <f:items>
-                                <GenericTile
-                                    class="sapUiTinyMarginBegin sapUiTinyMarginTop"
-                                    header="{app>title}"
-                                    subheader="{app>subtitle}"
-                                    press="onTilePress"
-                                    frameType="TwoByOne">
-                                    <layoutData>
-                                        <f:GridContainerItemLayoutData
-                                            columns="4"
-                                            rows="2"/>
-                                    </layoutData>
-                                    <tileContent>
-                                        <TileContent>
-                                            <content>
-                                                <NumericContent
-                                                    value="{app>number}"
-                                                    scale="{app>unit}"
-                                                    state="{app>state}"
-                                                    icon="{app>icon}"/>
-                                            </content>
-                                        </TileContent>
-                                    </tileContent>
-                                </GenericTile>
-                            </f:items>
-                        </f:GridContainer>
-                    </content>
-                </Page>
+                <tnt:ToolPage id="toolPage" class="crypto-trading-page">
+                    <tnt:header>
+                        <tnt:ToolHeader>
+                            <Button
+                                id="sideNavigationToggleButton"
+                                icon="sap-icon://menu2"
+                                type="Transparent"
+                                press="onSideNavButtonPress">
+                                <layoutData>
+                                    <OverflowToolbarLayoutData priority="NeverOverflow"/>
+                                </layoutData>
+                            </Button>
+                            <Image 
+                                src="images/crypto-logo.svg"
+                                height="30px"
+                                alt="Crypto Trading"
+                                class="sapUiSmallMarginBegin sapUiSmallMarginEnd">
+                                <layoutData>
+                                    <OverflowToolbarLayoutData priority="NeverOverflow"/>
+                                </layoutData>
+                            </Image>
+                            <Title text="{i18n>appTitle}" level="H2">
+                                <layoutData>
+                                    <OverflowToolbarLayoutData priority="NeverOverflow"/>
+                                </layoutData>
+                            </Title>
+                            <ToolbarSpacer/>
+                            <Button
+                                icon="sap-icon://wallet"
+                                text="{= ${app>/wallet/connected} ? 'Wallet Connected' : 'Connect Wallet' }"
+                                type="{= ${app>/wallet/connected} ? 'Accept' : 'Transparent' }"
+                                press="onWalletPress">
+                                <layoutData>
+                                    <OverflowToolbarLayoutData priority="High"/>
+                                </layoutData>
+                            </Button>
+                            <Button
+                                text="Network: {app>/networkStatus/text}"
+                                type="Transparent"
+                                icon="{app>/networkStatus/icon}">
+                                <layoutData>
+                                    <OverflowToolbarLayoutData priority="High"/>
+                                </layoutData>
+                            </Button>
+                            <Button
+                                icon="sap-icon://bell"
+                                type="Transparent"
+                                press="onNotificationPress"
+                                text="{app>/notificationCount}">
+                                <layoutData>
+                                    <OverflowToolbarLayoutData priority="NeverOverflow"/>
+                                </layoutData>
+                            </Button>
+                            <Avatar
+                                initials="{app>/user/initials}"
+                                displaySize="XS"
+                                backgroundColor="Accent6"
+                                press="onAvatarPress"/>
+                        </tnt:ToolHeader>
+                    </tnt:header>
+                    
+                    <tnt:sideContent>
+                        <tnt:SideNavigation
+                            id="sideNavigation"
+                            selectedKey="{app>/selectedKey}"
+                            itemSelect="onItemSelect">
+                            <tnt:NavigationList>
+                                <tnt:NavigationListItem
+                                    text="Dashboard"
+                                    icon="sap-icon://home"
+                                    key="home"/>
+                                <tnt:NavigationListItem
+                                    text="Market Overview"
+                                    icon="sap-icon://line-chart"
+                                    key="marketOverview"/>
+                                <tnt:NavigationListItem
+                                    text="Trading"
+                                    icon="sap-icon://cart"
+                                    key="trading"/>
+                                <tnt:NavigationListItem
+                                    text="Technical Analysis"
+                                    icon="sap-icon://business-objects-experience"
+                                    key="technicalAnalysis"/>
+                                <tnt:NavigationListItem
+                                    text="Portfolio"
+                                    icon="sap-icon://pie-chart"
+                                    key="portfolio"/>
+                                <tnt:NavigationListItem
+                                    text="News"
+                                    icon="sap-icon://newspaper"
+                                    key="news"/>
+                                <tnt:NavigationListItem
+                                    text="Risk Management"
+                                    icon="sap-icon://shield"
+                                    key="risk"/>
+                                <tnt:NavigationListItem
+                                    text="Settings"
+                                    icon="sap-icon://action-settings"
+                                    key="settings"/>
+                            </tnt:NavigationList>
+                        </tnt:SideNavigation>
+                    </tnt:sideContent>
+                    
+                    <tnt:mainContents>
+                        <NavContainer id="navContainer">
+                            <!-- Pages will be added here by the router -->
+                        </NavContainer>
+                    </tnt:mainContents>
+                </tnt:ToolPage>
             </pages>
         </App>
     </Shell>

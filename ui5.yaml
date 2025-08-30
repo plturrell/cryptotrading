@@ -1,29 +1,71 @@
-specVersion: '4.0'
+specVersion: "3.1"
 metadata:
-  name: com.rex.trading.launchpad
+  name: com.rex.cryptotrading
+  copyright: |-
+   Enterprise Crypto Trading Platform
+    ${copyright}
 type: application
 framework:
-  name: OpenUI5
-  version: 1.108.0
+  name: SAPUI5
+  version: "1.120.0"
   libraries:
     - name: sap.m
     - name: sap.f
+    - name: sap.tnt
     - name: sap.ui.core
-    - name: themelib_sap_horizon
+    - name: sap.ui.comp
+    - name: sap.ui.table
+    - name: sap.uxap
+    - name: sap.viz
+    - name: sap.suite.ui.microchart
+    - name: sap.ui.fl
+resources:
+  configuration:
+    paths:
+      webapp: webapp
 server:
   customMiddleware:
     - name: fiori-tools-proxy
       afterMiddleware: compression
       configuration:
         ignoreCertError: false
+        ui5:
+          path:
+            - /resources
+            - /test-resources
+          url: https://ui5.sap.com
         backend:
-          - path: /api
-            url: http://localhost:5000
-    - name: fiori-tools-servestatic
+          - path: /api/v1
+            url: http://localhost:4004
+          - path: /odata
+            url: http://localhost:4004
+          - path: /socket.io
+            url: http://localhost:4004
+          - path: /sap/bc/lrep
+            url: http://localhost:4004
+            destination: local-cap-server
+    - name: fiori-tools-appreload
       afterMiddleware: compression
       configuration:
-        paths:
-          - path: /css
-            src: webapp/css
-          - path: /images
-            src: webapp/images
+        port: 35729
+        path: webapp
+        delay: 300
+builder:
+  resources:
+    excludes:
+      - "/test/**"
+      - "/localService/**"
+  customTasks:
+    - name: ui5-task-minify
+      afterTask: replaceVersion
+      configuration:
+        minify:
+          js: true
+          css: true
+          html: true
+    - name: ui5-task-zipper
+      afterTask: generateCachebusterInfo
+      configuration:
+        archiveName: cryptoTradingEnterprise
+        additionalFiles:
+          - xs-app.json
