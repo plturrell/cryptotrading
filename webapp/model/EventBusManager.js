@@ -9,26 +9,26 @@ sap.ui.define([
      * Provides structured event communication between components
      */
     return BaseObject.extend("com.rex.cryptotrading.model.EventBusManager", {
-        
+
         constructor: function() {
             BaseObject.prototype.constructor.apply(this, arguments);
             this._oEventBus = EventBus.getInstance();
             this._mEventChannels = {};
             this._aSubscriptions = [];
         },
-        
+
         /**
          * Event channel definitions following SAP naming conventions
          */
         CHANNELS: {
             MARKET: "market",
-            WALLET: "wallet", 
+            WALLET: "wallet",
             ML: "ml",
             UI: "ui",
             NAVIGATION: "navigation",
             SYSTEM: "system"
         },
-        
+
         /**
          * Event types for each channel
          */
@@ -74,7 +74,7 @@ sap.ui.define([
                 PERFORMANCE_METRIC: "performanceMetric"
             }
         },
-        
+
         /**
          * Publish event to specific channel
          * @param {string} sChannel - Event channel
@@ -82,16 +82,16 @@ sap.ui.define([
          * @param {Object} oData - Event data
          */
         publish: function(sChannel, sEvent, oData) {
-            var oEventData = this._enhanceEventData(oData, sChannel, sEvent);
-            
+            const oEventData = this._enhanceEventData(oData, sChannel, sEvent);
+
             this._oEventBus.publish(sChannel, sEvent, oEventData);
-            
+
             // Log event for debugging (in development)
-            if (window.location.hostname === 'localhost') {
-                console.log(`[EventBus] ${sChannel}.${sEvent}:`, oEventData);
+            if (window.location.hostname === "localhost") {
+                // [EventBus] ${sChannel}.${sEvent}: oEventData
             }
         },
-        
+
         /**
          * Subscribe to events on a channel
          * @param {string} sChannel - Event channel
@@ -102,8 +102,8 @@ sap.ui.define([
          */
         subscribe: function(sChannel, sEvent, fnCallback, oContext) {
             this._oEventBus.subscribe(sChannel, sEvent, fnCallback, oContext);
-            
-            var oSubscription = {
+
+            const oSubscription = {
                 channel: sChannel,
                 event: sEvent,
                 callback: fnCallback,
@@ -114,25 +114,25 @@ sap.ui.define([
                     this._removeSubscription(oSubscription);
                 }
             };
-            
+
             this._aSubscriptions.push(oSubscription);
             return oSubscription;
         },
-        
+
         /**
-         * Unsubscribe from all events for a context
+         * Unsubscribe from all events for a contex
          * @param {Object} oContext - Context to unsubscribe
          */
         unsubscribeAll: function(oContext) {
-            var aToRemove = this._aSubscriptions.filter(sub => sub.context === oContext);
-            
+            const aToRemove = this._aSubscriptions.filter(sub => sub.context === oContext);
+
             aToRemove.forEach(sub => {
                 this._oEventBus.unsubscribe(sub.channel, sub.event, sub.callback, sub.context);
             });
-            
+
             this._aSubscriptions = this._aSubscriptions.filter(sub => sub.context !== oContext);
         },
-        
+
         /**
          * Market-specific event publishers
          */
@@ -143,7 +143,7 @@ sap.ui.define([
                 updateTime: new Date().toISOString()
             });
         },
-        
+
         publishPriceChanged: function(sSymbol, nOldPrice, nNewPrice) {
             this.publish(this.CHANNELS.MARKET, this.EVENTS.MARKET.PRICE_CHANGED, {
                 symbol: sSymbol,
@@ -153,7 +153,7 @@ sap.ui.define([
                 changePercent: ((nNewPrice - nOldPrice) / nOldPrice * 100).toFixed(2)
             });
         },
-        
+
         /**
          * Walvar-specific event publishers
          */
@@ -165,7 +165,7 @@ sap.ui.define([
                 timestamp: new Date().toISOString()
             });
         },
-        
+
         publishBalanceUpdated: function(oBalances) {
             this.publish(this.CHANNELS.WALLET, this.EVENTS.WALLET.BALANCE_UPDATED, {
                 balances: oBalances,
@@ -173,7 +173,7 @@ sap.ui.define([
                 timestamp: new Date().toISOString()
             });
         },
-        
+
         /**
          * ML-specific event publishers
          */
@@ -184,7 +184,7 @@ sap.ui.define([
                 timestamp: new Date().toISOString()
             });
         },
-        
+
         publishModelTrained: function(sModel, oMetrics) {
             this.publish(this.CHANNELS.ML, this.EVENTS.ML.MODEL_TRAINED, {
                 modelName: sModel,
@@ -192,7 +192,7 @@ sap.ui.define([
                 timestamp: new Date().toISOString()
             });
         },
-        
+
         /**
          * UI-specific event publishers
          */
@@ -204,7 +204,7 @@ sap.ui.define([
                 timestamp: new Date().toISOString()
             });
         },
-        
+
         publishLoadingState: function(bLoading, sComponent, sOperation) {
             this.publish(this.CHANNELS.UI, this.EVENTS.UI.LOADING_STATE, {
                 loading: bLoading,
@@ -213,7 +213,7 @@ sap.ui.define([
                 timestamp: new Date().toISOString()
             });
         },
-        
+
         /**
          * System-specific event publishers
          */
@@ -223,7 +223,7 @@ sap.ui.define([
                 timestamp: new Date().toISOString()
             });
         },
-        
+
         publishError: function(oError, sComponent, sOperation) {
             this.publish(this.CHANNELS.SYSTEM, this.EVENTS.SYSTEM.ERROR_GLOBAL, {
                 error: oError,
@@ -233,7 +233,7 @@ sap.ui.define([
                 severity: this._getErrorSeverity(oError)
             });
         },
-        
+
         /**
          * Convenience method for subscribing to multiple events
          * @param {Object} mEventHandlers - Map of channel.event to handler
@@ -241,39 +241,39 @@ sap.ui.define([
          * @returns {Array} Array of subscription objects
          */
         subscribeToEvents: function(mEventHandlers, oContext) {
-            var aSubscriptions = [];
-            
+            const aSubscriptions = [];
+
             Object.keys(mEventHandlers).forEach(sEventKey => {
-                var [sChannel, sEvent] = sEventKey.split('.');
-                var fnHandler = mEventHandlers[sEventKey];
-                
+                const [sChannel, sEvent] = sEventKey.split(".");
+                const fnHandler = mEventHandlers[sEventKey];
+
                 if (sChannel && sEvent && fnHandler) {
-                    var oSub = this.subscribe(sChannel, sEvent, fnHandler, oContext);
+                    const oSub = this.subscribe(sChannel, sEvent, fnHandler, oContext);
                     aSubscriptions.push(oSub);
                 }
             });
-            
+
             return aSubscriptions;
         },
-        
+
         /**
          * Get subscription statistics
          */
         getSubscriptionStats: function() {
-            var mStats = {};
-            
+            const mStats = {};
+
             this._aSubscriptions.forEach(sub => {
-                var sKey = `${sub.channel}.${sub.event}`;
+                const sKey = `${sub.channel}.${sub.event}`;
                 mStats[sKey] = (mStats[sKey] || 0) + 1;
             });
-            
+
             return {
                 totalSubscriptions: this._aSubscriptions.length,
                 byEvent: mStats,
                 channels: Object.keys(this.CHANNELS)
             };
         },
-        
+
         /**
          * Enhance event data with metadata
          * @private
@@ -288,7 +288,7 @@ sap.ui.define([
                 }
             });
         },
-        
+
         /**
          * Calculate total portfolio value
          * @private
@@ -299,17 +299,17 @@ sap.ui.define([
                 return total + (parseFloat(balance) || 0);
             }, 0);
         },
-        
+
         /**
          * Determine error severity
          * @private
          */
         _getErrorSeverity: function(oError) {
-            if (oError.name === 'NetworkError') return 'high';
-            if (oError.name === 'ValidationError') return 'medium';
-            return 'low';
+            if (oError.name === "NetworkError") return "high";
+            if (oError.name === "ValidationError") return "medium";
+            return "low";
         },
-        
+
         /**
          * Get next sequence number
          * @private
@@ -318,18 +318,18 @@ sap.ui.define([
             this._iSequence = (this._iSequence || 0) + 1;
             return this._iSequence;
         },
-        
+
         /**
          * Remove subscription from tracking
          * @private
          */
         _removeSubscription: function(oSubscription) {
-            var iIndex = this._aSubscriptions.indexOf(oSubscription);
+            const iIndex = this._aSubscriptions.indexOf(oSubscription);
             if (iIndex > -1) {
                 this._aSubscriptions.splice(iIndex, 1);
             }
         },
-        
+
         /**
          * Cleanup all subscriptions
          */
@@ -338,7 +338,7 @@ sap.ui.define([
                 this._oEventBus.unsubscribe(sub.channel, sub.event, sub.callback, sub.context);
             });
             this._aSubscriptions = [];
-            
+
             BaseObject.prototype.destroy.apply(this, arguments);
         }
     });

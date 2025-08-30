@@ -84,11 +84,11 @@ sap.ui.define([
             const subscription = this._subscriptions.get(subscriptionId);
             if (subscription) {
                 this._subscriptions.delete(subscriptionId);
-                
+
                 // Check if no more subscriptions for this symbol
                 const hasOtherSubs = Array.from(this._subscriptions.values())
                     .some(sub => sub.symbol === subscription.symbol);
-                
+
                 if (!hasOtherSubs && this._isConnected && this._websocket) {
                     this._sendUnsubscription(subscription.symbol);
                 }
@@ -102,8 +102,8 @@ sap.ui.define([
          */
         async getMarketData(symbol) {
             const sanitizedSymbol = SecurityUtils.sanitizeData(symbol).toUpperCase();
-            
-            // Check cache first
+
+            // Check cache firs
             const cachedData = this._cache.get(sanitizedSymbol);
             if (cachedData && this._isCacheValid(cachedData)) {
                 return Promise.resolve(cachedData.data);
@@ -120,7 +120,7 @@ sap.ui.define([
 
                 const data = await response.json();
                 const marketData = this._processMarketData(data);
-                
+
                 // Cache the data
                 this._cache.set(sanitizedSymbol, {
                     data: marketData,
@@ -144,7 +144,7 @@ sap.ui.define([
         async getHistoricalData(symbol, timeframe = "1h", limit = 100) {
             const sanitizedSymbol = SecurityUtils.sanitizeData(symbol).toUpperCase();
             const sanitizedTimeframe = SecurityUtils.sanitizeData(timeframe);
-            const sanitizedLimit = Math.min(Math.max(parseInt(limit) || 100, 1), 1000);
+            const sanitizedLimit = Math.min(Math.max(parseInt(limit, 10) || 100, 1), 1000);
 
             try {
                 const response = await fetch(
@@ -161,9 +161,9 @@ sap.ui.define([
                 const data = await response.json();
                 return this._processHistoricalData(data);
             } catch (error) {
-                ErrorHandler.handleMarketDataError(error, { 
-                    symbol: sanitizedSymbol, 
-                    timeframe: sanitizedTimeframe 
+                ErrorHandler.handleMarketDataError(error, {
+                    symbol: sanitizedSymbol,
+                    timeframe: sanitizedTimeframe
                 });
                 throw error;
             }
@@ -223,12 +223,12 @@ sap.ui.define([
         _initializeWebSocket() {
             try {
                 this._websocket = new WebSocket(this._config.wsUrl);
-                
+
                 this._websocket.onopen = () => {
                     this._isConnected = true;
                     this._reconnectAttempts = 0;
                     this._eventBus.publish("MarketData", "Connected", {});
-                    
+
                     // Resubscribe to all active subscriptions
                     this._resubscribeAll();
                 };
@@ -264,7 +264,7 @@ sap.ui.define([
             try {
                 const data = JSON.parse(event.data);
                 const processedData = this._processMarketData(data);
-                
+
                 if (processedData.symbol) {
                     // Update cache
                     this._cache.set(processedData.symbol, {
@@ -294,7 +294,7 @@ sap.ui.define([
                 high: parseFloat(rawData.h || rawData.high || 0),
                 low: parseFloat(rawData.l || rawData.low || 0),
                 open: parseFloat(rawData.o || rawData.open || 0),
-                timestamp: parseInt(rawData.E || rawData.timestamp || Date.now())
+                timestamp: parseInt(rawData.E || rawData.timestamp || Date.now(), 10)
             };
         },
 
@@ -308,7 +308,7 @@ sap.ui.define([
             }
 
             return rawData.map(item => ({
-                timestamp: parseInt(item[0] || item.timestamp),
+                timestamp: parseInt(item[0] || item.timestamp, 10),
                 open: parseFloat(item[1] || item.open),
                 high: parseFloat(item[2] || item.high),
                 low: parseFloat(item[3] || item.low),
@@ -342,7 +342,7 @@ sap.ui.define([
             for (const subscription of this._subscriptions.values()) {
                 symbols.add(subscription.symbol);
             }
-            
+
             for (const symbol of symbols) {
                 this._sendSubscription(symbol);
             }
@@ -379,14 +379,14 @@ sap.ui.define([
         },
 
         /**
-         * Schedules reconnection attempt
+         * Schedules reconnection attemp
          * @private
          */
         _scheduleReconnect() {
             if (this._reconnectAttempts < this._maxReconnectAttempts) {
                 this._reconnectAttempts++;
                 const delay = this._reconnectDelay * Math.pow(2, this._reconnectAttempts - 1);
-                
+
                 setTimeout(() => {
                     this._initializeWebSocket();
                 }, delay);
@@ -431,7 +431,7 @@ sap.ui.define([
                 this._websocket.close();
                 this._websocket = null;
             }
-            
+
             this._subscriptions.clear();
             this._cache.clear();
             this._isConnected = false;

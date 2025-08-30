@@ -1,27 +1,28 @@
 sap.ui.define([
     "./BaseController",
     "sap/m/MessageToast",
-    "sap/m/MessageBox"
-], function (BaseController, MessageToast, MessageBox) {
+    "sap/m/MessageBox",
+    "../utils/Constants"
+], function (BaseController, MessageToast, MessageBox, Constants) {
     "use strict";
 
     return BaseController.extend("com.rex.cryptotrading.controller.App", {
 
         onInit: function () {
             BaseController.prototype.onInit.apply(this, arguments);
-            
+
             // Initialize app model
             this._initializeAppModel();
-            
+
             // Set up routing
             this._setupRouting();
-            
+
             // Initialize services
             this._initializeServices();
-            
+
             // Set up WebSocket connections
             this._setupWebSocketConnections();
-            
+
             // Initialize navigation
             this._initializeNavigation();
         },
@@ -44,7 +45,7 @@ sap.ui.define([
                 },
                 notificationCount: "3"
             });
-            
+
             this.getView().setModel(oAppModel, "app");
         },
 
@@ -58,12 +59,12 @@ sap.ui.define([
             const oComponent = this.getOwnerComponent();
             const oServiceRegistry = oComponent.getServiceRegistry();
             const oExtensionManager = oComponent.getExtensionManager();
-            
+
             if (oServiceRegistry) {
                 // Services are already initialized in Component.js
                 this.getLogger().info("ServiceRegistry initialized with services", oServiceRegistry.getRegisteredServices());
             }
-            
+
             if (oExtensionManager) {
                 // Extensions are already loaded in Component.js
                 this.getLogger().info("ExtensionManager initialized with plugins", oExtensionManager.getRegisteredPlugins());
@@ -84,36 +85,36 @@ sap.ui.define([
         _onRouteMatched: function (oEvent) {
             const sRouteName = oEvent.getParameter("name");
             const oAppModel = this.getView().getModel("app");
-            
+
             // Update selected navigation key based on route
             let sSelectedKey = "home";
             switch (sRouteName) {
-                case "dashboard":
-                    sSelectedKey = "home";
-                    break;
-                case "market":
-                    sSelectedKey = "marketOverview";
-                    break;
-                case "trading":
-                    sSelectedKey = "trading";
-                    break;
-                case "analytics":
-                    sSelectedKey = "technicalAnalysis";
-                    break;
-                case "portfolio":
-                    sSelectedKey = "portfolio";
-                    break;
-                case "news":
-                    sSelectedKey = "news";
-                    break;
-                case "risk":
-                    sSelectedKey = "risk";
-                    break;
-                case "settings":
-                    sSelectedKey = "settings";
-                    break;
+            case "dashboard":
+                sSelectedKey = "home";
+                break;
+            case "market":
+                sSelectedKey = "marketOverview";
+                break;
+            case "trading":
+                sSelectedKey = "trading";
+                break;
+            case "analytics":
+                sSelectedKey = "technicalAnalysis";
+                break;
+            case "portfolio":
+                sSelectedKey = "portfolio";
+                break;
+            case "news":
+                sSelectedKey = "news";
+                break;
+            case "risk":
+                sSelectedKey = "risk";
+                break;
+            case "settings":
+                sSelectedKey = "settings";
+                break;
             }
-            
+
             oAppModel.setProperty("/selectedKey", sSelectedKey);
         },
 
@@ -127,40 +128,40 @@ sap.ui.define([
         onItemSelect: function (oEvent) {
             const oItem = oEvent.getParameter("item");
             const sKey = oItem.getKey();
-            
+
             // Navigate based on selected key
             switch (sKey) {
-                case "home":
-                    this.navTo("dashboard");
-                    break;
-                case "marketOverview":
-                    this.navTo("market");
-                    break;
-                case "trading":
-                    this.navTo("trading");
-                    break;
-                case "technicalAnalysis":
-                    this.navTo("analytics");
-                    break;
-                case "portfolio":
-                    this.navTo("portfolio");
-                    break;
-                case "news":
-                    this.navTo("news");
-                    break;
-                case "risk":
-                    this.navTo("risk");
-                    break;
-                case "settings":
-                    this.navTo("settings");
-                    break;
+            case "home":
+                this.navTo("dashboard");
+                break;
+            case "marketOverview":
+                this.navTo("market");
+                break;
+            case "trading":
+                this.navTo("trading");
+                break;
+            case "technicalAnalysis":
+                this.navTo("analytics");
+                break;
+            case "portfolio":
+                this.navTo("portfolio");
+                break;
+            case "news":
+                this.navTo("news");
+                break;
+            case "risk":
+                this.navTo("risk");
+                break;
+            case "settings":
+                this.navTo("settings");
+                break;
             }
         },
 
         onWalletPress: function () {
-            const oModel = this.getView().getModel("app");
+            const _oModel = this.getView().getModel("app");
             const bConnected = oModel.getProperty("/wallet/connected");
-            
+
             if (!bConnected) {
                 // Connect to MetaMask
                 this._connectWallet();
@@ -168,7 +169,7 @@ sap.ui.define([
                 // Show wallet details
                 const sAddress = oModel.getProperty("/wallet/address");
                 const fBalance = oModel.getProperty("/wallet/balance");
-                
+
                 MessageBox.information(
                     "Address: " + sAddress + "\n" +
                     "Balance: " + fBalance + " ETH",
@@ -188,25 +189,26 @@ sap.ui.define([
         },
 
         _connectWallet: function () {
-            if (typeof window.ethereum !== 'undefined') {
+            if (typeof window.ethereum !== "undefined") {
                 // MetaMask is installed
-                window.ethereum.request({ method: 'eth_requestAccounts' })
+                window.ethereum.request({ method: "eth_requestAccounts" })
                     .then(function(accounts) {
                         if (accounts.length > 0) {
-                            const oModel = this.getView().getModel("app");
+                            const _oModel = this.getView().getModel("app");
                             oModel.setProperty("/wallet/address", accounts[0]);
                             oModel.setProperty("/wallet/connected", true);
-                            
+
                             // Get balance
                             window.ethereum.request({
-                                method: 'eth_getBalance',
-                                params: [accounts[0], 'latest']
+                                method: "eth_getBalance",
+                                params: [accounts[0], "latest"]
                             }).then(function(balance) {
                                 // Convert from wei to ETH
-                                const ethBalance = parseInt(balance, 16) / 1e18;
-                                oModel.setProperty("/wallet/balance", ethBalance.toFixed(4));
+                                const ethBalance = parseInt(balance, Constants.NUMBERS.HEX_BASE) /
+                                    Constants.NUMBERS.WEI_TO_ETH;
+                                oModel.setProperty("/wallet/balance", ethBalance.toFixed(Constants.NUMBERS.DECIMAL_PLACES));
                             });
-                            
+
                             MessageToast.show("Wallet connected successfully!");
                         }
                     }.bind(this))

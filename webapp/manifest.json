@@ -349,6 +349,26 @@
                     "name": "history",
                     "pattern": "history",
                     "target": "history"
+                },
+                {
+                    "name": "mcpMonitoring",
+                    "pattern": "mcp-monitoring",
+                    "target": "mcpMonitoring"
+                },
+                {
+                    "name": "awsDataExchange",
+                    "pattern": "aws-data-exchange",
+                    "target": "awsDataExchange"
+                },
+                {
+                    "name": "dataLoading",
+                    "pattern": "data-loading",
+                    "target": "dataLoading"
+                },
+                {
+                    "name": "newsPanel",
+                    "pattern": "news",
+                    "target": "newsPanel"
                 }
             ],
             "targets": {
@@ -410,6 +430,26 @@
                 "history": {
                     "viewType": "XML",
                     "viewName": "History",
+                    "viewLevel": 2
+                },
+                "mcpMonitoring": {
+                    "viewType": "XML",
+                    "viewName": "MCPMonitoring",
+                    "viewLevel": 2
+                },
+                "awsDataExchange": {
+                    "viewType": "XML",
+                    "viewName": "AWSDataExchange",
+                    "viewLevel": 2
+                },
+                "dataLoading": {
+                    "viewType": "XML",
+                    "viewName": "DataLoading",
+                    "viewLevel": 2
+                },
+                "newsPanel": {
+                    "viewType": "XML",
+                    "viewName": "NewsPanel",
                     "viewLevel": 2
                 },
                 "notFound": {

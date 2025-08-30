@@ -8,35 +8,40 @@ sap.ui.define([
     "use strict";
 
     return BaseController.extend("com.rex.cryptotrading.controller.MarketOverview", {
-        
+
         onInit: function() {
-            // Call parent onInit
+            // Call parent onIni
             BaseController.prototype.onInit.apply(this, arguments);
-            
+
             // Initialize OData model for Trading Service
             this._oTradingModel = this.getOwnerComponent().getModel("trading");
-            
+
             // Initialize EventBus and data managers (keep for backward compatibility)
             this._oEventBusManager = sap.ui.getCore().EventBusManager;
             this._oMarketModel = sap.ui.getCore().getModel("market");
-            
+
             // Initialize local models
             this._initializeModels();
-            
+
             // Setup event handlers
             this._setupEventHandlers();
-            
+
             // Load initial market data from CDS service
             this._loadMarketDataFromCDS();
         },
-        
+
         onExit: function() {
             // Cleanup EventBus subscriptions
             if (this._oEventBusManager) {
                 this._oEventBusManager.unsubscribeAll(this);
             }
+
+            // Cleanup refresh timer
+            if (this._refreshTimer) {
+                clearInterval(this._refreshTimer);
+            }
         },
-        
+
         _setupEventHandlers: function() {
             // Subscribe to market data updates
             this._oEventBusManager.subscribe(
@@ -45,7 +50,7 @@ sap.ui.define([
                 this._onMarketDataUpdated.bind(this),
                 this
             );
-            
+
             // Subscribe to price changes
             this._oEventBusManager.subscribe(
                 this._oEventBusManager.CHANNELS.MARKET,
@@ -54,15 +59,15 @@ sap.ui.define([
                 this
             );
         },
-        
+
         _onMarketDataUpdated: function(sChannel, sEvent, oData) {
             // Update local view model when market data changes
-            var oMarketModel = this.getView().getModel("market");
-            var oMarketData = oData.marketData || {};
-            
+            const oMarketModel = this.getView().getModel("market");
+            const oMarketData = oData.marketData || {};
+
             // Update model with new data
             Object.keys(oMarketData).forEach(function(sSymbol) {
-                var oSymbolData = oMarketData[sSymbol];
+                const oSymbolData = oMarketData[sSymbol];
                 oMarketModel.setProperty("/" + sSymbol.toLowerCase(), {
                     price: oSymbolData.price,
                     change24h: oSymbolData.priceChange24h,
@@ -72,28 +77,28 @@ sap.ui.define([
                     low24h: oSymbolData.low24h
                 });
             });
-            
+
             MessageToast.show("Market data updated");
         },
-        
+
         _onPriceChanged: function(sChannel, sEvent, oData) {
             // Handle individual price changes
-            console.log("Price changed for " + oData.symbol + ": " + oData.newPrice);
+            // Price changed for " + oData.symbol + ": " + oData.newPrice
         },
-        
+
         _initializeModels: function() {
             // Create local view model for this controller
-            var oViewModel = new JSONModel({
+            const oViewModel = new JSONModel({
                 refreshing: false,
                 lastRefresh: null,
                 selectedTimeframe: "24h",
                 viewMode: "grid" // or "list"
             });
             this.getView().setModel(oViewModel, "view");
-            
-            // The market model is already set globally, just reference it
+
+            // The market model is already set globally, just reference i
             // Local initialization with default data
-            var oLocalMarketModel = new JSONModel({
+            const oLocalMarketModel = new JSONModel({
                 btc: { price: 0, change24h: 0 },
                 eth: { price: 0, change24h: 0 },
                 bnb: { price: 0, change24h: 0 },
@@ -102,11 +107,11 @@ sap.ui.define([
             });
             this.getView().setModel(oLocalMarketModel, "localMarket");
         },
-        
+
         _loadMarketData: function() {
             // Use CDS service for market data
             this._loadMarketDataFromCDS();
-            
+
             // Also trigger EventBus for backward compatibility
             if (this._oEventBusManager) {
                 this._oEventBusManager.publish(
@@ -116,10 +121,10 @@ sap.ui.define([
                 );
             }
         },
-        
+
         _loadMarketDataFromCDS: function() {
-            var that = this;
-            
+            const _that = this;
+
             // Call MarketDataService to get real market data (READ ONLY)
             jQuery.ajax({
                 url: "/api/odata/v4/MarketDataService/MarketData",
@@ -132,20 +137,20 @@ sap.ui.define([
                 }
             });
         },
-        
+
         _updateMarketData: function(aMarketData) {
-            var oLocalMarketModel = this.getView().getModel("localMarket");
+            const oLocalMarketModel = this.getView().getModel("localMarket");
             if (oLocalMarketModel && aMarketData) {
                 // Update local model with market data
                 aMarketData.forEach(function(oData) {
-                    var sKey = oData.symbol.toLowerCase();
+                    const sKey = oData.symbol.toLowerCase();
                     oLocalMarketModel.setProperty("/" + sKey, oData);
                 });
             }
         },
-        
+
         _updateMarketSummary: function(oSummary) {
-            var oViewModel = this.getView().getModel("view");
+            const oViewModel = this.getView().getModel("view");
             if (oViewModel && oSummary) {
                 oViewModel.setProperty("/marketCap", oSummary.totalMarketCap);
                 oViewModel.setProperty("/volume24h", oSummary.totalVolume24h);
@@ -153,12 +158,12 @@ sap.ui.define([
                 oViewModel.setProperty("/fearGreedIndex", oSummary.fearGreedIndex);
             }
         },
-        
+
         _updateTradingPairs: function(aTradingPairs) {
-            var oLocalMarketModel = this.getView().getModel("localMarket");
+            const oLocalMarketModel = this.getView().getModel("localMarket");
             if (oLocalMarketModel && aTradingPairs) {
                 aTradingPairs.forEach(function(oPair) {
-                    var sKey = oPair.base_currency.toLowerCase();
+                    const sKey = oPair.base_currency.toLowerCase();
                     oLocalMarketModel.setProperty("/" + sKey, {
                         price: oPair.current_price || 0,
                         change24h: oPair.price_change_24h || 0,
@@ -169,76 +174,70 @@ sap.ui.define([
                 });
             }
         },
-        
+
         onRefreshPress: function() {
             // Manual refresh button handler
             this._loadMarketData();
         },
-        
+
         onSymbolPress: function(oEvent) {
             // Handle symbol tile press
-            var oBindingContext = oEvent.getSource().getBindingContext("market");
-            var sSymbol = oBindingContext.getProperty("symbol");
-            
+            const oBindingContext = oEvent.getSource().getBindingContext("market");
+            const sSymbol = oBindingContext.getProperty("symbol");
+
             MessageToast.show("Viewing details for " + sSymbol);
-            
+
             // Could navigate to detailed view
             // this.getRouter().navTo("symbolDetail", { symbol: sSymbol });
         },
-        
-        onExit: function() {
-            if (this._refreshTimer) {
-                clearInterval(this._refreshTimer);
-            }
-        },
-        
+
         onNavBack: function() {
-            var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+            const oRouter = sap.ui.core.UIComponent.getRouterFor(this);
             oRouter.navTo("launchpad");
         },
-        
+
         onRefreshData: function() {
             this._loadMarketData();
             MessageToast.show("Market data refreshed");
         },
-        
+
         onCryptoPress: function(oEvent) {
-            var oContext = oEvent.getSource().getBindingContext("market");
-            var sCrypto = oContext.getProperty("symbol");
+            const oContext = oEvent.getSource().getBindingContext("market");
+            const sCrypto = oContext.getProperty("symbol");
             MessageToast.show("Opening " + sCrypto + " details");
         },
-        
+
         onBuyCrypto: function(oEvent) {
-            var oContext = oEvent.getSource().getBindingContext("market");
-            var sCrypto = oContext.getProperty("symbol");
-            
+            const oContext = oEvent.getSource().getBindingContext("market");
+            const sCrypto = oContext.getProperty("symbol");
+
             // Display market data only - no actual trading
             MessageToast.show("Viewing " + sCrypto + " market data");
-            
+
             // Navigate to detailed view or refresh data
             this._loadMarketDataFromCDS();
         },
-        
+
         // Formatters
         formatPriceColor: function(fChange) {
             if (fChange > 0) return "Good";
             if (fChange < 0) return "Error";
             return "Neutral";
         },
-        
+
         formatIndicator: function(fChange) {
             if (fChange > 0) return "Up";
             if (fChange < 0) return "Down";
             return "None";
         },
-        
+
         formatSentimentColor: function(iIndex) {
             if (iIndex >= 75) return "Good";
             if (iIndex >= 50) return "Critical";
             if (iIndex >= 25) return "Error";
             return "Error";
         },
-        
+
         formatChangeState: function(fChange) {
             if (fChange > 0) return "Success";
             if (fChange < 0) return "Error";

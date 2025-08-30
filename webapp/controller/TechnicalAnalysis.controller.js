@@ -11,12 +11,12 @@ sap.ui.define([
     return BaseController.extend("com.rex.cryptotrading.controller.TechnicalAnalysis", {
 
         onInit: function () {
-            // Call parent onInit
+            // Call parent onIni
             BaseController.prototype.onInit.apply(this, arguments);
-            
+
             // Initialize OData model for Trading Service
             this._oTradingModel = this.getOwnerComponent().getModel("trading");
-            
+
             this._initializeModel();
             this._setupRouting();
             this._loadInitialData();
@@ -30,7 +30,7 @@ sap.ui.define([
         },
 
         _initializeModel: function () {
-            const oModel = new JSONModel({
+            const _oModel = new JSONModel({
                 selectedSymbol: "BTC-USD",
                 selectedTimeframe: "1d",
                 availableSymbols: [
@@ -134,7 +134,7 @@ sap.ui.define([
                 isLoading: false,
                 lastUpdated: new Date()
             });
-            
+
             this.getView().setModel(oModel, "ta");
         },
 
@@ -165,12 +165,12 @@ sap.ui.define([
         },
 
         _loadTechnicalAnalysis: function () {
-            const oModel = this.getModel("ta");
+            const _oModel = this.getModel("ta");
             const sSymbol = oModel.getProperty("/selectedSymbol");
             const sTimeframe = oModel.getProperty("/selectedTimeframe");
-            
+
             oModel.setProperty("/isLoading", true);
-            
+
             // Call backend Technical Analysis API
             this._callTechnicalAnalysisAPI(sSymbol, sTimeframe)
                 .then((oData) => {
@@ -189,8 +189,8 @@ sap.ui.define([
 
         _callTechnicalAnalysisAPI: function (sSymbol, sTimeframe) {
             return new Promise((resolve, reject) => {
-                // Call the backend Technical Analysis STRAND agent
-                fetch(`/api/technical-analysis/comprehensive`, {
+                // Call the backend Technical Analysis STRAND agen
+                fetch("/api/technical-analysis/comprehensive", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
@@ -204,52 +204,33 @@ sap.ui.define([
                         include_performance: true
                     })
                 })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    resolve(data);
-                })
-                .catch(error => {
-                    reject(error);
-                });
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        resolve(data);
+                    })
+                    .catch(error => {
+                        reject(error);
+                    });
             });
         },
 
         _updateModelWithAnalysis: function (oData) {
             const oModel = this.getModel("ta");
-            
-            // Update current price and indicators
-            if (oData.current_price) {
-                oModel.setProperty("/currentPrice", oData.current_price.toFixed(2));
-                oModel.setProperty("/priceIndicator", this._getPriceIndicator(oData.price_change_24h));
-                oModel.setProperty("/priceColor", this._getPriceColor(oData.price_change_24h));
-            }
-            
-            // Update technical indicators
-            if (oData.indicators) {
-                const indicators = oData.indicators;
-                oModel.setProperty("/indicators/RSI", indicators.RSI ? indicators.RSI.toFixed(1) : 0);
-                oModel.setProperty("/indicators/RSI_indicator", this._getRSIIndicator(indicators.RSI));
-                oModel.setProperty("/indicators/RSI_color", this._getRSIColor(indicators.RSI));
-            }
-            
-            // Update analysis summary
-            if (oData.analysis_summary) {
-                const analysis = oData.analysis_summary;
-                oModel.setProperty("/analysis/confidence_score", analysis.confidence_score ? analysis.confidence_score.toFixed(1) : 0);
-                oModel.setProperty("/analysis/sentiment_indicator", this._getSentimentIndicator(analysis.overall_sentiment));
-                oModel.setProperty("/analysis/sentiment_color", this._getSentimentColor(analysis.overall_sentiment));
-            }
-            
+
+            this._updatePriceData(oModel, oData);
+            this._updateTechnicalIndicators(oModel, oData);
+            this._updateAnalysisSummary(oModel, oData);
+
             // Update chart data
             if (oData.chart_data) {
                 oModel.setProperty("/chartData", oData.chart_data);
             }
-            
+
             // Update signals
             if (oData.signals) {
                 const formattedSignals = oData.signals.map(signal => ({
@@ -257,11 +238,11 @@ sap.ui.define([
                     signalState: this._getSignalState(signal.signal),
                     strengthPercent: signal.strength * 100,
                     strengthState: this._getStrengthState(signal.strength),
-                    hasInsight: !!signal.ai_insight
+                    hasInsight: Boolean(signal.ai_insight)
                 }));
                 oModel.setProperty("/signals", formattedSignals);
             }
-            
+
             // Update patterns
             if (oData.patterns) {
                 const formattedPatterns = oData.patterns.map(pattern => ({
@@ -270,7 +251,7 @@ sap.ui.define([
                 }));
                 oModel.setProperty("/patterns", formattedPatterns);
             }
-            
+
             // Update support/resistance levels
             if (oData.support_resistance) {
                 const formattedLevels = oData.support_resistance.map(level => ({
@@ -280,7 +261,7 @@ sap.ui.define([
                 }));
                 oModel.setProperty("/supportResistance", formattedLevels);
             }
-            
+
             // Update AI insights
             if (oData.ai_insights) {
                 const insights = oData.ai_insights;
@@ -294,7 +275,7 @@ sap.ui.define([
                     confidence: insights.confidence || 0
                 });
             }
-            
+
             // Update performance metrics
             if (oData.performance_metrics) {
                 const formattedMetrics = oData.performance_metrics.map(metric => ({
@@ -321,7 +302,7 @@ sap.ui.define([
         onNavBack: function () {
             const oHistory = History.getInstance();
             const sPreviousHash = oHistory.getPreviousHash();
-            
+
             if (sPreviousHash !== undefined) {
                 window.history.go(-1);
             } else {
@@ -331,9 +312,9 @@ sap.ui.define([
         },
 
         onTabSelect: function (oEvent) {
-            const sSelectedKey = oEvent.getParameter("selectedKey");
+            const _sSelectedKey = oEvent.getParameter("selectedKey");
             // Handle tab-specific loading if needed
-            console.log("Selected tab:", sSelectedKey);
+            // Selected tab: _sSelectedKey
         },
 
         onChartSelect: function (oEvent) {
@@ -347,7 +328,7 @@ sap.ui.define([
         onSignalPress: function (oEvent) {
             const oBindingContext = oEvent.getSource().getBindingContext("ta");
             const oSignal = oBindingContext.getObject();
-            
+
             MessageBox.information(
                 `Signal: ${oSignal.signal}\nStrength: ${oSignal.strength}\nValue: ${oSignal.value}`,
                 {
@@ -359,7 +340,7 @@ sap.ui.define([
         onInsightPress: function (oEvent) {
             const oBindingContext = oEvent.getSource().getBindingContext("ta");
             const oSignal = oBindingContext.getObject();
-            
+
             if (oSignal.ai_insight) {
                 MessageBox.information(oSignal.ai_insight, {
                     title: `AI Insight: ${oSignal.indicator}`
@@ -370,7 +351,7 @@ sap.ui.define([
         onPatternPress: function (oEvent) {
             const oBindingContext = oEvent.getSource().getBindingContext("ta");
             const oPattern = oBindingContext.getObject();
-            
+
             MessageBox.information(
                 `${oPattern.description}\n\nConfidence: ${oPattern.confidence}%\nReliability: ${oPattern.reliability}`,
                 {
@@ -380,10 +361,10 @@ sap.ui.define([
         },
 
         onExportAnalysis: function () {
-            const oModel = this.getModel("ta");
+            const _oModel = this.getModel("ta");
             const aSignals = oModel.getProperty("/signals");
             const aPatterns = oModel.getProperty("/patterns");
-            
+
             const aExportData = [
                 ...aSignals.map(signal => ({
                     Type: "Signal",
@@ -400,7 +381,7 @@ sap.ui.define([
                     Details: pattern.description
                 }))
             ];
-            
+
             const oSpreadsheet = new Spreadsheet({
                 workbook: {
                     columns: [
@@ -412,9 +393,9 @@ sap.ui.define([
                     ]
                 },
                 dataSource: aExportData,
-                fileName: `TA_Analysis_${oModel.getProperty("/selectedSymbol")}_${new Date().toISOString().split('T')[0]}.xlsx`
+                fileName: `TA_Analysis_${oModel.getProperty("/selectedSymbol")}_${new Date().toISOString().split("T")[0]}.xlsx`
             });
-            
+
             oSpreadsheet.build();
             MessageToast.show("Analysis exported successfully");
         },
@@ -492,6 +473,44 @@ sap.ui.define([
             if (sRegime === "Bull Market") return "Success";
             if (sRegime === "Bear Market") return "Error";
             return "Warning";
+        },
+
+        /**
+         * Update price-related data in model
+         */
+        _updatePriceData: function(oModel, oData) {
+            if (oData.current_price) {
+                oModel.setProperty("/currentPrice", oData.current_price.toFixed(2));
+                oModel.setProperty("/priceIndicator", this._getPriceIndicator(oData.price_change_24h));
+                oModel.setProperty("/priceColor", this._getPriceColor(oData.price_change_24h));
+            }
+        },
+
+        /**
+         * Update technical indicators in model
+         */
+        _updateTechnicalIndicators: function(oModel, oData) {
+            if (oData.indicators) {
+                const indicators = oData.indicators;
+                oModel.setProperty("/indicators/RSI", indicators.RSI ? indicators.RSI.toFixed(1) : 0);
+                oModel.setProperty("/indicators/RSI_indicator", this._getRSIIndicator(indicators.RSI));
+                oModel.setProperty("/indicators/RSI_color", this._getRSIColor(indicators.RSI));
+            }
+        },
+
+        /**
+         * Update analysis summary in model
+         */
+        _updateAnalysisSummary: function(oModel, oData) {
+            if (oData.analysis_summary) {
+                const analysis = oData.analysis_summary;
+                oModel.setProperty("/analysis/confidence_score",
+                    analysis.confidence_score ? analysis.confidence_score.toFixed(1) : 0);
+                oModel.setProperty("/analysis/sentiment_indicator",
+                    this._getSentimentIndicator(analysis.overall_sentiment));
+                oModel.setProperty("/analysis/sentiment_color",
+                    this._getSentimentColor(analysis.overall_sentiment));
+            }
         }
     });
 });

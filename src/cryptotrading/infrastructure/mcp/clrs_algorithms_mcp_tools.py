@@ -1,10 +1,10 @@
 """
 CLRS Algorithms MCP Tools - All search, sort, and algorithmic calculations
 """
-import logging
-from typing import Dict, Any, List, Optional, Callable
 import json
+import logging
 from datetime import datetime
+from typing import Any, Callable, Dict, List, Optional
 
 from ...infrastructure.analysis.clrs_algorithms import CLRSSearchAlgorithms, CLRSSortingAlgorithms
 
@@ -13,12 +13,12 @@ logger = logging.getLogger(__name__)
 
 class CLRSAlgorithmsMCPTools:
     """MCP tools for CLRS algorithms and calculations"""
-    
+
     def __init__(self):
         self.search_algorithms = CLRSSearchAlgorithms()
         self.sorting_algorithms = CLRSSortingAlgorithms()
         self.tools = self._create_tools()
-    
+
     def _create_tools(self) -> List[Dict[str, Any]]:
         """Create MCP tool definitions for CLRS algorithms"""
         return [
@@ -30,10 +30,14 @@ class CLRSAlgorithmsMCPTools:
                     "properties": {
                         "array": {"type": "array", "description": "Sorted array to search"},
                         "target": {"description": "Target value to find"},
-                        "data_type": {"type": "string", "enum": ["number", "string"], "default": "number"}
+                        "data_type": {
+                            "type": "string",
+                            "enum": ["number", "string"],
+                            "default": "number",
+                        },
                     },
-                    "required": ["array", "target"]
-                }
+                    "required": ["array", "target"],
+                },
             },
             {
                 "name": "linear_search",
@@ -43,10 +47,14 @@ class CLRSAlgorithmsMCPTools:
                     "properties": {
                         "array": {"type": "array", "description": "Array to search"},
                         "target": {"description": "Target value to find"},
-                        "data_type": {"type": "string", "enum": ["number", "string"], "default": "number"}
+                        "data_type": {
+                            "type": "string",
+                            "enum": ["number", "string"],
+                            "default": "number",
+                        },
                     },
-                    "required": ["array", "target"]
-                }
+                    "required": ["array", "target"],
+                },
             },
             {
                 "name": "quick_select",
@@ -55,11 +63,18 @@ class CLRSAlgorithmsMCPTools:
                     "type": "object",
                     "properties": {
                         "array": {"type": "array", "description": "Array to search"},
-                        "k": {"type": "integer", "description": "Position (1-indexed) of element to find"},
-                        "data_type": {"type": "string", "enum": ["number", "string"], "default": "number"}
+                        "k": {
+                            "type": "integer",
+                            "description": "Position (1-indexed) of element to find",
+                        },
+                        "data_type": {
+                            "type": "string",
+                            "enum": ["number", "string"],
+                            "default": "number",
+                        },
                     },
-                    "required": ["array", "k"]
-                }
+                    "required": ["array", "k"],
+                },
             },
             {
                 "name": "insertion_sort",
@@ -68,11 +83,19 @@ class CLRSAlgorithmsMCPTools:
                     "type": "object",
                     "properties": {
                         "array": {"type": "array", "description": "Array to sort"},
-                        "ascending": {"type": "boolean", "default": True, "description": "Sort in ascending order"},
-                        "data_type": {"type": "string", "enum": ["number", "string"], "default": "number"}
+                        "ascending": {
+                            "type": "boolean",
+                            "default": True,
+                            "description": "Sort in ascending order",
+                        },
+                        "data_type": {
+                            "type": "string",
+                            "enum": ["number", "string"],
+                            "default": "number",
+                        },
                     },
-                    "required": ["array"]
-                }
+                    "required": ["array"],
+                },
             },
             {
                 "name": "merge_sort",
@@ -81,11 +104,19 @@ class CLRSAlgorithmsMCPTools:
                     "type": "object",
                     "properties": {
                         "array": {"type": "array", "description": "Array to sort"},
-                        "ascending": {"type": "boolean", "default": True, "description": "Sort in ascending order"},
-                        "data_type": {"type": "string", "enum": ["number", "string"], "default": "number"}
+                        "ascending": {
+                            "type": "boolean",
+                            "default": True,
+                            "description": "Sort in ascending order",
+                        },
+                        "data_type": {
+                            "type": "string",
+                            "enum": ["number", "string"],
+                            "default": "number",
+                        },
                     },
-                    "required": ["array"]
-                }
+                    "required": ["array"],
+                },
             },
             {
                 "name": "quick_sort",
@@ -94,25 +125,33 @@ class CLRSAlgorithmsMCPTools:
                     "type": "object",
                     "properties": {
                         "array": {"type": "array", "description": "Array to sort"},
-                        "ascending": {"type": "boolean", "default": True, "description": "Sort in ascending order"},
-                        "data_type": {"type": "string", "enum": ["number", "string"], "default": "number"}
+                        "ascending": {
+                            "type": "boolean",
+                            "default": True,
+                            "description": "Sort in ascending order",
+                        },
+                        "data_type": {
+                            "type": "string",
+                            "enum": ["number", "string"],
+                            "default": "number",
+                        },
                     },
-                    "required": ["array"]
-                }
-            }
+                    "required": ["array"],
+                },
+            },
         ]
-    
+
     def register_tools(self, server):
         """Register all CLRS algorithm tools with MCP server"""
         for tool_def in self.tools:
             tool_name = tool_def["name"]
-            
+
             @server.call_tool()
             async def handle_tool(name: str, arguments: dict) -> dict:
                 if name == tool_name:
                     return await self.handle_tool_call(tool_name, arguments)
                 return {"error": f"Unknown tool: {name}"}
-    
+
     async def handle_tool_call(self, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Handle MCP tool calls for CLRS algorithms"""
         try:
@@ -130,28 +169,28 @@ class CLRSAlgorithmsMCPTools:
                 return await self._handle_quick_sort(arguments)
             else:
                 return {"success": False, "error": f"Unknown tool: {tool_name}"}
-                
+
         except Exception as e:
             logger.error(f"Error in CLRS algorithm tool {tool_name}: {str(e)}")
             return {"success": False, "error": str(e)}
-    
+
     async def _handle_binary_search(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Handle binary search requests"""
         try:
             array = args["array"]
             target = args["target"]
             data_type = args.get("data_type", "number")
-            
+
             # Convert data types
             if data_type == "number":
                 array = [float(x) for x in array]
                 target = float(target)
-            
+
             # Create comparison function
             compare_fn = lambda a, b: -1 if a < b else (1 if a > b else 0)
-            
+
             result_index = self.search_algorithms.binary_search(array, target, compare_fn)
-            
+
             return {
                 "success": True,
                 "result": {
@@ -159,28 +198,28 @@ class CLRSAlgorithmsMCPTools:
                     "found": result_index != -1,
                     "value": array[result_index] if result_index != -1 else None,
                     "algorithm": "binary_search",
-                    "complexity": "O(log n)"
+                    "complexity": "O(log n)",
                 },
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
-            
+
         except Exception as e:
             return {"success": False, "error": str(e)}
-    
+
     async def _handle_linear_search(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Handle linear search requests"""
         try:
             array = args["array"]
             target = args["target"]
             data_type = args.get("data_type", "number")
-            
+
             # Convert data types
             if data_type == "number":
                 array = [float(x) for x in array]
                 target = float(target)
-            
+
             result_index = self.search_algorithms.linear_search(array, target)
-            
+
             return {
                 "success": True,
                 "result": {
@@ -188,63 +227,63 @@ class CLRSAlgorithmsMCPTools:
                     "found": result_index != -1,
                     "value": array[result_index] if result_index != -1 else None,
                     "algorithm": "linear_search",
-                    "complexity": "O(n)"
+                    "complexity": "O(n)",
                 },
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
-            
+
         except Exception as e:
             return {"success": False, "error": str(e)}
-    
+
     async def _handle_quick_select(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Handle quick select requests"""
         try:
             array = args["array"]
             k = args["k"]
             data_type = args.get("data_type", "number")
-            
+
             # Convert data types
             if data_type == "number":
                 array = [float(x) for x in array]
-            
+
             # Create comparison function
             compare_fn = lambda a, b: -1 if a < b else (1 if a > b else 0)
-            
+
             result = self.search_algorithms.quick_select(array, k, compare_fn)
-            
+
             return {
                 "success": True,
                 "result": {
                     "kth_element": result,
                     "k": k,
                     "algorithm": "quick_select",
-                    "complexity": "O(n) average"
+                    "complexity": "O(n) average",
                 },
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
-            
+
         except Exception as e:
             return {"success": False, "error": str(e)}
-    
+
     async def _handle_insertion_sort(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Handle insertion sort requests"""
         try:
             array = args["array"]
             ascending = args.get("ascending", True)
             data_type = args.get("data_type", "number")
-            
+
             # Convert data types
             if data_type == "number":
                 array = [float(x) for x in array]
-            
+
             # Create comparison function
             if ascending:
                 compare_fn = lambda a, b: -1 if a < b else (1 if a > b else 0)
             else:
                 compare_fn = lambda a, b: 1 if a < b else (-1 if a > b else 0)
-            
+
             sorted_array = self.sorting_algorithms.insertion_sort(array, compare_fn)
-            
+
             return {
                 "success": True,
                 "result": {
@@ -252,33 +291,33 @@ class CLRSAlgorithmsMCPTools:
                     "original_length": len(array),
                     "algorithm": "insertion_sort",
                     "complexity": "O(n²) time, O(1) space",
-                    "ascending": ascending
+                    "ascending": ascending,
                 },
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
-            
+
         except Exception as e:
             return {"success": False, "error": str(e)}
-    
+
     async def _handle_merge_sort(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Handle merge sort requests"""
         try:
             array = args["array"]
             ascending = args.get("ascending", True)
             data_type = args.get("data_type", "number")
-            
+
             # Convert data types
             if data_type == "number":
                 array = [float(x) for x in array]
-            
+
             # Create comparison function
             if ascending:
                 compare_fn = lambda a, b: -1 if a < b else (1 if a > b else 0)
             else:
                 compare_fn = lambda a, b: 1 if a < b else (-1 if a > b else 0)
-            
+
             sorted_array = self.sorting_algorithms.merge_sort(array, compare_fn)
-            
+
             return {
                 "success": True,
                 "result": {
@@ -286,33 +325,33 @@ class CLRSAlgorithmsMCPTools:
                     "original_length": len(array),
                     "algorithm": "merge_sort",
                     "complexity": "O(n log n) time, O(n) space",
-                    "ascending": ascending
+                    "ascending": ascending,
                 },
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
-            
+
         except Exception as e:
             return {"success": False, "error": str(e)}
-    
+
     async def _handle_quick_sort(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Handle quicksort requests"""
         try:
             array = args["array"]
             ascending = args.get("ascending", True)
             data_type = args.get("data_type", "number")
-            
+
             # Convert data types
             if data_type == "number":
                 array = [float(x) for x in array]
-            
+
             # Create comparison function
             if ascending:
                 compare_fn = lambda a, b: -1 if a < b else (1 if a > b else 0)
             else:
                 compare_fn = lambda a, b: 1 if a < b else (-1 if a > b else 0)
-            
+
             sorted_array = self.sorting_algorithms.quick_sort(array, compare_fn)
-            
+
             return {
                 "success": True,
                 "result": {
@@ -320,10 +359,10 @@ class CLRSAlgorithmsMCPTools:
                     "original_length": len(array),
                     "algorithm": "quick_sort",
                     "complexity": "O(n log n) average time",
-                    "ascending": ascending
+                    "ascending": ascending,
                 },
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
-            
+
         except Exception as e:
             return {"success": False, "error": str(e)}

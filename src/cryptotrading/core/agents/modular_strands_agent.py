@@ -5,21 +5,21 @@ Uses focused components with Single Responsibility Principle
 import asyncio
 import logging
 import time
-from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from .memory import MemoryAgent
-from .components import ToolManager, WorkflowEngine, ContextManager
-from .secure_code_sandbox import SecureCodeExecutor, SecurityLevel
+from ..di_container import resolve
 from ..interfaces import (
-    ISecurityManager,
     ICommunicationManager,
+    IHealthChecker,
     ILogger,
     IMetricsCollector,
-    IHealthChecker,
+    ISecurityManager,
 )
-from ..di_container import resolve
+from .components import ContextManager, ToolManager, WorkflowEngine
+from .memory import MemoryAgent
+from .secure_code_sandbox import SecureCodeExecutor, SecurityLevel
 
 logger = logging.getLogger(__name__)
 
@@ -150,8 +150,8 @@ class ModularStrandsAgent(MemoryAgent):
 
     async def _resolve_dependencies(self):
         """Resolve dependencies from DI container"""
+        from .components import ContextManager, ToolManager, WorkflowEngine
         from .di_configuration import get_strands_di_config
-        from .components import ToolManager, WorkflowEngine, ContextManager
         from .secure_code_sandbox import SecureCodeExecutor
 
         # Configure DI container if not already done

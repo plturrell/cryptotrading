@@ -2,6 +2,6 @@
 Utility modules for cryptotrading.com
 """
 
-from .rate_limiter import rate_limiter, RateLimiter
+from .rate_limiter import RateLimiter, rate_limiter
 
-__all__ = ['rate_limiter', 'RateLimiter']
+__all__ = ["rate_limiter", "RateLimiter"]

@@ -14,7 +14,19 @@ sap.ui.define([
     "./utils/CacheManager",
     "./service/ServiceRegistry",
     "./extensions/ExtensionManager"
-], function (UIComponent, Device, JSONModel, Log, SharedErrorHandlingUtils, SharedSecurityUtils, MarketDataService, TradingService, CacheManager, ServiceRegistry, ExtensionManager) {
+], function (
+    UIComponent,
+    Device,
+    JSONModel,
+    Log,
+    SharedErrorHandlingUtils,
+    SharedSecurityUtils,
+    MarketDataService,
+    TradingService,
+    CacheManager,
+    ServiceRegistry,
+    ExtensionManager
+) {
     "use strict";
 
     return UIComponent.extend("com.rex.cryptotrading.Component", {
@@ -24,7 +36,8 @@ sap.ui.define([
         },
 
         /**
-         * The component is initialized by UI5 automatically during the startup of the app and calls the init method once.
+         * The component is initialized by UI5 automatically during the startup of the app
+         * and calls the init method once.
          * @public
          * @override
          */
@@ -33,34 +46,34 @@ sap.ui.define([
             this._aCleanupTasks = [];
             this._aIntervals = [];
             this._aTimeouts = [];
-            
+
             // Initialize performance monitoring
             this._initPerformanceMonitoring();
-            
+
             // Initialize memory leak prevention
             this._initMemoryLeakPrevention();
-            
+
             // Initialize shared utilities
             this._initSharedUtils();
-            
+
             // Initialize service registry
             this._initServiceRegistry();
-            
+
             // Initialize extension manager
             this._initExtensionManager();
-            
+
             // Initialize services
             this._initServices();
-            
+
             // Initialize WebSocket connections
             this._initWebSocketConnections();
-            
+
             // Initialize global error handling
             this._initGlobalErrorHandling();
-            
+
             // Initialize user preferences
             this._initUserPreferences();
-            
+
             // Disable UI5 flexibility features for performance
             if (sap.ui.fl && sap.ui.fl.Utils) {
                 if (typeof sap.ui.fl.Utils.isApplicationVariant === "undefined") {
@@ -68,7 +81,7 @@ sap.ui.define([
                     sap.ui.fl.Utils.isVariantByStartupParameter = function() { return false; };
                 }
             }
-            
+
             // Call the base component's init function
             UIComponent.prototype.init.apply(this, arguments);
 
@@ -90,7 +103,7 @@ sap.ui.define([
                 renderTimes: [],
                 apiCallTimes: []
             };
-            
+
             // Track component initialization time
             this.registerForCleanup(() => {
                 const initTime = Date.now() - this._oPerformanceMetrics.startTime;
@@ -105,23 +118,23 @@ sap.ui.define([
         _initMemoryLeakPrevention: function () {
             // Override setInterval to track intervals
             const originalSetInterval = window.setInterval;
-            const that = this;
-            
+            const _that = this;
+
             window.setInterval = function (callback, delay) {
                 const intervalId = originalSetInterval(callback, delay);
                 that._aIntervals.push(intervalId);
                 return intervalId;
             };
-            
+
             // Override setTimeout to track timeouts
             const originalSetTimeout = window.setTimeout;
-            
+
             window.setTimeout = function (callback, delay) {
                 const timeoutId = originalSetTimeout(callback, delay);
                 that._aTimeouts.push(timeoutId);
                 return timeoutId;
             };
-            
+
             // Register cleanup for intervals and timeouts
             this.registerForCleanup(() => {
                 that._aIntervals.forEach(clearInterval);
@@ -139,10 +152,10 @@ sap.ui.define([
             try {
                 // Initialize error handling utils
                 this._errorHandlingUtils = SharedErrorHandlingUtils;
-                
+
                 // Initialize security utils
                 this._securityUtils = SharedSecurityUtils;
-                
+
                 // Register cleanup for utilities
                 this.registerForCleanup(() => {
                     if (this._errorHandlingUtils && this._errorHandlingUtils.cleanup) {
@@ -152,7 +165,7 @@ sap.ui.define([
                         this._securityUtils.cleanup();
                     }
                 });
-                
+
                 Log.info("Shared utilities initialized successfully");
             } catch (error) {
                 Log.error("Failed to initialize shared utilities", error);
@@ -165,20 +178,20 @@ sap.ui.define([
          */
         _initServices: function () {
             try {
-                // Initialize cache manager first
+                // Initialize cache manager firs
                 this._cacheManager = new CacheManager();
-                
+
                 // Initialize market data service
                 this._marketDataService = new MarketDataService({
                     cacheManager: this._cacheManager
                 });
-                
+
                 // Initialize trading service
                 this._tradingService = new TradingService({
                     cacheManager: this._cacheManager,
                     marketDataService: this._marketDataService
                 });
-                
+
                 // Register cleanup for services
                 this.registerForCleanup(() => {
                     if (this._tradingService && this._tradingService.destroy) {
@@ -191,7 +204,7 @@ sap.ui.define([
                         this._cacheManager.destroy();
                     }
                 });
-                
+
                 Log.info("Services initialized successfully");
             } catch (error) {
                 Log.error("Failed to initialize services", error);
@@ -204,16 +217,16 @@ sap.ui.define([
          */
         _initWebSocketConnections: function () {
             try {
-                // WebSocket URL based on current environment
+                // WebSocket URL based on current environmen
                 const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
                 const wsUrl = protocol + "//" + window.location.host + "/ws/market-data";
-                
+
                 this._webSocket = new WebSocket(wsUrl);
-                
+
                 this._webSocket.onopen = () => {
                     Log.info("WebSocket connection established");
                 };
-                
+
                 this._webSocket.onmessage = (event) => {
                     try {
                         const data = JSON.parse(event.data);
@@ -222,22 +235,22 @@ sap.ui.define([
                         Log.error("Failed to parse WebSocket message", error);
                     }
                 };
-                
+
                 this._webSocket.onerror = (error) => {
                     Log.error("WebSocket error", error);
                 };
-                
+
                 this._webSocket.onclose = () => {
                     Log.info("WebSocket connection closed");
                 };
-                
-                // Register cleanup for WebSocket
+
+                // Register cleanup for WebSocke
                 this.registerForCleanup(() => {
                     if (this._webSocket && this._webSocket.readyState === WebSocket.OPEN) {
                         this._webSocket.close();
                     }
                 });
-                
+
             } catch (error) {
                 Log.error("Failed to initialize WebSocket connections", error);
             }
@@ -268,7 +281,7 @@ sap.ui.define([
                     this._errorHandlingUtils.handleError(event.reason, "UNHANDLED_PROMISE");
                 }
             });
-            
+
             // Global error handler for JavaScript errors
             window.addEventListener("error", (event) => {
                 Log.error("Global JavaScript error", event.error);
@@ -294,10 +307,10 @@ sap.ui.define([
                     autoRefresh: true,
                     refreshInterval: 30000
                 };
-                
+
                 // Apply preferences
                 this._applyUserPreferences();
-                
+
                 Log.info("User preferences initialized");
             } catch (error) {
                 Log.error("Failed to initialize user preferences", error);
@@ -322,7 +335,7 @@ sap.ui.define([
             if (this._userPreferences.theme) {
                 sap.ui.getCore().applyTheme(this._userPreferences.theme);
             }
-            
+
             // Apply language
             if (this._userPreferences.language) {
                 sap.ui.getCore().getConfiguration().setLanguage(this._userPreferences.language);
@@ -338,7 +351,7 @@ sap.ui.define([
             const oDeviceModel = new JSONModel(Device);
             oDeviceModel.setDefaultBindingMode("OneWay");
             this.setModel(oDeviceModel, "device");
-            
+
             // Initialize application model with real data structure
             const oAppModel = new JSONModel({
                 user: {
@@ -389,9 +402,9 @@ sap.ui.define([
                     loading: true
                 }
             });
-            
+
             this.setModel(oAppModel, "app");
-            
+
             // Initialize UI state model
             const oUIModel = new JSONModel({
                 isLoading: false,
@@ -401,7 +414,7 @@ sap.ui.define([
                 sidebarExpanded: true,
                 notifications: []
             });
-            
+
             this.setModel(oUIModel, "ui");
         },
 
@@ -413,10 +426,10 @@ sap.ui.define([
         destroy: function () {
             // Execute cleanup tasks
             this._executeCleanupTasks();
-            
+
             // Call parent destroy
             UIComponent.prototype.destroy.apply(this, arguments);
-            
+
             Log.info("Component destroyed successfully");
         },
 
@@ -498,14 +511,14 @@ sap.ui.define([
         _initServiceRegistry: function () {
             this._serviceRegistry = new ServiceRegistry();
             this._serviceRegistry.init();
-            
+
             this.registerForCleanup(() => {
                 if (this._serviceRegistry) {
                     this._serviceRegistry.destroy();
                     this._serviceRegistry = null;
                 }
             });
-            
+
             Log.info("Service Registry initialized");
         },
 
@@ -517,14 +530,14 @@ sap.ui.define([
             this._extensionManager = new ExtensionManager();
             this._extensionManager.init();
             this._extensionManager.initializeExtensions();
-            
+
             this.registerForCleanup(() => {
                 if (this._extensionManager) {
                     this._extensionManager.destroy();
                     this._extensionManager = null;
                 }
             });
-            
+
             Log.info("Extension Manager initialized");
         }
     });

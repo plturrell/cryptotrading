@@ -8,18 +8,14 @@ trading factors with validation, quality checks, and parallel processing.
 from .data_orchestrator import (
     EnhancedDataIngestionOrchestrator,
     IngestionConfig,
-    ingest_comprehensive_crypto_data
+    ingest_comprehensive_crypto_data,
 )
-
-from .quality_validator import (
-    FactorQualityValidator,
-    ValidationResult
-)
+from .quality_validator import FactorQualityValidator, ValidationResult
 
 __all__ = [
-    'EnhancedDataIngestionOrchestrator',
-    'IngestionConfig', 
-    'FactorQualityValidator',
-    'ValidationResult',
-    'ingest_comprehensive_crypto_data'
+    "EnhancedDataIngestionOrchestrator",
+    "IngestionConfig",
+    "FactorQualityValidator",
+    "ValidationResult",
+    "ingest_comprehensive_crypto_data",
 ]

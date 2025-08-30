@@ -1,0 +1,331 @@
+{
+  "name": "technical-analysis-mcp-tools",
+  "version": "1.0.0",
+  "description": "MCP tools for Technical Analysis Agent with CDS integration",
+  "tools": {
+    "analyze_market": {
+      "description": "Comprehensive market analysis with CDS monitoring",
+      "parameters": {
+        "data": {
+          "type": "object",
+          "description": "Market data (OHLCV format)"
+        },
+        "analysis_type": {
+          "type": "string",
+          "enum": ["comprehensive", "trend", "momentum", "volatility", "volume"],
+          "description": "Type of analysis",
+          "default": "comprehensive"
+        },
+        "risk_tolerance": {
+          "type": "string",
+          "enum": ["conservative", "moderate", "aggressive"],
+          "description": "Risk tolerance level",
+          "default": "moderate"
+        },
+        "timeframe": {
+          "type": "string",
+          "description": "Analysis timeframe (1m, 5m, 1h, 1d)",
+          "default": "1h"
+        },
+        "enable_monitoring": {
+          "type": "boolean",
+          "description": "Enable CDS transaction monitoring",
+          "default": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "analysis_results": "object",
+          "signals": "array",
+          "confidence_score": "number",
+          "risk_assessment": "object",
+          "transaction_id": "string"
+        }
+      }
+    },
+    "detect_patterns": {
+      "description": "Detect chart patterns and formations",
+      "parameters": {
+        "data": {
+          "type": "object",
+          "description": "Price data for pattern detection"
+        },
+        "patterns": {
+          "type": "array",
+          "items": "string",
+          "description": "Specific patterns to look for",
+          "optional": true
+        },
+        "sensitivity": {
+          "type": "number",
+          "description": "Pattern detection sensitivity (0-1)",
+          "default": 0.7
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "detected_patterns": "array",
+          "pattern_confidence": "object",
+          "formation_quality": "object"
+        }
+      }
+    },
+    "calculate_indicators": {
+      "description": "Calculate technical indicators",
+      "parameters": {
+        "data": {
+          "type": "object",
+          "description": "Price/volume data"
+        },
+        "indicators": {
+          "type": "array",
+          "items": "string",
+          "description": "Technical indicators to calculate"
+        },
+        "parameters": {
+          "type": "object",
+          "description": "Indicator parameters",
+          "optional": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "indicators": "object",
+          "values": "object",
+          "signals": "object"
+        }
+      }
+    },
+    "generate_signals": {
+      "description": "Generate trading signals from analysis",
+      "parameters": {
+        "analysis_results": {
+          "type": "object",
+          "description": "Technical analysis results"
+        },
+        "signal_types": {
+          "type": "array",
+          "items": "string",
+          "enum": ["entry", "exit", "stop_loss", "take_profit"],
+          "description": "Types of signals to generate"
+        },
+        "risk_parameters": {
+          "type": "object",
+          "description": "Risk management parameters",
+          "optional": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "signals": "array",
+          "signal_strength": "object",
+          "risk_metrics": "object"
+        }
+      }
+    },
+    "trend_analysis": {
+      "description": "Comprehensive trend analysis",
+      "parameters": {
+        "data": {
+          "type": "object",
+          "description": "Price data"
+        },
+        "timeframes": {
+          "type": "array",
+          "items": "string",
+          "description": "Multiple timeframes to analyze",
+          "default": ["1h", "4h", "1d"]
+        },
+        "trend_strength": {
+          "type": "boolean",
+          "description": "Calculate trend strength",
+          "default": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "trend_direction": "string",
+          "trend_strength": "number",
+          "timeframe_analysis": "object",
+          "support_resistance": "object"
+        }
+      }
+    },
+    "volatility_analysis": {
+      "description": "Analyze market volatility",
+      "parameters": {
+        "data": {
+          "type": "object",
+          "description": "Price data"
+        },
+        "volatility_metrics": {
+          "type": "array",
+          "items": "string",
+          "description": "Volatility metrics to calculate",
+          "default": ["atr", "bollinger_bands", "vix"]
+        },
+        "period": {
+          "type": "integer",
+          "description": "Analysis period",
+          "default": 20
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "volatility_metrics": "object",
+          "volatility_regime": "string",
+          "risk_assessment": "object"
+        }
+      }
+    },
+    "support_resistance": {
+      "description": "Identify support and resistance levels",
+      "parameters": {
+        "data": {
+          "type": "object",
+          "description": "Price data"
+        },
+        "method": {
+          "type": "string",
+          "enum": ["pivot_points", "fibonacci", "psychological", "volume_profile"],
+          "description": "Method for S/R calculation",
+          "default": "pivot_points"
+        },
+        "num_levels": {
+          "type": "integer",
+          "description": "Number of levels to identify",
+          "default": 5
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "support_levels": "array",
+          "resistance_levels": "array",
+          "current_position": "object",
+          "strength_ratings": "object"
+        }
+      }
+    },
+    "risk_assessment": {
+      "description": "Assess trading risk based on technical analysis",
+      "parameters": {
+        "analysis_results": {
+          "type": "object",
+          "description": "Technical analysis results"
+        },
+        "position_size": {
+          "type": "number",
+          "description": "Intended position size",
+          "optional": true
+        },
+        "risk_tolerance": {
+          "type": "string",
+          "enum": ["low", "medium", "high"],
+          "description": "Risk tolerance level"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "risk_score": "number",
+          "risk_factors": "array",
+          "recommendations": "array",
+          "position_sizing": "object"
+        }
+      }
+    },
+    "backtest_strategy": {
+      "description": "Backtest technical analysis strategy",
+      "parameters": {
+        "historical_data": {
+          "type": "object",
+          "description": "Historical market data"
+        },
+        "strategy_config": {
+          "type": "object",
+          "description": "Strategy configuration"
+        },
+        "period": {
+          "type": "object",
+          "description": "Backtesting period"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "backtest_results": "object",
+          "performance_metrics": "object",
+          "drawdown_analysis": "object",
+          "trade_statistics": "object"
+        }
+      }
+    },
+    "monitor_alerts": {
+      "description": "Monitor and manage technical analysis alerts",
+      "parameters": {
+        "alert_config": {
+          "type": "object",
+          "description": "Alert configuration"
+        },
+        "symbols": {
+          "type": "array",
+          "items": "string",
+          "description": "Symbols to monitor"
+        },
+        "alert_types": {
+          "type": "array",
+          "items": "string",
+          "description": "Types of alerts to monitor"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "active_alerts": "array",
+          "triggered_alerts": "array",
+          "monitoring_status": "string"
+        }
+      }
+    }
+  },
+  "capabilities": {
+    "analysis": [
+      "market_analysis",
+      "pattern_recognition",
+      "trend_identification",
+      "volatility_analysis",
+      "support_resistance"
+    ],
+    "indicators": [
+      "technical_indicators",
+      "custom_indicators",
+      "multi_timeframe",
+      "signal_generation"
+    ],
+    "risk_management": [
+      "risk_assessment",
+      "position_sizing",
+      "stop_loss_calculation",
+      "portfolio_risk"
+    ],
+    "backtesting": [
+      "strategy_backtesting",
+      "performance_analysis",
+      "optimization",
+      "walk_forward_analysis"
+    ],
+    "integration": [
+      "cds_monitoring",
+      "transaction_tracking",
+      "real_time_analysis",
+      "alert_management"
+    ]
+  }
+}

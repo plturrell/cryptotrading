@@ -35,7 +35,7 @@ sap.ui.define([
          * Register an extension
          * @public
          * @param {string} sName Extension name
-         * @param {Object} oExtension Extension object
+         * @param {Object} oExtension Extension objec
          * @param {Object} oConfig Extension configuration
          */
         registerExtension: function (sName, oExtension, oConfig) {
@@ -49,7 +49,7 @@ sap.ui.define([
                 return false;
             }
 
-            var oExtensionWrapper = {
+            const oExtensionWrapper = {
                 name: sName,
                 extension: oExtension,
                 config: oConfig || {},
@@ -72,7 +72,7 @@ sap.ui.define([
          * @returns {Object|null} Extension object or null
          */
         getExtension: function (sName) {
-            var oWrapper = this._mExtensionRegistry[sName];
+            const oWrapper = this._mExtensionRegistry[sName];
             return oWrapper ? oWrapper.extension : null;
         },
 
@@ -82,7 +82,7 @@ sap.ui.define([
          * @param {string} sName Extension name
          */
         enableExtension: function (sName) {
-            var oWrapper = this._mExtensionRegistry[sName];
+            const oWrapper = this._mExtensionRegistry[sName];
             if (oWrapper) {
                 oWrapper.enabled = true;
                 Log.info("Extension '" + sName + "' enabled");
@@ -95,7 +95,7 @@ sap.ui.define([
          * @param {string} sName Extension name
          */
         disableExtension: function (sName) {
-            var oWrapper = this._mExtensionRegistry[sName];
+            const oWrapper = this._mExtensionRegistry[sName];
             if (oWrapper) {
                 oWrapper.enabled = false;
                 Log.info("Extension '" + sName + "' disabled");
@@ -108,7 +108,7 @@ sap.ui.define([
          */
         initializeExtensions: function () {
             // Sort extensions by dependencies
-            var aSortedExtensions = this._sortExtensionsByDependencies();
+            const aSortedExtensions = this._sortExtensionsByDependencies();
 
             aSortedExtensions.forEach(function (oWrapper) {
                 if (oWrapper.enabled && !oWrapper.initialized) {
@@ -211,11 +211,11 @@ sap.ui.define([
          * @returns {Array} Sorted extensions array
          */
         _sortExtensionsByDependencies: function () {
-            var aResult = [];
-            var mVisited = {};
-            var mInProgress = {};
+            const aResult = [];
+            const mVisited = {};
+            const mInProgress = {};
 
-            var fnVisit = function (oWrapper) {
+            const fnVisit = function (oWrapper) {
                 if (mInProgress[oWrapper.name]) {
                     Log.error("Circular dependency detected for extension: " + oWrapper.name);
                     return;
@@ -227,9 +227,9 @@ sap.ui.define([
 
                 mInProgress[oWrapper.name] = true;
 
-                // Visit dependencies first
+                // Visit dependencies firs
                 oWrapper.dependencies.forEach(function (sDependency) {
-                    var oDependencyWrapper = this._mExtensionRegistry[sDependency];
+                    const oDependencyWrapper = this._mExtensionRegistry[sDependency];
                     if (oDependencyWrapper) {
                         fnVisit(oDependencyWrapper);
                     }
@@ -260,7 +260,7 @@ sap.ui.define([
          * @returns {boolean} True if enabled
          */
         isExtensionEnabled: function (sName) {
-            var oWrapper = this._mExtensionRegistry[sName];
+            const oWrapper = this._mExtensionRegistry[sName];
             return oWrapper ? oWrapper.enabled : false;
         },
 

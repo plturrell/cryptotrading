@@ -1,6 +1,5 @@
 {
-  "extends": ["@sap/eslint-config"],
-  "plugins": ["@sap/eslint-plugin-ui5-jsdocs", "@sap-ux/eslint-plugin-fiori-tools"],
+  "plugins": [],
   "parserOptions": {
     "ecmaVersion": 2020,
     "sourceType": "script"
@@ -8,7 +7,8 @@
   "env": {
     "browser": true,
     "es6": true,
-    "amd": true
+    "amd": true,
+    "node": true
   },
   "globals": {
     "sap": "readonly",

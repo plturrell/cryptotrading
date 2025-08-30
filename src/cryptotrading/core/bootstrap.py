@@ -3,28 +3,28 @@ Bootstrap module for dependency injection container
 Registers all services and breaks circular dependencies
 """
 import logging
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 from .di_container import DIContainer, get_container, reset_container
-from .interfaces import (
-    ILogger,
-    IMetricsCollector,
-    IHealthChecker,
-    IConfigProvider,
-    IServiceRegistry,
-    ICache,
-    ISecurityManager,
-    ICommunicationManager,
-)
 from .infrastructure import (
+    EnterpriseConfigProvider,
+    EnterpriseHealthChecker,
+    EnterpriseInMemoryCache,
     EnterpriseLogger,
     EnterpriseMetricsCollector,
-    EnterpriseHealthChecker,
-    EnterpriseConfigProvider,
     EnterpriseServiceRegistry,
-    EnterpriseInMemoryCache,
-    SimpleSecurityManager,
     SimpleCommunicationManager,
+    SimpleSecurityManager,
+)
+from .interfaces import (
+    ICache,
+    ICommunicationManager,
+    IConfigProvider,
+    IHealthChecker,
+    ILogger,
+    IMetricsCollector,
+    ISecurityManager,
+    IServiceRegistry,
 )
 
 logger = logging.getLogger(__name__)
@@ -135,7 +135,7 @@ class ApplicationBootstrap:
 
         # Import business services here to avoid circular imports
         try:
-            from .agents.components import ToolManager, WorkflowEngine, ContextManager
+            from .agents.components import ContextManager, ToolManager, WorkflowEngine
 
             # Register component types (but not as singletons since they're per-agent)
             self.container.register_transient(ToolManager, ToolManager)

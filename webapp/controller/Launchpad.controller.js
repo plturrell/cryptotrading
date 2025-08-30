@@ -5,29 +5,30 @@ sap.ui.define([
     "sap/m/Button",
     "sap/m/Text",
     "sap/ui/core/Fragment",
-    "sap/ui/model/json/JSONModel"
-], function(BaseController, MessageToast, Dialog, Button, Text, Fragment, JSONModel) {
+    "sap/ui/model/json/JSONModel",
+    "../utils/Constants"
+], function(BaseController, MessageToast, Dialog, Button, Text, Fragment, JSONModel, Constants) {
     "use strict";
 
     return BaseController.extend("com.rex.cryptotrading.controller.Launchpad", {
-        
+
         onInit: function() {
-            // Call parent onInit
+            // Call parent onIni
             BaseController.prototype.onInit.apply(this, arguments);
-            
+
             try {
                 // Initialize controller-specific properties
                 this._initializeController();
-                
+
             } catch (e) {
                 this.handleError(e, "Controller initialization failed");
             }
         },
-        
+
         _initializeController: function() {
             try {
-                console.log("Initializing controller with available models");
-                
+                // Initializing controller with available models
+
                 // Initialize basic properties safely
                 this._oEventBusManager = null;
                 this._oWalletDataManager = {
@@ -36,25 +37,25 @@ sap.ui.define([
                     balances: {},
                     error: null
                 };
-                
-                console.log("Controller initialization completed successfully");
+
+                // Controller initialization completed successfully
             } catch (e) {
                 console.error("Controller initialization error:", e);
             }
         },
-        
+
         onExit: function() {
             // Cleanup EventBus subscriptions
             if (this._oEventBusManager) {
                 this._oEventBusManager.unsubscribeAll(this);
             }
         },
-        
+
         _setupEventHandlers: function() {
             if (!this._oEventBusManager || !this._oEventBusManager.subscribe) {
                 return;
             }
-            
+
             try {
                 // Subscribe to wallet connection events
                 this._oEventBusManager.subscribe(
@@ -63,7 +64,7 @@ sap.ui.define([
                     this._onWalletConnectionChanged.bind(this),
                     this
                 );
-                
+
                 // Subscribe to UI notifications
                 this._oEventBusManager.subscribe(
                     this._oEventBusManager.CHANNELS.UI,
@@ -75,41 +76,41 @@ sap.ui.define([
                 console.warn("EventBus not available:", e);
             }
         },
-        
+
         _onWalletConnectionChanged: function(sChannel, sEvent, oData) {
             if (oData.connected) {
-                MessageToast.show("Wallet connected: " + oData.address.substring(0, 8) + "...");
+                MessageToast.show("Wallet connected: " + oData.address.substring(Constants.NUMBERS.ZERO, Constants.NUMBERS.HEX_MASK_HIGH) + "...");
             } else {
                 MessageToast.show("Wallet disconnected");
             }
         },
-        
+
         _onNotification: function(sChannel, sEvent, oData) {
             MessageToast.show(oData.message);
         },
-        
+
         onTilePress: function(oEvent) {
-            var oTile = oEvent.getSource();
-            var oBindingContext = oTile.getBindingContext("app");
-            
+            const oTile = oEvent.getSource();
+            const oBindingContext = oTile.getBindingContext("app");
+
             // Check if binding context exists
             if (!oBindingContext) {
                 console.warn("No binding context found for tile");
                 MessageToast.show("Navigation not configured for this tile");
                 return;
             }
-            
-            var sTilePress = oBindingContext.getProperty("press");
-            var sTitle = oBindingContext.getProperty("title");
-            
+
+            const sTilePress = oBindingContext.getProperty("press");
+            const sTitle = oBindingContext.getProperty("title");
+
             if (!sTilePress) {
                 console.warn("No press action configured for tile");
                 MessageToast.show("Navigation not configured for this tile");
                 return;
             }
-            
+
             MessageToast.show("Opening " + (sTitle || "Application") + "...");
-            
+
             // Navigate using BaseController method
             try {
                 this.navTo(sTilePress);
@@ -117,11 +118,11 @@ sap.ui.define([
                 this.handleError(e, "Navigation failed");
             }
         },
-        
+
         onMenuPress: function() {
             MessageToast.show("Menu functionality coming soon");
         },
-        
+
         onNotificationPress: function() {
             if (!this._oNotificationPopover) {
                 this._oNotificationPopover = new Dialog({
@@ -141,10 +142,10 @@ sap.ui.define([
             }
             this._oNotificationPopover.open();
         },
-        
+
         onAvatarPress: function(oEvent) {
-            var oButton = oEvent.getSource();
-            
+            const oButton = oEvent.getSource();
+
             if (!this._oUserPopover) {
                 Fragment.load({
                     name: "com.rex.cryptotrading.fragment.UserMenu",
@@ -158,36 +159,36 @@ sap.ui.define([
                 this._oUserPopover.openBy(oButton);
             }
         },
-        
+
         onConnectWallet: function() {
-            var that = this;
-            
-            if (typeof window.ethereum !== 'undefined') {
+            const _that = this;
+
+            if (typeof window.ethereum !== "undefined") {
                 // Get wallet data manager
-                var oWalletModel = sap.ui.getCore().getModel("wallet");
-                var oWalletDataManager = oWalletModel.getProperty("/");
-                
+                const oWalletModel = sap.ui.getCore().getModel("wallet");
+                const _oWalletDataManager = oWalletModel.getProperty("/");
+
                 // Set connecting status
                 oWalletModel.setProperty("/status", "connecting");
-                
-                window.ethereum.request({ method: 'eth_requestAccounts' })
+
+                window.ethereum.request({ method: "eth_requestAccounts" })
                     .then(function(accounts) {
                         if (accounts.length > 0) {
-                            // Use wallet data manager to connect
-                            var oWalletManager = that._getWalletDataManager();
-                            oWalletManager.connectWallet('metamask', accounts[0], 'mainnet', 1);
-                            
+                            // Use wallet data manager to connec
+                            const oWalletManager = that._getWalletDataManager();
+                            oWalletManager.connectWallet("metamask", accounts[0], "mainnet", 1);
+
                             // Update balances
                             that._updateWalletBalance(accounts[0]);
-                            
+
                             // Legacy model update for backward compatibility
-                            var oAppModel = that.getView().getModel("app");
+                            const oAppModel = that.getView().getModel("app");
                             oAppModel.setProperty("/wallet/connected", true);
                             oAppModel.setProperty("/wallet/address", accounts[0]);
                         }
                     })
                     .catch(function(error) {
-                        var oWalletManager = that._getWalletDataManager();
+                        const oWalletManager = that._getWalletDataManager();
                         oWalletManager.setError(error.message);
                         MessageToast.show("Failed to connect wallet: " + error.message);
                     });
@@ -195,13 +196,13 @@ sap.ui.define([
                 MessageToast.show("Please install MetaMask to connect your wallet");
             }
         },
-        
+
         _getWalletDataManager: function() {
             // Helper to get wallet data manager instance
             // In a real implementation, this would access the manager instance
             return {
                 connectWallet: function(provider, address, network, chainId) {
-                    var oWalletModel = sap.ui.getCore().getModel("wallet");
+                    const oWalletModel = sap.ui.getCore().getModel("wallet");
                     oWalletModel.setProperty("/connection/connected", true);
                     oWalletModel.setProperty("/connection/provider", provider);
                     oWalletModel.setProperty("/connection/address", address);
@@ -210,13 +211,13 @@ sap.ui.define([
                     oWalletModel.setProperty("/status", "connected");
                 },
                 setError: function(error) {
-                    var oWalletModel = sap.ui.getCore().getModel("wallet");
+                    const oWalletModel = sap.ui.getCore().getModel("wallet");
                     oWalletModel.setProperty("/error", { message: error });
                     oWalletModel.setProperty("/status", "error");
                 }
             };
         },
-        
+
         _updateWalletBalance: function(address) {
             // Use BaseController's secure request method
             this.makeSecureRequest("/api/wallet/balance", {
@@ -224,18 +225,18 @@ sap.ui.define([
                 body: JSON.stringify({ address: address })
             }).then(function(data) {
                 // Update wallet model
-                var oWalletModel = sap.ui.getCore().getModel("wallet");
+                const oWalletModel = sap.ui.getCore().getModel("wallet");
                 if (data && data.balances) {
                     oWalletModel.setProperty("/balances", data.balances);
-                    
-                    // Publish balance updated event
+
+                    // Publish balance updated even
                     if (this._oEventBusManager && this._oEventBusManager.publishBalanceUpdated) {
                         this._oEventBusManager.publishBalanceUpdated(data.balances);
                     }
                 }
-                
+
                 // Keep legacy model update
-                var oModel = this.getView().getModel("app");
+                const _oModel = this.getView().getModel("app");
                 if (data.balance) {
                     oModel.setProperty("/wallet/balance", data.balance.ETH);
                 }
@@ -243,54 +244,70 @@ sap.ui.define([
                 this.handleError(error, "Failed to update wallet balance");
             }.bind(this));
         },
-        
+
         onPortfolioPress: function() {
             this.navTo("portfolio");
         },
-        
+
         onCodeAnalysisPress: function() {
             this.navTo("codeAnalysis");
         },
-        
+
         onTradingConsolePress: function() {
             this.navTo("trading");
         },
-        
+
         onTechnicalAnalysisPress: function() {
             this.navTo("analytics");
         },
-        
+
         // Additional press handlers for static tiles
         onMarketOverviewPress: function() {
             this.navTo("market");
         },
-        
+
         onMLPredictionsPress: function() {
             MessageToast.show("ML Predictions dashboard coming soon");
         },
-        
+
         onModelTrainingPress: function() {
             MessageToast.show("Model Training interface coming soon");
         },
-        
+
         onAIMarketIntelligencePress: function() {
             MessageToast.show("AI Market Intelligence coming soon");
         },
-        
+
         onFeatureStorePress: function() {
             MessageToast.show("Feature Store interface coming soon");
         },
-        
+
         onRiskManagementPress: function() {
             MessageToast.show("Risk Management dashboard coming soon");
         },
-        
+
         onHistoricalDataPress: function() {
             MessageToast.show("Historical Data viewer coming soon");
         },
-        
+
         onSystemSettingsPress: function() {
             MessageToast.show("System Settings coming soon");
+        },
+
+        onMCPMonitoringPress: function() {
+            this.navTo("mcpMonitoring");
+        },
+
+        onAWSDataExchangePress: function() {
+            this.navTo("awsDataExchange");
+        },
+
+        onDataLoadingPress: function() {
+            this.navTo("dataLoading");
+        },
+
+        onNewsPanelPress: function() {
+            this.navTo("newsPanel");
         }
     });
 });

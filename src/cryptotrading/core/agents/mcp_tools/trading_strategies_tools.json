@@ -482,58 +482,6 @@
           }
         }
       }
-    },
-    "risk_management": {
-      "calculate": {
-        "description": "Calculate comprehensive risk metrics",
-        "parameters": {
-          "portfolio": {
-            "type": "object",
-            "description": "Portfolio object with positions"
-          }
-        },
-        "returns": {
-          "type": "object",
-          "properties": {
-            "var_95": "number",
-            "cvar_95": "number",
-            "max_drawdown": "number",
-            "sharpe_ratio": "number"
-          }
-        }
-      },
-      "position_size": {
-        "description": "Calculate optimal position size",
-        "parameters": {
-          "symbol": {
-            "type": "string",
-            "description": "Trading pair symbol"
-          },
-          "entry_price": {
-            "type": "number",
-            "description": "Entry price"
-          },
-          "stop_loss": {
-            "type": "number",
-            "description": "Stop loss price"
-          }
-        }
-      },
-      "portfolio_optimize": {
-        "description": "Optimize portfolio allocation using Modern Portfolio Theory",
-        "parameters": {
-          "symbols": {
-            "type": "array",
-            "items": "string",
-            "description": "List of symbols for portfolio"
-          },
-          "target_return": {
-            "type": "number",
-            "description": "Target annual return",
-            "default": 0.1
-          }
-        }
-      }
     }
   },
   "capabilities": {
@@ -548,12 +496,6 @@
       "breakout_trading",
       "ml_predictive",
       "multi_strategy_hybrid"
-    ],
-    "risk_management": [
-      "position_sizing",
-      "portfolio_optimization",
-      "var_calculation",
-      "drawdown_protection"
     ],
     "market_analysis": [
       "technical_indicators",

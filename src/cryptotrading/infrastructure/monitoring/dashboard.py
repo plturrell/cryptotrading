@@ -3,28 +3,30 @@ Observability Dashboard API
 Provides endpoints for monitoring traces, errors, and metrics
 """
 
-from flask import Flask, jsonify, request
-from typing import Dict, Any
 import json
+from typing import Any, Dict
 
-from .tracer import get_tracer
-from .logger import get_logger  
+from flask import Flask, jsonify, request
+
 from .error_tracker import get_error_tracker
-from .metrics import get_metrics
 from .integration import get_observability_health
+from .logger import get_logger
+from .metrics import get_metrics
+from .tracer import get_tracer
 
 logger = get_logger(__name__)
 tracer = get_tracer()
 error_tracker = get_error_tracker()
 metrics = get_metrics()
 
+
 def create_observability_blueprint():
     """Create Flask blueprint for observability endpoints"""
     from flask import Blueprint
-    
-    bp = Blueprint('observability', __name__, url_prefix='/observability')
-    
-    @bp.route('/health', methods=['GET'])
+
+    bp = Blueprint("observability", __name__, url_prefix="/observability")
+
+    @bp.route("/health", methods=["GET"])
     def health():
         """Health check endpoint"""
         try:
@@ -32,124 +34,131 @@ def create_observability_blueprint():
             return jsonify(health_data), 200
         except Exception as e:
             logger.error("Health check failed", error=e)
-            return jsonify({'error': str(e)}), 500
-    
-    @bp.route('/metrics', methods=['GET'])
+            return jsonify({"error": str(e)}), 500
+
+    @bp.route("/metrics", methods=["GET"])
     def get_metrics_summary():
         """Get metrics summary"""
         try:
-            hours = int(request.args.get('hours', 1))
-            format_type = request.args.get('format', 'json')
-            
-            if format_type == 'prometheus':
-                prometheus_data = metrics.export_metrics('prometheus')
-                return prometheus_data, 200, {'Content-Type': 'text/plain'}
+            hours = int(request.args.get("hours", 1))
+            format_type = request.args.get("format", "json")
+
+            if format_type == "prometheus":
+                prometheus_data = metrics.export_metrics("prometheus")
+                return prometheus_data, 200, {"Content-Type": "text/plain"}
             else:
                 metrics_data = metrics.get_all_metrics_summary(hours)
                 return jsonify(metrics_data), 200
-                
+
         except Exception as e:
             logger.error("Failed to get metrics", error=e)
-            return jsonify({'error': str(e)}), 500
-    
-    @bp.route('/metrics/<metric_name>', methods=['GET'])
+            return jsonify({"error": str(e)}), 500
+
+    @bp.route("/metrics/<metric_name>", methods=["GET"])
     def get_metric_details(metric_name: str):
         """Get details for specific metric"""
         try:
-            hours = int(request.args.get('hours', 1))
+            hours = int(request.args.get("hours", 1))
             metric_data = metrics.get_metric_summary(metric_name, hours)
-            
+
             if metric_data:
                 return jsonify(metric_data), 200
             else:
-                return jsonify({'error': 'Metric not found'}), 404
-                
+                return jsonify({"error": "Metric not found"}), 404
+
         except Exception as e:
             logger.error(f"Failed to get metric {metric_name}", error=e)
-            return jsonify({'error': str(e)}), 500
-    
-    @bp.route('/errors/summary', methods=['GET'])
+            return jsonify({"error": str(e)}), 500
+
+    @bp.route("/errors/summary", methods=["GET"])
     def get_errors_summary():
         """Get error summary"""
         try:
-            hours = int(request.args.get('hours', 24))
+            hours = int(request.args.get("hours", 24))
             error_summary = error_tracker.get_error_summary(hours)
             return jsonify(error_summary), 200
-            
+
         except Exception as e:
             logger.error("Failed to get error summary", error=e)
-            return jsonify({'error': str(e)}), 500
-    
-    @bp.route('/errors/<error_id>', methods=['GET'])
+            return jsonify({"error": str(e)}), 500
+
+    @bp.route("/errors/<error_id>", methods=["GET"])
     def get_error_details(error_id: str):
         """Get details for specific error"""
         try:
             error_details = error_tracker.get_error_details(error_id)
-            
+
             if error_details:
                 return jsonify(error_details), 200
             else:
-                return jsonify({'error': 'Error not found'}), 404
-                
+                return jsonify({"error": "Error not found"}), 404
+
         except Exception as e:
             logger.error(f"Failed to get error {error_id}", error=e)
-            return jsonify({'error': str(e)}), 500
-    
-    @bp.route('/errors/fingerprint/<fingerprint>', methods=['GET'])
+            return jsonify({"error": str(e)}), 500
+
+    @bp.route("/errors/fingerprint/<fingerprint>", methods=["GET"])
     def get_errors_by_fingerprint(fingerprint: str):
         """Get errors with the same fingerprint"""
         try:
-            limit = int(request.args.get('limit', 10))
+            limit = int(request.args.get("limit", 10))
             errors = error_tracker.get_errors_by_fingerprint(fingerprint, limit)
-            return jsonify({'fingerprint': fingerprint, 'errors': errors}), 200
-            
+            return jsonify({"fingerprint": fingerprint, "errors": errors}), 200
+
         except Exception as e:
             logger.error(f"Failed to get errors by fingerprint {fingerprint}", error=e)
-            return jsonify({'error': str(e)}), 500
-    
-    @bp.route('/traces/<trace_id>', methods=['GET'])
+            return jsonify({"error": str(e)}), 500
+
+    @bp.route("/traces/<trace_id>", methods=["GET"])
     def get_trace_details(trace_id: str):
         """Get trace details (placeholder - would need trace storage)"""
         try:
             # This would need to be implemented with actual trace storage
             # For now, return a placeholder response
-            return jsonify({
-                'trace_id': trace_id,
-                'message': 'Trace storage not yet implemented',
-                'suggestion': 'Configure OTEL_EXPORTER_OTLP_ENDPOINT for trace collection'
-            }), 200
-            
+            return (
+                jsonify(
+                    {
+                        "trace_id": trace_id,
+                        "message": "Trace storage not yet implemented",
+                        "suggestion": "Configure OTEL_EXPORTER_OTLP_ENDPOINT for trace collection",
+                    }
+                ),
+                200,
+            )
+
         except Exception as e:
             logger.error(f"Failed to get trace {trace_id}", error=e)
-            return jsonify({'error': str(e)}), 500
-    
-    @bp.route('/dashboard', methods=['GET'])
+            return jsonify({"error": str(e)}), 500
+
+    @bp.route("/dashboard", methods=["GET"])
     def get_dashboard_data():
         """Get comprehensive dashboard data"""
         try:
-            hours = int(request.args.get('hours', 24))
-            
+            hours = int(request.args.get("hours", 24))
+
             dashboard_data = {
-                'timestamp': get_observability_health()['timestamp'],
-                'time_range': {'hours': hours},
-                'health': get_observability_health(),
-                'metrics_summary': metrics.get_all_metrics_summary(hours),
-                'errors_summary': error_tracker.get_error_summary(hours)
+                "timestamp": get_observability_health()["timestamp"],
+                "time_range": {"hours": hours},
+                "health": get_observability_health(),
+                "metrics_summary": metrics.get_all_metrics_summary(hours),
+                "errors_summary": error_tracker.get_error_summary(hours),
             }
-            
+
             return jsonify(dashboard_data), 200
-            
+
         except Exception as e:
             logger.error("Failed to get dashboard data", error=e)
-            return jsonify({'error': str(e)}), 500
-    
+            return jsonify({"error": str(e)}), 500
+
     return bp
+
 
 def register_observability_routes(app: Flask):
     """Register observability routes with Flask app"""
     bp = create_observability_blueprint()
     app.register_blueprint(bp)
     logger.info("Observability routes registered")
+
 
 # HTML Dashboard (basic)
 DASHBOARD_HTML = """
@@ -250,8 +259,10 @@ DASHBOARD_HTML = """
 </html>
 """
 
+
 def create_dashboard_route(app: Flask):
     """Create HTML dashboard route"""
-    @app.route('/observability/dashboard.html')
+
+    @app.route("/observability/dashboard.html")
     def dashboard_html():
         return DASHBOARD_HTML

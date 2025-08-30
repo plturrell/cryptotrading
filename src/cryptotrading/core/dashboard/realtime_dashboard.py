@@ -7,14 +7,16 @@ import asyncio
 import json
 import logging
 import os
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, Any, List, Optional, Set
-from dataclasses import dataclass, field
-import aiohttp
-from aiohttp import web, WSMsgType
+
 # import aiofiles  # Not needed for this implementation
 import weakref
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set
+
+import aiohttp
+from aiohttp import WSMsgType, web
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +24,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DashboardMetrics:
     """Dashboard metrics for real-time display"""
+
     total_files_watched: int = 0
     changes_detected: int = 0
     analyses_completed: int = 0
@@ -29,7 +32,7 @@ class DashboardMetrics:
     average_analysis_time: float = 0.0
     uptime_seconds: float = 0.0
     last_updated: datetime = field(default_factory=datetime.now)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "total_files_watched": self.total_files_watched,
@@ -38,68 +41,68 @@ class DashboardMetrics:
             "ai_insights_generated": self.ai_insights_generated,
             "average_analysis_time": round(self.average_analysis_time, 2),
             "uptime_seconds": round(self.uptime_seconds, 2),
-            "last_updated": self.last_updated.isoformat()
+            "last_updated": self.last_updated.isoformat(),
         }
 
 
 class RealtimeDashboard:
     """Real-time dashboard for code analysis insights"""
-    
+
     def __init__(self, mcp_server_url: str = "http://localhost:8082"):
         self.mcp_server_url = mcp_server_url
         self.app = None
         self.server = None
         self.websockets: Set[web.WebSocketResponse] = set()
         self.metrics = DashboardMetrics()
-        
+
         # Data cache for dashboard
         self.recent_changes: List[Dict[str, Any]] = []
         self.recent_analyses: List[Dict[str, Any]] = []
         self.system_status: Dict[str, Any] = {}
-        
+
         # Update intervals
         self.metrics_update_interval = 5.0  # seconds
-        self.data_update_interval = 2.0     # seconds
-        
+        self.data_update_interval = 2.0  # seconds
+
         # Background tasks
         self.background_tasks: Set[asyncio.Task] = set()
-        
+
     async def create_app(self) -> web.Application:
         """Create the web application"""
         app = web.Application()
-        
+
         # Static file serving
         dashboard_dir = Path(__file__).parent
         static_dir = dashboard_dir / "static"
-        
+
         # Ensure static directory exists
         static_dir.mkdir(exist_ok=True)
-        
+
         # Create static files if they don't exist
         await self._create_static_files(static_dir)
-        
+
         # Routes
-        app.router.add_get('/', self.serve_dashboard)
-        app.router.add_get('/ws', self.websocket_handler)
-        app.router.add_get('/api/metrics', self.get_metrics)
-        app.router.add_get('/api/changes', self.get_recent_changes)
-        app.router.add_get('/api/analyses', self.get_recent_analyses)
-        app.router.add_get('/api/status', self.get_system_status)
-        app.router.add_static('/static', static_dir)
-        
+        app.router.add_get("/", self.serve_dashboard)
+        app.router.add_get("/ws", self.websocket_handler)
+        app.router.add_get("/api/metrics", self.get_metrics)
+        app.router.add_get("/api/changes", self.get_recent_changes)
+        app.router.add_get("/api/analyses", self.get_recent_analyses)
+        app.router.add_get("/api/status", self.get_system_status)
+        app.router.add_static("/static", static_dir)
+
         # CORS middleware
         async def cors_middleware(request, handler):
             response = await handler(request)
-            response.headers['Access-Control-Allow-Origin'] = '*'
-            response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
-            response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+            response.headers["Access-Control-Allow-Origin"] = "*"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = "Content-Type"
             return response
-        
+
         app.middlewares.append(cors_middleware)
-        
+
         self.app = app
         return app
-    
+
     async def serve_dashboard(self, request) -> web.Response:
         """Serve the main dashboard HTML"""
         html_content = """
@@ -561,23 +564,23 @@ class RealtimeDashboard:
 </body>
 </html>
         """
-        
-        return web.Response(text=html_content, content_type='text/html')
-    
+
+        return web.Response(text=html_content, content_type="text/html")
+
     async def websocket_handler(self, request) -> web.WebSocketResponse:
         """Handle WebSocket connections for real-time updates"""
         ws = web.WebSocketResponse()
         await ws.prepare(request)
-        
+
         # Add to active connections
         self.websockets.add(ws)
         logger.info("WebSocket client connected")
-        
+
         try:
             # Send initial data
-            await self._send_to_websocket(ws, 'metrics', self.metrics.to_dict())
-            await self._send_to_websocket(ws, 'system_status', self.system_status)
-            
+            await self._send_to_websocket(ws, "metrics", self.metrics.to_dict())
+            await self._send_to_websocket(ws, "system_status", self.system_status)
+
             # Handle incoming messages
             async for msg in ws:
                 if msg.type == WSMsgType.TEXT:
@@ -587,41 +590,37 @@ class RealtimeDashboard:
                     except json.JSONDecodeError:
                         pass
                 elif msg.type == WSMsgType.ERROR:
-                    logger.error(f'WebSocket error: {ws.exception()}')
+                    logger.error(f"WebSocket error: {ws.exception()}")
                     break
-                    
+
         except Exception as e:
             logger.error(f"WebSocket handler error: {e}")
         finally:
             # Remove from active connections
             self.websockets.discard(ws)
             logger.info("WebSocket client disconnected")
-        
+
         return ws
-    
+
     async def _send_to_websocket(self, ws: web.WebSocketResponse, msg_type: str, payload: Any):
         """Send data to a WebSocket connection"""
         try:
             message = {
                 "type": msg_type,
                 "payload": payload,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
             await ws.send_str(json.dumps(message))
         except Exception as e:
             logger.error(f"Failed to send WebSocket message: {e}")
-    
+
     async def broadcast_to_websockets(self, msg_type: str, payload: Any):
         """Broadcast data to all WebSocket connections"""
         if not self.websockets:
             return
-        
-        message = {
-            "type": msg_type,
-            "payload": payload,
-            "timestamp": datetime.now().isoformat()
-        }
-        
+
+        message = {"type": msg_type, "payload": payload, "timestamp": datetime.now().isoformat()}
+
         # Send to all active connections
         disconnected = set()
         for ws in self.websockets:
@@ -629,33 +628,34 @@ class RealtimeDashboard:
                 await ws.send_str(json.dumps(message))
             except Exception:
                 disconnected.add(ws)
-        
+
         # Clean up disconnected sockets
         self.websockets -= disconnected
-    
+
     async def get_metrics(self, request) -> web.Response:
         """Get current metrics"""
         return web.json_response(self.metrics.to_dict())
-    
+
     async def get_recent_changes(self, request) -> web.Response:
         """Get recent file changes"""
         return web.json_response({"recent_changes": self.recent_changes})
-    
+
     async def get_recent_analyses(self, request) -> web.Response:
         """Get recent analysis results"""
         return web.json_response({"recent_analyses": self.recent_analyses})
-    
+
     async def get_system_status(self, request) -> web.Response:
         """Get system status"""
         return web.json_response(self.system_status)
-    
+
     async def _create_static_files(self, static_dir: Path):
         """Create necessary static files"""
         # Create empty files if needed - the HTML is self-contained
         pass
-    
+
     async def start_data_updates(self):
         """Start background data update tasks"""
+
         # Metrics update task
         async def update_metrics():
             while True:
@@ -665,7 +665,7 @@ class RealtimeDashboard:
                 except Exception as e:
                     logger.error(f"Metrics update error: {e}")
                     await asyncio.sleep(5)
-        
+
         # Data update task
         async def update_data():
             while True:
@@ -675,18 +675,18 @@ class RealtimeDashboard:
                 except Exception as e:
                     logger.error(f"Data update error: {e}")
                     await asyncio.sleep(5)
-        
+
         # Start background tasks
         task1 = asyncio.create_task(update_metrics())
         task2 = asyncio.create_task(update_data())
-        
+
         self.background_tasks.add(task1)
         self.background_tasks.add(task2)
-        
+
         # Clean up completed tasks
         task1.add_done_callback(self.background_tasks.discard)
         task2.add_done_callback(self.background_tasks.discard)
-    
+
     async def _fetch_metrics_from_mcp(self):
         """Fetch metrics from MCP server"""
         try:
@@ -696,10 +696,12 @@ class RealtimeDashboard:
                     "jsonrpc": "2.0",
                     "id": "dashboard_status",
                     "method": "tools/call",
-                    "params": {"name": "realtime_get_status", "arguments": {}}
+                    "params": {"name": "realtime_get_status", "arguments": {}},
                 }
-                
-                async with session.post(f"{self.mcp_server_url}/mcp", json=status_request) as response:
+
+                async with session.post(
+                    f"{self.mcp_server_url}/mcp", json=status_request
+                ) as response:
                     if response.status == 200:
                         data = await response.json()
                         result = data.get("result", {})
@@ -708,16 +710,18 @@ class RealtimeDashboard:
                             if content.get("type") == "resource":
                                 status_data = json.loads(content.get("data", "{}"))
                                 await self._update_metrics_from_status(status_data)
-                
+
                 # Get statistics
                 stats_request = {
                     "jsonrpc": "2.0",
                     "id": "dashboard_stats",
                     "method": "tools/call",
-                    "params": {"name": "glean_statistics", "arguments": {}}
+                    "params": {"name": "glean_statistics", "arguments": {}},
                 }
-                
-                async with session.post(f"{self.mcp_server_url}/mcp", json=stats_request) as response:
+
+                async with session.post(
+                    f"{self.mcp_server_url}/mcp", json=stats_request
+                ) as response:
                     if response.status == 200:
                         data = await response.json()
                         result = data.get("result", {})
@@ -726,37 +730,37 @@ class RealtimeDashboard:
                             if content.get("type") == "resource":
                                 stats_data = json.loads(content.get("data", "{}"))
                                 await self._update_metrics_from_stats(stats_data)
-                
+
         except Exception as e:
             logger.error(f"Failed to fetch metrics from MCP: {e}")
-    
+
     async def _update_metrics_from_status(self, status_data: Dict[str, Any]):
         """Update metrics from status data"""
         watcher_stats = status_data.get("watcher_statistics", {})
-        
+
         self.metrics.changes_detected = watcher_stats.get("changes_detected", 0)
         self.metrics.analyses_completed = watcher_stats.get("analyses_completed", 0)
         self.metrics.ai_insights_generated = watcher_stats.get("ai_insights_generated", 0)
         self.metrics.total_files_watched = watcher_stats.get("files_watched", 0)
         self.metrics.uptime_seconds = watcher_stats.get("uptime_seconds", 0)
-        
+
         queue_stats = watcher_stats.get("queue_stats", {})
         self.metrics.average_analysis_time = queue_stats.get("avg_processing_time", 0)
-        
+
         self.metrics.last_updated = datetime.now()
         self.system_status = status_data
-        
+
         # Broadcast to WebSocket clients
-        await self.broadcast_to_websockets('metrics', self.metrics.to_dict())
-        await self.broadcast_to_websockets('system_status', self.system_status)
-    
+        await self.broadcast_to_websockets("metrics", self.metrics.to_dict())
+        await self.broadcast_to_websockets("system_status", self.system_status)
+
     async def _update_metrics_from_stats(self, stats_data: Dict[str, Any]):
         """Update metrics from statistics data"""
         realtime_stats = stats_data.get("realtime_statistics", {})
         if realtime_stats:
             # Update with any additional stats from Glean
             pass
-    
+
     async def _fetch_data_from_mcp(self):
         """Fetch recent data from MCP server"""
         try:
@@ -766,10 +770,12 @@ class RealtimeDashboard:
                     "jsonrpc": "2.0",
                     "id": "dashboard_changes",
                     "method": "tools/call",
-                    "params": {"name": "realtime_get_changes", "arguments": {"limit": 20}}
+                    "params": {"name": "realtime_get_changes", "arguments": {"limit": 20}},
                 }
-                
-                async with session.post(f"{self.mcp_server_url}/mcp", json=changes_request) as response:
+
+                async with session.post(
+                    f"{self.mcp_server_url}/mcp", json=changes_request
+                ) as response:
                     if response.status == 200:
                         data = await response.json()
                         result = data.get("result", {})
@@ -778,21 +784,23 @@ class RealtimeDashboard:
                             if content.get("type") == "resource":
                                 changes_data = json.loads(content.get("data", "{}"))
                                 new_changes = changes_data.get("recent_changes", [])
-                                
+
                                 # Update and broadcast if new changes
                                 if new_changes != self.recent_changes:
                                     self.recent_changes = new_changes
-                                    await self.broadcast_to_websockets('file_changes', new_changes)
-                
+                                    await self.broadcast_to_websockets("file_changes", new_changes)
+
                 # Get recent analyses
                 analyses_request = {
                     "jsonrpc": "2.0",
                     "id": "dashboard_analyses",
                     "method": "tools/call",
-                    "params": {"name": "realtime_get_analyses", "arguments": {"limit": 20}}
+                    "params": {"name": "realtime_get_analyses", "arguments": {"limit": 20}},
                 }
-                
-                async with session.post(f"{self.mcp_server_url}/mcp", json=analyses_request) as response:
+
+                async with session.post(
+                    f"{self.mcp_server_url}/mcp", json=analyses_request
+                ) as response:
                     if response.status == 200:
                         data = await response.json()
                         result = data.get("result", {})
@@ -801,65 +809,69 @@ class RealtimeDashboard:
                             if content.get("type") == "resource":
                                 analyses_data = json.loads(content.get("data", "{}"))
                                 new_analyses = analyses_data.get("recent_analyses", [])
-                                
+
                                 # Update and broadcast if new analyses
                                 if new_analyses != self.recent_analyses:
                                     self.recent_analyses = new_analyses
-                                    await self.broadcast_to_websockets('analysis_results', new_analyses)
-                                    
+                                    await self.broadcast_to_websockets(
+                                        "analysis_results", new_analyses
+                                    )
+
                                     # Check for AI insights
                                     ai_insights = [a for a in new_analyses if a.get("ai_insights")]
                                     if ai_insights:
-                                        await self.broadcast_to_websockets('ai_insights', ai_insights)
-                
+                                        await self.broadcast_to_websockets(
+                                            "ai_insights", ai_insights
+                                        )
+
         except Exception as e:
             logger.error(f"Failed to fetch data from MCP: {e}")
-    
+
     async def start_server(self, host: str = "localhost", port: int = 8090):
         """Start the dashboard server"""
         try:
             app = await self.create_app()
-            
+
             runner = web.AppRunner(app)
             await runner.setup()
-            
+
             site = web.TCPSite(runner, host, port)
             await site.start()
-            
+
             self.server = (runner, site)
-            
+
             # Start background data updates
             await self.start_data_updates()
-            
+
             logger.info(f"🚀 Real-time Dashboard running on http://{host}:{port}")
             logger.info(f"   • Main Dashboard: http://{host}:{port}/")
             logger.info(f"   • API Metrics: http://{host}:{port}/api/metrics")
             logger.info(f"   • WebSocket: ws://{host}:{port}/ws")
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to start dashboard server: {e}")
             return False
-    
+
     async def stop_server(self):
         """Stop the dashboard server"""
         # Cancel background tasks
         for task in self.background_tasks:
             task.cancel()
-        
+
         # Close WebSocket connections
         for ws in self.websockets:
             await ws.close()
         self.websockets.clear()
-        
+
         # Stop server
         if self.server:
             runner, site = self.server
             await site.stop()
             await runner.cleanup()
             self.server = None
-        
+
         logger.info("Dashboard server stopped")
 
 
@@ -873,30 +885,30 @@ async def create_dashboard(mcp_server_url: str = "http://localhost:8082") -> Rea
 async def main():
     """Main dashboard launcher"""
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Launch Real-time Code Analysis Dashboard")
     parser.add_argument("--host", default="localhost", help="Dashboard host")
     parser.add_argument("--port", type=int, default=8090, help="Dashboard port")
     parser.add_argument("--mcp-url", default="http://localhost:8082", help="MCP server URL")
-    
+
     args = parser.parse_args()
-    
+
     # Create and start dashboard
     dashboard = await create_dashboard(args.mcp_url)
-    
+
     try:
         if await dashboard.start_server(args.host, args.port):
             print(f"✅ Dashboard started successfully!")
             print(f"🌐 Open: http://{args.host}:{args.port}")
             print("Press Ctrl+C to stop")
-            
+
             # Keep running
             while True:
                 await asyncio.sleep(1)
-                
+
         else:
             print("❌ Failed to start dashboard")
-            
+
     except KeyboardInterrupt:
         print("\n🛑 Stopping dashboard...")
     except Exception as e:

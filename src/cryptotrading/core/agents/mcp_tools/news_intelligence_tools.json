@@ -1,0 +1,435 @@
+{
+  "name": "news-intelligence",
+  "version": "1.0.0",
+  "description": "MCP tools for news intelligence, sentiment analysis, and market correlation",
+  "tools": {
+    "fetch_news": {
+      "description": "Fetch news from multiple sources with intelligent filtering",
+      "parameters": {
+        "query": {
+          "type": "string",
+          "description": "Search query for news"
+        },
+        "symbols": {
+          "type": "array",
+          "items": "string",
+          "description": "Crypto symbols to search for"
+        },
+        "sources": {
+          "type": "array",
+          "items": "string",
+          "description": "News sources to query",
+          "optional": true,
+          "default": ["perplexity", "newsapi", "social"]
+        },
+        "language": {
+          "type": "string",
+          "description": "Language code (en, ru, zh, es)",
+          "default": "en"
+        },
+        "limit": {
+          "type": "integer",
+          "description": "Number of articles to fetch",
+          "default": 10
+        },
+        "time_range": {
+          "type": "string",
+          "description": "Time range (1h, 24h, 7d)",
+          "optional": true,
+          "default": "24h"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "articles": "array",
+          "total": "integer",
+          "query": "string",
+          "sources": "array"
+        }
+      }
+    },
+    "analyze_sentiment": {
+      "description": "Analyze news sentiment using AI and NLP",
+      "parameters": {
+        "article": {
+          "type": "object",
+          "description": "News article to analyze"
+        },
+        "symbols": {
+          "type": "array",
+          "items": "string",
+          "description": "Symbols to focus sentiment analysis on",
+          "optional": true
+        },
+        "deep_analysis": {
+          "type": "boolean",
+          "description": "Perform deep AI analysis",
+          "default": false
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "sentiment": "string",
+          "sentiment_score": "number",
+          "confidence": "number",
+          "factors": "object",
+          "symbols_mentioned": "array"
+        }
+      }
+    },
+    "translate_article": {
+      "description": "Translate news article to target language",
+      "parameters": {
+        "article": {
+          "type": "object",
+          "description": "Article to translate"
+        },
+        "target_language": {
+          "type": "string",
+          "description": "Target language code (ru, zh, es, etc.)"
+        },
+        "preserve_technical": {
+          "type": "boolean",
+          "description": "Preserve technical trading terms",
+          "default": true
+        },
+        "domain_specific": {
+          "type": "boolean",
+          "description": "Use crypto/trading specific translation",
+          "default": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "original_language": "string",
+          "target_language": "string",
+          "translated_title": "string",
+          "translated_content": "string",
+          "translation_confidence": "number"
+        }
+      }
+    },
+    "correlate_with_market": {
+      "description": "Correlate news events with market movements",
+      "parameters": {
+        "articles": {
+          "type": "array",
+          "description": "News articles to correlate"
+        },
+        "market_data": {
+          "type": "object",
+          "description": "Market data for correlation analysis"
+        },
+        "time_window": {
+          "type": "integer",
+          "description": "Hours to analyze for correlation",
+          "default": 24
+        },
+        "correlation_method": {
+          "type": "string",
+          "enum": ["pearson", "spearman", "kendall"],
+          "description": "Correlation calculation method",
+          "default": "pearson"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "correlations": "array",
+          "significant_correlations": "integer",
+          "average_lag_minutes": "number",
+          "market_impact_score": "number"
+        }
+      }
+    },
+    "generate_alert": {
+      "description": "Generate intelligent news-based trading alert",
+      "parameters": {
+        "article": {
+          "type": "object",
+          "description": "Triggering news article"
+        },
+        "alert_type": {
+          "type": "string",
+          "enum": ["breaking", "sentiment_shift", "high_impact", "correlation", "trend"],
+          "description": "Type of alert to generate"
+        },
+        "urgency": {
+          "type": "string",
+          "enum": ["low", "normal", "high", "critical"],
+          "description": "Alert urgency level",
+          "default": "normal"
+        },
+        "channels": {
+          "type": "array",
+          "items": "string",
+          "description": "Delivery channels for alert",
+          "optional": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "alert_id": "string",
+          "alert_type": "string",
+          "title": "string",
+          "urgency": "string",
+          "symbols": "array",
+          "created_at": "string",
+          "status": "string"
+        }
+      }
+    },
+    "summarize_news": {
+      "description": "Generate intelligent summary of multiple news articles",
+      "parameters": {
+        "articles": {
+          "type": "array",
+          "description": "Articles to summarize"
+        },
+        "focus": {
+          "type": "string",
+          "description": "Focus area for summary (price, regulation, technology, adoption)",
+          "optional": true
+        },
+        "max_length": {
+          "type": "integer",
+          "description": "Maximum summary length in characters",
+          "default": 500
+        },
+        "style": {
+          "type": "string",
+          "enum": ["brief", "detailed", "technical", "executive"],
+          "description": "Summary style",
+          "default": "brief"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "summary": "string",
+          "article_count": "integer",
+          "key_points": "array",
+          "focus_area": "string",
+          "generated_at": "string"
+        }
+      }
+    },
+    "extract_insights": {
+      "description": "Extract actionable trading insights from news",
+      "parameters": {
+        "articles": {
+          "type": "array",
+          "description": "Articles to analyze for insights"
+        },
+        "symbols": {
+          "type": "array",
+          "items": "string",
+          "description": "Symbols of interest for insight extraction"
+        },
+        "insight_types": {
+          "type": "array",
+          "items": "string",
+          "description": "Types of insights to extract",
+          "optional": true,
+          "default": ["trading_signals", "risk_factors", "opportunities"]
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "insights": "object",
+          "symbols_analyzed": "array",
+          "recommendation": "string",
+          "confidence_score": "number",
+          "generated_at": "string"
+        }
+      }
+    },
+    "monitor_sentiment_shift": {
+      "description": "Monitor for significant sentiment shifts in news",
+      "parameters": {
+        "symbol": {
+          "type": "string",
+          "description": "Symbol to monitor for sentiment shifts"
+        },
+        "threshold": {
+          "type": "number",
+          "description": "Minimum shift magnitude to trigger alert",
+          "default": 0.3
+        },
+        "time_window": {
+          "type": "string",
+          "description": "Time window for comparison (1h, 6h, 24h)",
+          "default": "6h"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "symbol": "string",
+          "shift_detected": "boolean",
+          "shift_magnitude": "number",
+          "current_sentiment": "number",
+          "previous_sentiment": "number",
+          "direction": "string",
+          "confidence": "number"
+        }
+      }
+    },
+    "get_trending_topics": {
+      "description": "Identify trending topics in crypto news",
+      "parameters": {
+        "time_range": {
+          "type": "string",
+          "enum": ["1h", "6h", "24h", "7d"],
+          "description": "Time range for trend analysis",
+          "default": "24h"
+        },
+        "min_mentions": {
+          "type": "integer",
+          "description": "Minimum mentions to be considered trending",
+          "default": 5
+        },
+        "categories": {
+          "type": "array",
+          "items": "string",
+          "description": "Categories to focus on",
+          "optional": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "trending_topics": "array",
+          "time_range": "string",
+          "total_articles_analyzed": "integer"
+        }
+      }
+    },
+    "analyze_source_credibility": {
+      "description": "Analyze credibility and reliability of news sources",
+      "parameters": {
+        "source": {
+          "type": "string",
+          "description": "News source to analyze"
+        },
+        "articles": {
+          "type": "array",
+          "description": "Sample articles from source for analysis",
+          "optional": true
+        },
+        "check_history": {
+          "type": "boolean",
+          "description": "Check historical accuracy of source",
+          "default": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "source": "string",
+          "credibility_score": "number",
+          "reputation": "string",
+          "factors": "object",
+          "recommendation": "string"
+        }
+      }
+    },
+    "detect_fake_news": {
+      "description": "Detect potential fake or misleading news",
+      "parameters": {
+        "article": {
+          "type": "object",
+          "description": "Article to verify"
+        },
+        "cross_reference": {
+          "type": "boolean",
+          "description": "Cross-reference with other sources",
+          "default": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "authenticity_score": "number",
+          "red_flags": "array",
+          "verification_status": "string",
+          "cross_references": "array"
+        }
+      }
+    },
+    "track_narrative": {
+      "description": "Track evolving narratives in crypto news",
+      "parameters": {
+        "narrative": {
+          "type": "string",
+          "description": "Narrative or theme to track"
+        },
+        "symbols": {
+          "type": "array",
+          "items": "string",
+          "description": "Related symbols",
+          "optional": true
+        },
+        "time_range": {
+          "type": "string",
+          "description": "Time range for tracking",
+          "default": "7d"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "narrative": "string",
+          "evolution": "array",
+          "current_sentiment": "string",
+          "momentum": "string",
+          "key_influencers": "array"
+        }
+      }
+    }
+  },
+  "capabilities": {
+    "data_sources": [
+      "perplexity_api",
+      "newsapi",
+      "social_media",
+      "blogs",
+      "official_announcements"
+    ],
+    "analysis_types": [
+      "sentiment_analysis",
+      "entity_extraction",
+      "trend_detection",
+      "correlation_analysis",
+      "credibility_scoring"
+    ],
+    "languages": [
+      "en",
+      "ru",
+      "zh",
+      "es",
+      "ja",
+      "ko",
+      "de",
+      "fr"
+    ],
+    "alert_channels": [
+      "slack",
+      "email",
+      "webhook",
+      "dashboard",
+      "mobile_push"
+    ]
+  },
+  "requirements": {
+    "apis": ["perplexity", "newsapi", "translation_api"],
+    "ai_models": ["sentiment_analysis", "nlp", "translation"],
+    "storage": "news_cache",
+    "real_time": true
+  }
+}

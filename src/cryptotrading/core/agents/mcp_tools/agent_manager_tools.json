@@ -272,6 +272,216 @@
           "recommendations": "array"
         }
       }
+    },
+    "send_alert": {
+      "description": "Send system alerts through configured channels",
+      "parameters": {
+        "alert_type": {
+          "type": "string",
+          "enum": ["agent_down", "compliance_violation", "performance_issue", "security_alert", "system_error"],
+          "description": "Type of alert"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"],
+          "description": "Alert severity"
+        },
+        "message": {
+          "type": "string",
+          "description": "Alert message"
+        },
+        "agent_id": {
+          "type": "string",
+          "description": "Related agent ID",
+          "optional": true
+        },
+        "channels": {
+          "type": "array",
+          "items": "string",
+          "description": "Delivery channels (slack, email, webhook)",
+          "optional": true
+        }
+      }
+    },
+    "configure_alerts": {
+      "description": "Configure alert delivery settings",
+      "parameters": {
+        "channel_type": {
+          "type": "string",
+          "enum": ["slack", "email", "webhook", "pagerduty"],
+          "description": "Channel type"
+        },
+        "config": {
+          "type": "object",
+          "description": "Channel configuration"
+        },
+        "severity_filter": {
+          "type": "array",
+          "items": "string",
+          "description": "Severities to send",
+          "optional": true
+        }
+      }
+    },
+    "check_wallet_balance": {
+      "description": "Check agent wallet balance on blockchain",
+      "parameters": {
+        "agent_id": {
+          "type": "string",
+          "description": "Agent ID"
+        },
+        "network": {
+          "type": "string",
+          "enum": ["ethereum", "bsc", "polygon", "arbitrum", "local_anvil"],
+          "description": "Blockchain network",
+          "default": "local_anvil"
+        },
+        "include_tokens": {
+          "type": "boolean",
+          "description": "Include ERC20 token balances",
+          "default": false
+        }
+      }
+    },
+    "execute_blockchain_tx": {
+      "description": "Execute blockchain transaction for agent operations",
+      "parameters": {
+        "agent_id": {
+          "type": "string",
+          "description": "Agent executing transaction"
+        },
+        "tx_type": {
+          "type": "string",
+          "enum": ["register", "update_status", "send_message", "update_capabilities"],
+          "description": "Transaction type"
+        },
+        "data": {
+          "type": "object",
+          "description": "Transaction data"
+        },
+        "network": {
+          "type": "string",
+          "default": "local_anvil"
+        }
+      }
+    },
+    "monitor_defi": {
+      "description": "Monitor DeFi protocols for agent operations",
+      "parameters": {
+        "protocols": {
+          "type": "array",
+          "items": "string",
+          "description": "DeFi protocols to monitor"
+        },
+        "metrics": {
+          "type": "array",
+          "items": "string",
+          "enum": ["tvl", "apy", "volume", "fees"],
+          "description": "Metrics to track"
+        },
+        "alert_thresholds": {
+          "type": "object",
+          "description": "Alert thresholds for metrics",
+          "optional": true
+        }
+      }
+    },
+    "manage_gas": {
+      "description": "Manage gas optimization for agent transactions",
+      "parameters": {
+        "network": {
+          "type": "string",
+          "description": "Blockchain network"
+        },
+        "operation": {
+          "type": "string",
+          "description": "Operation to optimize"
+        },
+        "max_gas_price": {
+          "type": "number",
+          "description": "Maximum gas price in gwei",
+          "optional": true
+        }
+      }
+    },
+    "register_with_cds": {
+      "description": "Register agent with CDS service and enable monitoring",
+      "parameters": {
+        "agent_id": {
+          "type": "string",
+          "description": "Agent ID"
+        },
+        "capabilities": {
+          "type": "object",
+          "description": "Agent capabilities for CDS registration"
+        },
+        "cds_endpoint": {
+          "type": "string",
+          "description": "CDS service endpoint",
+          "default": "http://localhost:4005"
+        },
+        "enable_monitoring": {
+          "type": "boolean",
+          "description": "Enable CDS monitoring",
+          "default": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "cds_registration_id": "string",
+          "monitoring_enabled": "boolean",
+          "status": "string"
+        }
+      }
+    },
+    "query_cds_metrics": {
+      "description": "Query CDS integration metrics and monitoring data",
+      "parameters": {
+        "agent_id": {
+          "type": "string",
+          "description": "Agent ID",
+          "optional": true
+        },
+        "metric_type": {
+          "type": "string",
+          "enum": ["performance", "operations", "errors", "transactions"],
+          "description": "Type of metrics to query",
+          "optional": true
+        },
+        "time_range": {
+          "type": "string",
+          "description": "Time range for metrics (1h, 24h, 7d)",
+          "default": "24h"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "metrics": "object",
+          "agent_stats": "array",
+          "system_health": "object"
+        }
+      }
+    },
+    "track_contracts": {
+      "description": "Track smart contracts for agent interactions",
+      "parameters": {
+        "contracts": {
+          "type": "array",
+          "items": "object",
+          "description": "Contract addresses and ABIs"
+        },
+        "events": {
+          "type": "array",
+          "items": "string",
+          "description": "Events to monitor"
+        },
+        "real_time": {
+          "type": "boolean",
+          "default": true
+        }
+      }
     }
   },
   "capabilities": {
@@ -285,7 +495,9 @@
       "lifecycle_management",
       "health_monitoring",
       "performance_tracking",
-      "network_configuration"
+      "network_configuration",
+      "alert_management",
+      "notification_delivery"
     ],
     "compliance": [
       "mcp_segregation",
@@ -296,7 +508,32 @@
     "blockchain": [
       "smart_contract_interaction",
       "registry_management",
-      "transaction_tracking"
+      "transaction_tracking",
+      "wallet_management",
+      "gas_optimization",
+      "multi_chain_support"
+    ],
+    "defi": [
+      "protocol_monitoring",
+      "liquidity_tracking",
+      "yield_analysis",
+      "dex_integration"
+    ],
+    "alerts": [
+      "multi_channel_delivery",
+      "slack_integration",
+      "email_notifications",
+      "webhook_support",
+      "rate_limiting",
+      "priority_handling"
+    ],
+    "cds_integration": [
+      "cds_registration",
+      "monitoring_integration",
+      "transactional_operations",
+      "metrics_collection",
+      "health_tracking",
+      "performance_analysis"
     ]
   }
 }

@@ -9,10 +9,10 @@ sap.ui.define([
      * Trading Service for Crypto Trading Platform
      * Provides trading functionality including:
      * - Order management (place, cancel, modify)
-     * - Portfolio tracking and management
+     * - Portfolio tracking and managemen
      * - Risk management and validation
      * - Trading history and analytics
-     * - Position management
+     * - Position managemen
      */
     return BaseObject.extend("com.rex.cryptotrading.utils.TradingService", {
 
@@ -30,8 +30,8 @@ sap.ui.define([
         initialize(config = {}) {
             this._config = {
                 apiUrl: config.apiUrl || "/api/trading",
-                maxOrderSize: config.maxOrderSize || 1000000, // $1M default
-                maxPositionSize: config.maxPositionSize || 5000000, // $5M default
+                maxOrderSize: config.maxOrderSize || 1000000, // $1M defaul
+                maxPositionSize: config.maxPositionSize || 5000000, // $5M defaul
                 riskLimits: {
                     dailyLoss: config.dailyLossLimit || 50000, // $50K
                     maxLeverage: config.maxLeverage || 10,
@@ -202,18 +202,18 @@ sap.ui.define([
         async getTradingHistory(options = {}) {
             try {
                 const params = new URLSearchParams();
-                
+
                 if (options.symbol) {
                     params.append("symbol", SecurityUtils.sanitizeData(options.symbol).toUpperCase());
                 }
                 if (options.startTime) {
-                    params.append("startTime", parseInt(options.startTime));
+                    params.append("startTime", parseInt(options.startTime, 10));
                 }
                 if (options.endTime) {
-                    params.append("endTime", parseInt(options.endTime));
+                    params.append("endTime", parseInt(options.endTime, 10));
                 }
                 if (options.limit) {
-                    params.append("limit", Math.min(parseInt(options.limit) || 100, 1000));
+                    params.append("limit", Math.min(parseInt(options.limit, 10) || 100, 1000));
                 }
 
                 const response = await fetch(`${this._config.apiUrl}/history?${params.toString()}`, {
@@ -246,7 +246,7 @@ sap.ui.define([
                 riskPercentage = 2, // 2% default risk
                 entryPrice,
                 stopLoss,
-                symbol
+                symbol: _symbol
             } = params;
 
             if (!accountBalance || !entryPrice || !stopLoss) {
@@ -260,7 +260,7 @@ sap.ui.define([
             // Apply maximum position size limits
             const maxPositionValue = Math.min(
                 this._config.maxPositionSize,
-                accountBalance * 0.5 // Max 50% of account
+                accountBalance * 0.5 // Max 50% of accoun
             );
             const maxQuantity = maxPositionValue / entryPrice;
 
@@ -284,7 +284,7 @@ sap.ui.define([
                 throw new Error(`Order size exceeds maximum limit of ${this._config.maxOrderSize}`);
             }
 
-            // Check open orders limit
+            // Check open orders limi
             const openOrders = await this.getOpenOrders();
             if (openOrders.length >= this._config.riskLimits.maxOpenOrders) {
                 throw new Error(`Maximum open orders limit (${this._config.riskLimits.maxOpenOrders}) reached`);
@@ -311,8 +311,8 @@ sap.ui.define([
                 executedQuantity: parseFloat(orderData.executedQty || orderData.executedQuantity || 0),
                 status: orderData.status,
                 timeInForce: orderData.timeInForce,
-                createdAt: parseInt(orderData.time || orderData.createdAt || Date.now()),
-                updatedAt: parseInt(orderData.updateTime || orderData.updatedAt || Date.now())
+                createdAt: parseInt(orderData.time || orderData.createdAt || Date.now(), 10),
+                updatedAt: parseInt(orderData.updateTime || orderData.updatedAt || Date.now(), 10)
             };
         },
 
@@ -351,7 +351,7 @@ sap.ui.define([
                 price: parseFloat(tradeData.price || 0),
                 commission: parseFloat(tradeData.commission || 0),
                 commissionAsset: tradeData.commissionAsset,
-                timestamp: parseInt(tradeData.time || tradeData.timestamp || 0)
+                timestamp: parseInt(tradeData.time || tradeData.timestamp || 0, 10)
             };
         },
 

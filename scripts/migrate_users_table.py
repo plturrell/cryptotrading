@@ -3,27 +3,30 @@
 Migration script to add missing columns to users table
 """
 
+import os
 import sqlite3
 import sys
-import os
 
 # Database path
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'rex_trading.db')
+DB_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "rex_trading.db"
+)
+
 
 def migrate_users_table():
     """Add missing columns to users table"""
-    
+
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    
+
     try:
         # Check current schema
         cursor.execute("PRAGMA table_info(users)")
         columns = cursor.fetchall()
         existing_columns = {col[1] for col in columns}
-        
+
         print(f"Existing columns: {existing_columns}")
-        
+
         # Add missing columns if they don't exist
         migrations = [
             ("first_name", "TEXT"),
@@ -44,9 +47,9 @@ def migrate_users_table():
             ("email_verified", "INTEGER DEFAULT 0"),
             ("email_verification_token", "TEXT"),
             ("created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
-            ("updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+            ("updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ]
-        
+
         for column_name, column_type in migrations:
             if column_name not in existing_columns:
                 print(f"Adding column: {column_name} {column_type}")
@@ -57,23 +60,24 @@ def migrate_users_table():
                 except sqlite3.OperationalError as e:
                     if "duplicate column name" not in str(e):
                         print(f"⚠️ Warning for {column_name}: {e}")
-        
+
         # Verify final schema
         cursor.execute("PRAGMA table_info(users)")
         columns = cursor.fetchall()
         print("\n📋 Final users table schema:")
         for col in columns:
             print(f"   {col[1]} ({col[2]})")
-        
+
         conn.commit()
         print("\n✅ Users table migration completed successfully!")
-        
+
     except Exception as e:
         print(f"❌ Migration failed: {e}")
         conn.rollback()
         sys.exit(1)
     finally:
         conn.close()
+
 
 if __name__ == "__main__":
     migrate_users_table()

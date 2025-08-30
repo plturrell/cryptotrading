@@ -4,7 +4,8 @@ Identify factors that depend on unavailable data sources
 """
 
 import sys
-sys.path.append('src')
+
+sys.path.append("src")
 
 from cryptotrading.core.factors.factor_definitions import ALL_FACTORS, DataSource
 
@@ -18,12 +19,12 @@ unsupported_factors = []
 for factor in ALL_FACTORS:
     # Check if ANY required source is available
     has_available_source = any(source in AVAILABLE_SOURCES for source in factor.required_sources)
-    
+
     # If no required sources, check if it's derived from available factors
     if not factor.required_sources and factor.is_derived:
         # Check dependencies recursively - simplified check
         has_available_source = True  # Assume derived factors can be calculated
-    
+
     if has_available_source or not factor.required_sources:
         supported_factors.append(factor)
     else:

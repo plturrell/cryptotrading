@@ -1,0 +1,21 @@
+ID,fromAgent_ID,toAgent_ID,connectionType,status,protocol,metadata,establishedAt,lastActivity
+1,1,2,DataAnalysisToML,CONNECTED,HTTP,"{""endpoint"": ""/api/mcp/data-analysis"", ""format"": ""json"", ""capabilities"": [""correlation_matrix"", ""outlier_detection""]}",2025-08-30T18:40:00.000Z,2025-08-30T18:47:00.000Z
+2,1,7,DataQualityToFeatureStore,CONNECTED,WebSocket,"{""channel"": ""data_quality"", ""validation_checks"": [""completeness"", ""accuracy"", ""timeliness""]}",2025-08-30T18:41:00.000Z,2025-08-30T18:47:00.000Z
+3,2,4,MLPredictionToSignals,CONNECTED,WebSocket,"{""channel"": ""ml_predictions"", ""models"": [""ensemble"", ""neural_network""], ""symbols"": [""BTC"", ""ETH"", ""SOL""]}",2025-08-30T18:42:00.000Z,2025-08-30T18:46:45.000Z
+4,3,4,StrategyToSignals,CONNECTED,HTTP,"{""endpoint"": ""/api/mcp/strategy-signals"", ""algorithms"": [""gaussian_mean_reversion"", ""kalman_filter""]}",2025-08-30T18:43:00.000Z,2025-08-30T18:46:30.000Z
+5,5,2,TechnicalAnalysisToML,CONNECTED,WebSocket,"{""channel"": ""technical_indicators"", ""skills"": [""momentum"", ""volatility"", ""patterns""]}",2025-08-30T18:44:00.000Z,2025-08-30T18:46:00.000Z
+6,5,4,TechnicalToSignals,CONNECTED,HTTP,"{""endpoint"": ""/api/mcp/technical-signals"", ""indicators"": [""RSI"", ""MACD"", ""Bollinger""]}",2025-08-30T18:45:00.000Z,2025-08-30T18:46:00.000Z
+7,6,8,NewsToCorrelation,CONNECTED,HTTP,"{""endpoint"": ""/api/news-correlation"", ""perplexity_enabled"": true, ""sentiment_analysis"": true}",2025-08-30T18:46:00.000Z,2025-08-30T18:45:45.000Z
+8,6,15,NewsToIntelligence,CONNECTED,WebSocket,"{""channel"": ""news_intelligence"", ""sentiment_model"": ""transformer"", ""impact_analysis"": true}",2025-08-30T18:47:00.000Z,2025-08-30T18:45:45.000Z
+9,7,2,FeatureStoreToML,CONNECTED,HTTP,"{""endpoint"": ""/api/mcp/features"", ""cds_transactional"": true, ""feature_types"": [""technical"", ""fundamental""]}",2025-08-30T18:48:00.000Z,2025-08-30T18:45:30.000Z
+10,8,2,NewsCorrelationToML,CONNECTED,WebSocket,"{""channel"": ""news_correlation"", ""correlation_window"": 24, ""impact_threshold"": 0.05}",2025-08-30T18:49:00.000Z,2025-08-30T18:45:15.000Z
+11,9,3,MCTSToStrategy,CONNECTED,HTTP,"{""endpoint"": ""/api/mcp/mcts-optimization"", ""simulation_runs"": 10000, ""max_depth"": 50}",2025-08-30T18:50:00.000Z,2025-08-30T18:45:00.000Z
+12,10,1,AWSDataToAnalysis,CONNECTED,HTTP,"{""endpoint"": ""/api/aws-data"", ""region"": ""us-east-1"", ""validation_enabled"": true}",2025-08-30T18:51:00.000Z,2025-08-30T18:44:45.000Z
+13,11,12,KnowledgeToOrchestrator,CONNECTED,WebSocket,"{""channel"": ""knowledge_retrieval"", ""semantic_search"": true, ""context_window"": 4096}",2025-08-30T18:52:00.000Z,2025-08-30T18:44:30.000Z
+14,12,13,OrchestratorToManager,CONNECTED,HTTP,"{""endpoint"": ""/api/agent-coordination"", ""load_balancing"": true, ""health_monitoring"": true}",2025-08-30T18:53:00.000Z,2025-08-30T18:44:15.000Z
+15,13,1,ManagerToDataAnalysis,CONNECTED,WebSocket,"{""channel"": ""agent_health"", ""monitoring_interval"": 60, ""restart_policy"": ""on_failure""}",2025-08-30T18:54:00.000Z,2025-08-30T18:44:00.000Z
+16,14,2,RealMLToMLAgent,CONNECTED,HTTP,"{""endpoint"": ""/api/real-ml"", ""inference_timeout"": 5000, ""batch_processing"": true}",2025-08-30T18:55:00.000Z,2025-08-30T18:43:45.000Z
+17,15,6,IntelligenceToNews,CONNECTED,WebSocket,"{""channel"": ""news_intelligence"", ""trend_analysis"": true, ""impact_prediction"": true}",2025-08-30T18:56:00.000Z,2025-08-30T18:43:30.000Z
+18,2,9,MLToMCTS,CONNECTED,HTTP,"{""endpoint"": ""/api/mcp/ml-mcts"", ""prediction_horizons"": [""1h"", ""24h"", ""7d""]}",2025-08-30T18:57:00.000Z,2025-08-30T18:46:45.000Z
+19,4,13,SignalsToManager,CONNECTED,WebSocket,"{""channel"": ""trading_signals"", ""signal_validation"": true, ""risk_assessment"": true}",2025-08-30T18:58:00.000Z,2025-08-30T18:46:15.000Z
+20,3,9,StrategyToMCTS,CONNECTED,HTTP,"{""endpoint"": ""/api/strategy-mcts"", ""consensus_enabled"": true, ""blockchain_messaging"": true}",2025-08-30T18:59:00.000Z,2025-08-30T18:46:30.000Z

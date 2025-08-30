@@ -8,27 +8,28 @@ sap.ui.define([
     "sap/m/Button",
     "sap/m/Input",
     "sap/m/Label",
-    "sap/m/VBox"
-], function(Controller, MessageToast, MessageBox, Fragment, JSONModel, Dialog, Button, Input, Label, VBox) {
+    "sap/m/VBox",
+    "../utils/Constants"
+], function(Controller, MessageToast, MessageBox, Fragment, JSONModel, Dialog, Button, Input, Label, VBox, Constants) {
     "use strict";
 
     return Controller.extend("com.rex.cryptotrading.controller.CodeAnalysis", {
-        
+
         onInit: function() {
             this._initializeModels();
             this._loadAnalyticsData();
             this._loadIndexingSessions();
             this._loadBlindSpots();
             this._loadRecentResults();
-            
+
             // Set up auto-refresh for active sessions
             this._setupAutoRefresh();
         },
-        
+
         _loadRealAnalyticsData: function() {
-            var that = this;
-            var oAnalyticsModel = this.getView().getModel("analytics");
-            
+            const _that = this;
+            const oAnalyticsModel = this.getView().getModel("analytics");
+
             // Load real project analytics from API
             jQuery.ajax({
                 url: "/api/analytics/project-stats",
@@ -55,10 +56,10 @@ sap.ui.define([
                 }
             });
         },
-        
+
         _initializeModels: function() {
             // Analytics model - load real data from API
-            var oAnalyticsModel = new JSONModel({
+            const oAnalyticsModel = new JSONModel({
                 totalProjects: null,
                 totalFiles: null,
                 totalFacts: null,
@@ -68,23 +69,23 @@ sap.ui.define([
                 error: null
             });
             this.getView().setModel(oAnalyticsModel, "analytics");
-            
+
             // Load real analytics data
             this._loadRealAnalyticsData();
-            
+
             // Sessions model
-            var oSessionsModel = new JSONModel([]);
+            const oSessionsModel = new JSONModel([]);
             this.getView().setModel(oSessionsModel, "sessions");
-            
+
             // Blind spots model
-            var oBlindSpotsModel = new JSONModel([]);
+            const oBlindSpotsModel = new JSONModel([]);
             this.getView().setModel(oBlindSpotsModel, "blindSpots");
-            
+
             // Results model
-            var oResultsModel = new JSONModel([]);
+            const oResultsModel = new JSONModel([]);
             this.getView().setModel(oResultsModel, "results");
         },
-        
+
         _loadAnalyticsData: function() {
             // Load real-time analytics from multi-language indexer
             jQuery.ajax({
@@ -98,7 +99,7 @@ sap.ui.define([
                 }
             });
         },
-        
+
         _loadIndexingSessions: function() {
             jQuery.ajax({
                 url: "/api/code-analysis/sessions",
@@ -111,7 +112,7 @@ sap.ui.define([
                 }
             });
         },
-        
+
         _loadBlindSpots: function() {
             jQuery.ajax({
                 url: "/api/code-analysis/blind-spots",
@@ -124,7 +125,7 @@ sap.ui.define([
                 }
             });
         },
-        
+
         _loadRecentResults: function() {
             jQuery.ajax({
                 url: "/api/code-analysis/results?limit=50",
@@ -137,26 +138,26 @@ sap.ui.define([
                 }
             });
         },
-        
+
         _setupAutoRefresh: function() {
             // Refresh active sessions every 30 seconds
             this._refreshTimer = setInterval(function() {
                 this._loadIndexingSessions();
                 this._loadAnalyticsData();
-            }.bind(this), 30000);
+            }.bind(this), Constants.TIME.REFRESH_INTERVAL);
         },
-        
+
         onExit: function() {
             if (this._refreshTimer) {
                 clearInterval(this._refreshTimer);
             }
         },
-        
+
         onNavBack: function() {
-            var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+            const oRouter = sap.ui.core.UIComponent.getRouterFor(this);
             oRouter.navTo("launchpad");
         },
-        
+
         onNewAnalysis: function() {
             if (!this._oNewAnalysisDialog) {
                 this._oNewAnalysisDialog = new Dialog({
@@ -190,17 +191,17 @@ sap.ui.define([
             }
             this._oNewAnalysisDialog.open();
         },
-        
+
         _onCreateProject: function() {
-            var sName = sap.ui.getCore().byId("projectNameInput").getValue();
-            var sPath = sap.ui.getCore().byId("projectPathInput").getValue();
-            var sDesc = sap.ui.getCore().byId("projectDescInput").getValue();
-            
+            const sName = sap.ui.getCore().byId("projectNameInput").getValue();
+            const sPath = sap.ui.getCore().byId("projectPathInput").getValue();
+            const sDesc = sap.ui.getCore().byId("projectDescInput").getValue();
+
             if (!sName || !sPath) {
                 MessageToast.show("Please fill in required fields");
                 return;
             }
-            
+
             jQuery.ajax({
                 url: "/api/code-analysis/projects",
                 type: "POST",
@@ -220,7 +221,7 @@ sap.ui.define([
                 }
             });
         },
-        
+
         onStartIndexing: function() {
             MessageBox.confirm(
                 "Start a new indexing session for the selected project?",
@@ -233,7 +234,7 @@ sap.ui.define([
                 }
             );
         },
-        
+
         _startIndexing: function(sProjectId) {
             jQuery.ajax({
                 url: "/api/code-analysis/start-indexing",
@@ -251,11 +252,11 @@ sap.ui.define([
                 }
             });
         },
-        
+
         onStopSession: function(oEvent) {
-            var oContext = oEvent.getSource().getBindingContext("sessions");
-            var sSessionId = oContext.getProperty("id");
-            
+            const oContext = oEvent.getSource().getBindingContext("sessions");
+            const sSessionId = oContext.getProperty("id");
+
             MessageBox.confirm(
                 "Stop the selected indexing session?",
                 {
@@ -267,7 +268,7 @@ sap.ui.define([
                 }
             );
         },
-        
+
         _stopSession: function(sSessionId) {
             jQuery.ajax({
                 url: "/api/code-analysis/sessions/" + sSessionId + "/stop",
@@ -281,34 +282,42 @@ sap.ui.define([
                 }
             });
         },
-        
+
         onViewSession: function(oEvent) {
-            var oContext = oEvent.getSource().getBindingContext("sessions");
-            var sSessionId = oContext.getProperty("id");
-            
+            const oContext = oEvent.getSource().getBindingContext("sessions");
+            const sSessionId = oContext.getProperty("id");
+
             // Navigate to detailed session view
-            var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+            const oRouter = sap.ui.core.UIComponent.getRouterFor(this);
             oRouter.navTo("sessionDetails", { sessionId: sSessionId });
         },
-        
+
         onSessionPress: function(oEvent) {
-            var oContext = oEvent.getSource().getBindingContext("sessions");
-            var sSessionId = oContext.getProperty("id");
-            this.onViewSession({ getSource: function() { return { getBindingContext: function() { return oContext; } }; } });
+            const oContext = oEvent.getSource().getBindingContext("sessions");
+            const _sSessionId = oContext.getProperty("id");
+            this.onViewSession({
+                getSource: function() {
+                    return {
+                        getBindingContext: function() {
+                            return oContext;
+                        }
+                    };
+                }
+            });
         },
-        
+
         onExportResults: function() {
             jQuery.ajax({
                 url: "/api/code-analysis/export",
                 type: "GET",
                 success: function(data) {
                     // Create and download CSV
-                    var csvContent = this._generateCSV(data);
-                    var blob = new Blob([csvContent], { type: 'text/csv' });
-                    var url = window.URL.createObjectURL(blob);
-                    var a = document.createElement('a');
+                    const csvContent = this._generateCSV(data);
+                    const blob = new Blob([csvContent], { type: "text/csv" });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement("a");
                     a.href = url;
-                    a.download = 'code-analysis-results.csv';
+                    a.download = "code-analysis-results.csv";
                     a.click();
                     window.URL.revokeObjectURL(url);
                     MessageToast.show("Results exported successfully");
@@ -318,9 +327,9 @@ sap.ui.define([
                 }
             });
         },
-        
+
         _generateCSV: function(data) {
-            var csv = "Symbol,Type,File,Line,Confidence,Validated\n";
+            let csv = "Symbol,Type,File,Line,Confidence,Validated\n";
             data.forEach(function(item) {
                 csv += [
                     item.symbolName,
@@ -333,7 +342,7 @@ sap.ui.define([
             });
             return csv;
         },
-        
+
         onRefresh: function() {
             this._loadAnalyticsData();
             this._loadIndexingSessions();
@@ -341,86 +350,87 @@ sap.ui.define([
             this._loadRecentResults();
             MessageToast.show("Data refreshed");
         },
-        
+
         // Formatters
         formatCoverageColor: function(fCoverage) {
-            if (fCoverage >= 90) return "Good";
-            if (fCoverage >= 70) return "Critical";
+            if (fCoverage >= Constants.NUMBERS.PERCENTAGE_90) return "Good";
+            if (fCoverage >= Constants.NUMBERS.PERCENTAGE_70) return "Critical";
             return "Error";
         },
-        
+
         formatSuccessState: function(fRate) {
-            if (fRate >= 95) return "Success";
-            if (fRate >= 85) return "Warning";
+            if (fRate >= Constants.NUMBERS.PERCENTAGE_95) return "Success";
+            if (fRate >= Constants.NUMBERS.PERCENTAGE_85) return "Warning";
             return "Error";
         },
-        
+
         formatSessionStatus: function(sStatus) {
             switch (sStatus) {
-                case "RUNNING": return "Success";
-                case "COMPLETED": return "Success";
-                case "FAILED": return "Error";
-                case "CANCELLED": return "Warning";
-                default: return "None";
+            case "RUNNING": return "Success";
+            case "COMPLETED": return "Success";
+            case "FAILED": return "Error";
+            case "CANCELLED": return "Warning";
+            default: return "None";
             }
         },
-        
+
         formatProgressState: function(sStatus) {
             return sStatus === "RUNNING" ? "Success" : "None";
         },
-        
+
         calculateProgress: function(iProcessed, iTotal) {
             return iTotal > 0 ? (iProcessed / iTotal) * 100 : 0;
         },
-        
+
         formatProgress: function(iProcessed, iTotal) {
             return iProcessed + " / " + iTotal;
         },
-        
+
         formatDuration: function(sStartTime) {
             if (!sStartTime) return "";
-            var start = new Date(sStartTime);
-            var now = new Date();
-            var diff = Math.floor((now - start) / 1000 / 60); // minutes
+            const start = new Date(sStartTime);
+            const _now = new Date();
+            const diff = Math.floor((now - start) /
+                Constants.TIME.MILLISECONDS_IN_SECOND / Constants.NUMBERS.MINUTES_IN_HOUR); // minutes
             return diff + " min";
         },
-        
+
         isRunning: function(sStatus) {
             return sStatus === "RUNNING";
         },
-        
+
         formatSeverityState: function(sSeverity) {
             switch (sSeverity) {
-                case "CRITICAL": return "Error";
-                case "HIGH": return "Error";
-                case "MEDIUM": return "Warning";
-                case "LOW": return "Success";
-                default: return "None";
+            case "CRITICAL": return "Error";
+            case "HIGH": return "Error";
+            case "MEDIUM": return "Warning";
+            case "LOW": return "Success";
+            default: return "None";
             }
         },
-        
+
         formatResolvedStatus: function(bResolved) {
             return bResolved ? "Resolved" : "Open";
         },
-        
+
         formatResolvedState: function(bResolved) {
             return bResolved ? "Success" : "Error";
         },
-        
+
         formatConfidencePercent: function(fConfidence) {
-            return fConfidence * 100;
+            return fConfidence * Constants.NUMBERS.PERCENTAGE_MULTIPLIER;
         },
-        
+
         formatConfidenceState: function(fConfidence) {
-            if (fConfidence >= 0.9) return "Success";
-            if (fConfidence >= 0.7) return "Warning";
+            if (fConfidence >= Constants.ML.CONFIDENCE_THRESHOLD) return "Success";
+            if (fConfidence >= Constants.ML.MODEL_ACCURACY_MIN) return "Warning";
             return "Error";
         },
-        
+
         formatValidatedIcon: function(bValidated) {
             return bValidated ? "sap-icon://accept" : "sap-icon://pending";
         },
-        
+
         formatValidatedColor: function(bValidated) {
             return bValidated ? "Positive" : "Critical";
         }

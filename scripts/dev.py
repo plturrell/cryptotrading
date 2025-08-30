@@ -4,26 +4,24 @@ Local Development Script for MCP Server
 Provides hot reload, easy configuration, and development-friendly features
 """
 
-import os
-import sys
-import asyncio
-import logging
 import argparse
-from pathlib import Path
-from typing import Dict, Any
+import asyncio
 import json
+import logging
+import os
 import subprocess
+import sys
 import time
-from watchdog.observers import Observer
+from pathlib import Path
+from typing import Any, Dict
+
 from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.cryptotrading.core.protocols.mcp.quick_start import (
-    MCPTemplates,
-    MCPQuickStart,
-)
+from src.cryptotrading.core.protocols.mcp.quick_start import MCPQuickStart, MCPTemplates
 
 
 class MCPDevServer:
@@ -125,8 +123,8 @@ class MCPDevServer:
         print("\n✅ MCP Server running!")
         print(f"🌐 URL: http://{self.config['server']['host']}:{self.config['server']['port']}")
         print(f"🔧 Config: {self.config_file}")
-        host = self.config['server']['host']
-        port = self.config['server']['port']
+        host = self.config["server"]["host"]
+        port = self.config["server"]["port"]
         print(f"📚 Docs: http://{host}:{port}/api/mcp (GET)")
 
         if not self.config["security"]["require_auth"]:

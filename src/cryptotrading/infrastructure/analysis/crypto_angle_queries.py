@@ -2,8 +2,7 @@
 Angle queries for crypto data tracking
 Extends the basic Angle query system with crypto-specific queries
 """
-from typing import Dict, Any, List, Optional
-
+from typing import Any, Dict, List, Optional
 
 # Crypto-specific Angle query templates
 CRYPTO_ANGLE_QUERIES = {
@@ -16,7 +15,6 @@ CRYPTO_ANGLE_QUERIES = {
             timestamp: string
         }
     """,
-
     "data_outputs_by_function": """
         crypto.DataOutput {function: {function}} -> {
             output_type: string,
@@ -25,7 +23,6 @@ CRYPTO_ANGLE_QUERIES = {
             timestamp: string
         }
     """,
-
     "data_lineage_trace": """
         crypto.DataLineage {source_id: {source_id}} -> {
             target_id: string,
@@ -34,7 +31,6 @@ CRYPTO_ANGLE_QUERIES = {
             file: string
         }
     """,
-
     # Parameter queries
     "parameters_by_category": """
         crypto.Parameter {category: {category}} -> {
@@ -44,7 +40,6 @@ CRYPTO_ANGLE_QUERIES = {
             context: string
         }
     """,
-
     "parameters_by_range": """
         crypto.Parameter {param_type: "float"} where value >= {min_value} && value <= {max_value} -> {
             name: string,
@@ -53,7 +48,6 @@ CRYPTO_ANGLE_QUERIES = {
             category: string
         }
     """,
-
     # Factor queries
     "factors_by_symbol": """
         crypto.Factor {symbol: {symbol}} -> {
@@ -64,7 +58,6 @@ CRYPTO_ANGLE_QUERIES = {
             dependencies: string
         }
     """,
-
     "factors_by_category": """
         crypto.Factor {category: {category}} -> {
             name: string,
@@ -73,7 +66,6 @@ CRYPTO_ANGLE_QUERIES = {
             result_type: string
         }
     """,
-
     "factor_calculations_recent": """
         crypto.FactorCalculation {factor_name: {factor_name}}
         where timestamp >= {since_timestamp} -> {
@@ -84,7 +76,6 @@ CRYPTO_ANGLE_QUERIES = {
             error: string
         }
     """,
-
     # Factor dependency analysis
     "factor_dependency_chain": """
         crypto.Factor {name: {factor_name}} -> {
@@ -96,7 +87,6 @@ CRYPTO_ANGLE_QUERIES = {
             transformation: string
         }
     """,
-
     # Data quality queries
     "data_quality_by_score": """
         crypto.DataQuality where score >= {min_score} -> {
@@ -107,7 +97,6 @@ CRYPTO_ANGLE_QUERIES = {
             timestamp: string
         }
     """,
-
     "data_quality_issues": """
         crypto.DataQuality where score < {threshold} -> {
             data_id: string,
@@ -117,7 +106,6 @@ CRYPTO_ANGLE_QUERIES = {
             assessor: string
         }
     """,
-
     # Complex analysis queries
     "complete_data_flow": """
         crypto.DataInput {symbol: {symbol}} -> input {
@@ -135,7 +123,6 @@ CRYPTO_ANGLE_QUERIES = {
             formula: string
         }
     """,
-
     "parameter_impact_analysis": """
         crypto.Parameter {name: {param_name}} -> param {
             context: string,
@@ -147,7 +134,6 @@ CRYPTO_ANGLE_QUERIES = {
             execution_time_ms: nat
         }
     """,
-
     "performance_bottlenecks": """
         crypto.FactorCalculation where execution_time_ms > {threshold_ms} -> {
             factor_name: string,
@@ -157,7 +143,6 @@ CRYPTO_ANGLE_QUERIES = {
             timestamp: string
         }
     """,
-
     # Cross-factor analysis
     "factor_correlation_candidates": """
         crypto.Factor {category: {category}} -> factor1 {
@@ -170,7 +155,6 @@ CRYPTO_ANGLE_QUERIES = {
         }
         where factor1.symbol == factor2.symbol && factor1.name != factor2.name
     """,
-
     # Error analysis
     "calculation_errors": """
         crypto.FactorCalculation where error != null -> {
@@ -181,7 +165,6 @@ CRYPTO_ANGLE_QUERIES = {
             timestamp: string
         }
     """,
-
     # Data freshness analysis
     "stale_data_detection": """
         crypto.DataInput where timestamp < {stale_threshold} -> {
@@ -229,10 +212,7 @@ def create_crypto_query(query_type: str, parameters: Dict[str, Any]) -> str:
 
 
 def build_data_lineage_query(
-    symbol: str,
-    include_factors: bool = True,
-    include_parameters: bool = True,
-    max_depth: int = 3
+    symbol: str, include_factors: bool = True, include_parameters: bool = True, max_depth: int = 3
 ) -> str:
     """Build a comprehensive data lineage query for a symbol"""
 
@@ -343,8 +323,8 @@ def build_factor_dependency_query(factor_name: str) -> str:
 
 def build_performance_analysis_query(
     min_execution_time: int = 1000,  # milliseconds
-    error_threshold: float = 0.05,   # 5% error rate
-    time_window: str = "24h"
+    error_threshold: float = 0.05,  # 5% error rate
+    time_window: str = "24h",
 ) -> str:
     """Build a performance analysis query"""
 
@@ -389,18 +369,17 @@ def build_performance_analysis_query(
 def validate_crypto_query(query: str) -> Dict[str, Any]:
     """Validate a crypto Angle query"""
 
-    validation_result = {
-        "valid": True,
-        "errors": [],
-        "warnings": [],
-        "predicates_used": []
-    }
+    validation_result = {"valid": True, "errors": [], "warnings": [], "predicates_used": []}
 
     # Check for required crypto predicates
     crypto_predicates = [
-        "crypto.DataInput", "crypto.DataOutput", "crypto.Parameter",
-        "crypto.Factor", "crypto.FactorCalculation", "crypto.DataLineage",
-        "crypto.DataQuality"
+        "crypto.DataInput",
+        "crypto.DataOutput",
+        "crypto.Parameter",
+        "crypto.Factor",
+        "crypto.FactorCalculation",
+        "crypto.DataLineage",
+        "crypto.DataQuality",
     ]
 
     for predicate in crypto_predicates:
@@ -417,7 +396,9 @@ def validate_crypto_query(query: str) -> Dict[str, Any]:
     close_braces = query.count("}")
     if open_braces != close_braces:
         validation_result["valid"] = False
-        validation_result["errors"].append(f"Unbalanced braces: {open_braces} open, {close_braces} close")
+        validation_result["errors"].append(
+            f"Unbalanced braces: {open_braces} open, {close_braces} close"
+        )
 
     # Check for required arrows
     if " -> " not in query:
@@ -433,5 +414,5 @@ __all__ = [
     "build_data_lineage_query",
     "build_factor_dependency_query",
     "build_performance_analysis_query",
-    "validate_crypto_query"
+    "validate_crypto_query",
 ]

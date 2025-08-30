@@ -39,7 +39,7 @@ sap.ui.define([
         /**
          * Encodes text for safe display in HTML contexts
          * @param {string} text - Text to encode
-         * @returns {string} - Safely encoded text
+         * @returns {string} - Safely encoded tex
          */
         encodeHTML(text) {
             if (typeof text !== "string") {
@@ -51,7 +51,7 @@ sap.ui.define([
         /**
          * Encodes text for safe use in JavaScript contexts
          * @param {string} text - Text to encode
-         * @returns {string} - Safely encoded text
+         * @returns {string} - Safely encoded tex
          */
         encodeJS(text) {
             if (typeof text !== "string") {
@@ -76,7 +76,7 @@ sap.ui.define([
          * Validates and sanitizes trading input data
          * @param {Object} data - Trading data to validate
          * @param {string} type - Data type (order, portfolio, etc.)
-         * @returns {Object} - Validation result
+         * @returns {Object} - Validation resul
          */
         validateTradingData(data, type) {
             const result = {
@@ -87,17 +87,17 @@ sap.ui.define([
 
             try {
                 switch (type) {
-                    case "order":
-                        result.sanitizedData = this._validateOrderData(data, result);
-                        break;
-                    case "portfolio":
-                        result.sanitizedData = this._validatePortfolioData(data, result);
-                        break;
-                    case "symbol":
-                        result.sanitizedData = this._validateSymbolData(data, result);
-                        break;
-                    default:
-                        result.sanitizedData = this._sanitizeGenericData(data);
+                case "order":
+                    result.sanitizedData = this._validateOrderData(data, result);
+                    break;
+                case "portfolio":
+                    result.sanitizedData = this._validatePortfolioData(data, result);
+                    break;
+                case "symbol":
+                    result.sanitizedData = this._validateSymbolData(data, result);
+                    break;
+                default:
+                    result.sanitizedData = this._sanitizeGenericData(data);
                 }
             } catch (error) {
                 result.isValid = false;
@@ -110,7 +110,7 @@ sap.ui.define([
         /**
          * Validates API key format and strength
          * @param {string} apiKey - API key to validate
-         * @returns {Object} - Validation result
+         * @returns {Object} - Validation resul
          */
         validateApiKey(apiKey) {
             const result = {
@@ -150,7 +150,7 @@ sap.ui.define([
          * @returns {boolean} - Whether request is allowed
          */
         checkRateLimit(identifier, limit = this.CONFIG.MAX_REQUESTS_PER_WINDOW) {
-            const now = Date.now();
+            const _now = Date.now();
             const windowStart = now - this.CONFIG.RATE_LIMIT_WINDOW;
 
             // Clean old entries
@@ -169,7 +169,7 @@ sap.ui.define([
                 return false;
             }
 
-            // Add current request
+            // Add current reques
             recentRequests.push(now);
             this._requestTracker.set(identifier, recentRequests);
 
@@ -306,19 +306,19 @@ sap.ui.define([
             if (data.positions && Array.isArray(data.positions)) {
                 sanitized.positions = data.positions.map(position => {
                     const pos = {};
-                    
+
                     if (position.symbol && typeof position.symbol === "string") {
                         pos.symbol = this._sanitizeString(position.symbol.toUpperCase());
                     }
-                    
+
                     if (typeof position.quantity === "number") {
                         pos.quantity = position.quantity;
                     }
-                    
+
                     if (typeof position.averagePrice === "number" && position.averagePrice > 0) {
                         pos.averagePrice = position.averagePrice;
                     }
-                    
+
                     return pos;
                 });
             }
@@ -338,7 +338,7 @@ sap.ui.define([
             }
 
             const sanitized = this._sanitizeString(data.toUpperCase());
-            
+
             if (!/^[A-Z]{2,10}$/.test(sanitized)) {
                 result.errors.push("Invalid symbol format");
                 result.isValid = false;
@@ -357,7 +357,7 @@ sap.ui.define([
         },
 
         /**
-         * Sanitizes string input
+         * Sanitizes string inpu
          * @private
          */
         _sanitizeString(input) {
@@ -365,7 +365,7 @@ sap.ui.define([
                 return input;
             }
 
-            return input
+            return inpu
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;")
                 .replace(/"/g, "&quot;")
@@ -399,11 +399,11 @@ sap.ui.define([
         generateSecureRandom(length = 32) {
             const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
             let result = "";
-            
+
             for (let i = 0; i < length; i++) {
                 result += chars.charAt(Math.floor(Math.random() * chars.length));
             }
-            
+
             return result;
         },
 

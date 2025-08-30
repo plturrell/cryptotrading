@@ -3,22 +3,26 @@
 Create all database tables for the cryptocurrency trading platform
 """
 
+import os
 import sqlite3
 import sys
-import os
 
 # Database path
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'rex_trading.db')
+DB_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "rex_trading.db"
+)
+
 
 def create_tables():
     """Create all necessary database tables"""
-    
+
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    
+
     try:
         # Users table
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
@@ -44,10 +48,12 @@ def create_tables():
             email_verification_token TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )''')
-        
+        )"""
+        )
+
         # User preferences table
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS user_preferences (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -65,10 +71,12 @@ def create_tables():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
-        )''')
-        
+        )"""
+        )
+
         # User sessions table
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS user_sessions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -81,10 +89,12 @@ def create_tables():
             expires_at TIMESTAMP,
             is_active INTEGER DEFAULT 1,
             FOREIGN KEY (user_id) REFERENCES users(id)
-        )''')
-        
+        )"""
+        )
+
         # User audit log table
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS user_audit_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER,
@@ -95,10 +105,12 @@ def create_tables():
             status TEXT,
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
-        )''')
-        
+        )"""
+        )
+
         # API credentials table
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS api_credentials (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -113,10 +125,12 @@ def create_tables():
             is_active INTEGER DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
-        )''')
-        
+        )"""
+        )
+
         # Trading pairs table
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS trading_pairs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             symbol TEXT UNIQUE NOT NULL,
@@ -128,10 +142,12 @@ def create_tables():
             max_trade_size REAL,
             tick_size REAL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )''')
-        
+        )"""
+        )
+
         # Market data table
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS market_data (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             symbol TEXT NOT NULL,
@@ -143,10 +159,12 @@ def create_tables():
             volume REAL,
             trades_count INTEGER,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )''')
-        
+        )"""
+        )
+
         # Orders table
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS orders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -162,10 +180,12 @@ def create_tables():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
-        )''')
-        
+        )"""
+        )
+
         # Portfolio table
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS portfolio (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -178,10 +198,12 @@ def create_tables():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
-        )''')
-        
+        )"""
+        )
+
         # Watchlist table
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS watchlist (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -190,35 +212,39 @@ def create_tables():
             alert_price REAL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
-        )''')
-        
+        )"""
+        )
+
         # Create indexes
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_sessions_token ON user_sessions(session_token)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_sessions_user ON user_sessions(user_id)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_portfolio_user ON portfolio(user_id)')
-        
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)")
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_sessions_token ON user_sessions(session_token)"
+        )
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_sessions_user ON user_sessions(user_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_portfolio_user ON portfolio(user_id)")
+
         conn.commit()
-        
+
         # Verify tables were created
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
         tables = cursor.fetchall()
-        
+
         print("✅ Database tables created successfully!")
         print("\n📋 Created tables:")
         for table in tables:
             cursor.execute(f"SELECT COUNT(*) FROM {table[0]}")
             count = cursor.fetchone()[0]
             print(f"   - {table[0]} ({count} records)")
-        
+
     except Exception as e:
         print(f"❌ Failed to create tables: {e}")
         conn.rollback()
         sys.exit(1)
     finally:
         conn.close()
+
 
 if __name__ == "__main__":
     create_tables()

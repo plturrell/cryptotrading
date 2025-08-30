@@ -1,0 +1,440 @@
+{
+  "name": "strands-glean-mcp-tools",
+  "version": "1.0.0",
+  "description": "MCP tools for STRANDS Glean Agent with CDS integration and code analysis",
+  "tools": {
+    "analyze_code": {
+      "description": "Analyze code with Glean integration and CDS monitoring",
+      "parameters": {
+        "analysis_type": {
+          "type": "string",
+          "enum": ["dependency_analysis", "symbol_search", "architecture_analysis", "data_flow_analysis"],
+          "description": "Type of code analysis"
+        },
+        "query": {
+          "type": "string",
+          "description": "Analysis query or code pattern"
+        },
+        "context": {
+          "type": "object",
+          "description": "Additional analysis context",
+          "optional": true
+        },
+        "cache_results": {
+          "type": "boolean",
+          "description": "Cache analysis results",
+          "default": true
+        },
+        "enable_monitoring": {
+          "type": "boolean",
+          "description": "Enable CDS transaction monitoring",
+          "default": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "analysis_results": "object",
+          "status": "string",
+          "confidence": "number",
+          "cached": "boolean",
+          "transaction_id": "string"
+        }
+      }
+    },
+    "find_dependencies": {
+      "description": "Find code dependencies using Glean",
+      "parameters": {
+        "symbol": {
+          "type": "string",
+          "description": "Symbol or module to analyze"
+        },
+        "depth": {
+          "type": "integer",
+          "description": "Dependency depth to explore",
+          "default": 3
+        },
+        "include_reverse": {
+          "type": "boolean",
+          "description": "Include reverse dependencies",
+          "default": false
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "dependencies": "array",
+          "dependency_graph": "object",
+          "circular_dependencies": "array",
+          "analysis_depth": "integer"
+        }
+      }
+    },
+    "search_symbols": {
+      "description": "Search for symbols in codebase using SCIP indexing",
+      "parameters": {
+        "pattern": {
+          "type": "string",
+          "description": "Symbol search pattern or regex"
+        },
+        "symbol_types": {
+          "type": "array",
+          "items": "string",
+          "description": "Types of symbols to search for",
+          "optional": true
+        },
+        "file_filter": {
+          "type": "string",
+          "description": "File path filter",
+          "optional": true
+        },
+        "max_results": {
+          "type": "integer",
+          "description": "Maximum number of results",
+          "default": 100
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "symbols": "array",
+          "matches": "integer",
+          "symbol_types": "object",
+          "file_distribution": "object"
+        }
+      }
+    },
+    "analyze_architecture": {
+      "description": "Analyze architectural patterns and violations",
+      "parameters": {
+        "component": {
+          "type": "string",
+          "description": "Component or module to analyze"
+        },
+        "architecture_rules": {
+          "type": "array",
+          "items": "string",
+          "description": "Architecture rules to check",
+          "optional": true
+        },
+        "include_violations": {
+          "type": "boolean",
+          "description": "Include violation analysis",
+          "default": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "architecture": "object",
+          "patterns": "array",
+          "violations": "array",
+          "recommendations": "array"
+        }
+      }
+    },
+    "analyze_data_flow": {
+      "description": "Analyze data flow through system components",
+      "parameters": {
+        "symbol_or_component": {
+          "type": "string",
+          "description": "Starting point for data flow analysis"
+        },
+        "flow_direction": {
+          "type": "string",
+          "enum": ["inputs", "outputs", "bidirectional"],
+          "description": "Direction of data flow to analyze",
+          "default": "bidirectional"
+        },
+        "max_hops": {
+          "type": "integer",
+          "description": "Maximum hops in data flow",
+          "default": 5
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "data_inputs": "array",
+          "data_outputs": "array",
+          "data_lineage": "object",
+          "flow_diagram": "object"
+        }
+      }
+    },
+    "analyze_parameters": {
+      "description": "Analyze configuration parameters across system",
+      "parameters": {
+        "category": {
+          "type": "string",
+          "description": "Parameter category to analyze",
+          "optional": true
+        },
+        "include_usage": {
+          "type": "boolean",
+          "description": "Include parameter usage analysis",
+          "default": true
+        },
+        "detect_inconsistencies": {
+          "type": "boolean",
+          "description": "Detect parameter inconsistencies",
+          "default": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "parameters": "array",
+          "parameter_analysis": "object",
+          "usage_patterns": "object",
+          "inconsistencies": "array"
+        }
+      }
+    },
+    "analyze_factors": {
+      "description": "Analyze crypto trading factors and calculations",
+      "parameters": {
+        "symbol": {
+          "type": "string",
+          "description": "Crypto symbol to analyze",
+          "optional": true
+        },
+        "factor_types": {
+          "type": "array",
+          "items": "string",
+          "description": "Types of factors to analyze",
+          "optional": true
+        },
+        "include_calculations": {
+          "type": "boolean",
+          "description": "Include calculation analysis",
+          "default": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "factors": "array",
+          "calculations": "array",
+          "factor_analysis": "object",
+          "performance_metrics": "object"
+        }
+      }
+    },
+    "analyze_data_quality": {
+      "description": "Analyze data quality metrics and issues",
+      "parameters": {
+        "data_id": {
+          "type": "string",
+          "description": "Data source or ID to analyze",
+          "optional": true
+        },
+        "quality_metrics": {
+          "type": "array",
+          "items": "string",
+          "description": "Quality metrics to check",
+          "optional": true
+        },
+        "time_range": {
+          "type": "string",
+          "description": "Time range for quality analysis",
+          "default": "24h"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "quality_assessment": "object",
+          "quality_score": "number",
+          "issues": "array",
+          "recommendations": "array"
+        }
+      }
+    },
+    "get_context_summary": {
+      "description": "Get summary of current analysis context",
+      "parameters": {
+        "include_performance": {
+          "type": "boolean",
+          "description": "Include performance metrics",
+          "default": true
+        },
+        "include_cache_stats": {
+          "type": "boolean",
+          "description": "Include cache statistics",
+          "default": false
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "context_summary": "object",
+          "project_stats": "object",
+          "performance_metrics": "object",
+          "capabilities": "array"
+        }
+      }
+    },
+    "process_strand": {
+      "description": "Process STRANDS framework operations with Glean",
+      "parameters": {
+        "strand_data": {
+          "type": "object",
+          "description": "STRANDS operation data"
+        },
+        "strand_type": {
+          "type": "string",
+          "enum": ["code_analysis", "dependency_trace", "symbol_lookup", "architecture_review"],
+          "description": "Type of STRANDS operation"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["low", "medium", "high"],
+          "description": "Processing priority",
+          "default": "medium"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "strand_result": "object",
+          "processing_time": "number",
+          "status": "string",
+          "follow_up_actions": "array"
+        }
+      }
+    },
+    "clrs_dependency_analysis": {
+      "description": "CLRS algorithmic dependency analysis",
+      "parameters": {
+        "modules": {
+          "type": "object",
+          "description": "Module dependency graph"
+        },
+        "algorithm": {
+          "type": "string",
+          "enum": ["dfs", "topological_sort", "scc"],
+          "description": "CLRS algorithm to use",
+          "default": "dfs"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "dependency_analysis": "object",
+          "cycles": "array",
+          "topological_order": "array",
+          "strongly_connected_components": "array"
+        }
+      }
+    },
+    "clrs_code_similarity": {
+      "description": "CLRS code similarity analysis",
+      "parameters": {
+        "code_samples": {
+          "type": "array",
+          "description": "Code samples to compare"
+        },
+        "similarity_algorithm": {
+          "type": "string",
+          "enum": ["lcs", "edit_distance", "token_similarity"],
+          "description": "Similarity algorithm",
+          "default": "lcs"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "similarity_matrix": "array",
+          "similar_patterns": "array",
+          "duplicates": "array"
+        }
+      }
+    },
+    "tree_structure_analysis": {
+      "description": "Analyze hierarchical code structure",
+      "parameters": {
+        "codebase": {
+          "type": "object",
+          "description": "Codebase structure data"
+        },
+        "analysis_depth": {
+          "type": "integer",
+          "description": "Analysis depth",
+          "default": 5
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "tree_structure": "object",
+          "hierarchy_metrics": "object",
+          "structural_issues": "array"
+        }
+      }
+    },
+    "comprehensive_analysis": {
+      "description": "Comprehensive code analysis combining all techniques",
+      "parameters": {
+        "analysis_scope": {
+          "type": "string",
+          "enum": ["project", "module", "component"],
+          "description": "Scope of analysis",
+          "default": "module"
+        },
+        "include_all_metrics": {
+          "type": "boolean",
+          "description": "Include all available metrics",
+          "default": false
+        },
+        "performance_analysis": {
+          "type": "boolean",
+          "description": "Include performance analysis",
+          "default": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "comprehensive_results": "object",
+          "executive_summary": "object",
+          "detailed_metrics": "object",
+          "actionable_insights": "array"
+        }
+      }
+    }
+  },
+  "capabilities": {
+    "code_analysis": [
+      "glean_integration",
+      "scip_indexing",
+      "symbol_analysis",
+      "dependency_tracking",
+      "architecture_analysis"
+    ],
+    "data_analysis": [
+      "data_flow_analysis",
+      "parameter_analysis",
+      "factor_analysis",
+      "data_quality_assessment"
+    ],
+    "algorithmic_analysis": [
+      "clrs_algorithms",
+      "graph_algorithms",
+      "string_algorithms",
+      "tree_algorithms"
+    ],
+    "strands_framework": [
+      "strand_processing",
+      "context_management",
+      "memory_integration",
+      "performance_tracking"
+    ],
+    "integration": [
+      "cds_monitoring",
+      "transaction_support",
+      "cache_management",
+      "real_time_analysis"
+    ]
+  }
+}

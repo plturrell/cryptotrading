@@ -45,10 +45,10 @@ sap.ui.define([
          * Cache priorities for eviction
          */
         PRIORITY: {
-            CRITICAL: 1,    // Market data, portfolio
-            HIGH: 2,        // Orders, positions
-            MEDIUM: 3,      // Historical data
-            LOW: 4          // Static data, symbols
+            CRITICAL: 1, // Market data, portfolio
+            HIGH: 2, // Orders, positions
+            MEDIUM: 3, // Historical data
+            LOW: 4 // Static data, symbols
         },
 
         /**
@@ -58,10 +58,10 @@ sap.ui.define([
         initialize(config = {}) {
             this._config = { ...this.CONFIG, ...config };
             this._maxMemorySize = this._config.MAX_MEMORY_SIZE;
-            
+
             // Start cleanup interval
             this._startCleanupInterval();
-            
+
             // Warm up cache with essential data
             this._warmUpCache();
         },
@@ -76,7 +76,7 @@ sap.ui.define([
             const fullKey = this._buildKey(key, namespace);
             this._cacheStats.totalRequests++;
 
-            // Check memory cache first
+            // Check memory cache firs
             const memoryItem = this._memoryCache.get(fullKey);
             if (memoryItem && this._isValid(memoryItem)) {
                 this._cacheStats.hits++;
@@ -108,8 +108,8 @@ sap.ui.define([
          */
         set(key, data, options = {}) {
             const fullKey = this._buildKey(key, options.namespace || "default");
-            const now = Date.now();
-            
+            const _now = Date.now();
+
             const cacheItem = {
                 data: data,
                 createdAt: now,
@@ -136,7 +136,7 @@ sap.ui.define([
          */
         remove(key, namespace = "default") {
             const fullKey = this._buildKey(key, namespace);
-            
+
             // Remove from memory
             const memoryItem = this._memoryCache.get(fullKey);
             if (memoryItem) {
@@ -177,7 +177,7 @@ sap.ui.define([
          * @returns {Object} - Cache statistics
          */
         getStats() {
-            const hitRate = this._cacheStats.totalRequests > 0 ? 
+            const hitRate = this._cacheStats.totalRequests > 0 ?
                 (this._cacheStats.hits / this._cacheStats.totalRequests * 100).toFixed(2) : 0;
 
             return {
@@ -209,7 +209,7 @@ sap.ui.define([
         },
 
         /**
-         * Sets data in memory cache with size management
+         * Sets data in memory cache with size managemen
          * @private
          */
         _setInMemory(key, cacheItem) {
@@ -218,7 +218,7 @@ sap.ui.define([
                 this._evictLeastImportant();
             }
 
-            // Remove existing item if present
+            // Remove existing item if presen
             const existing = this._memoryCache.get(key);
             if (existing) {
                 this._currentMemorySize -= existing.size;
@@ -289,7 +289,7 @@ sap.ui.define([
 
                 sessionStorage.setItem(`cache_${key}`, serialized);
             } catch (error) {
-                if (error.name === 'QuotaExceededError') {
+                if (error.name === "QuotaExceededError") {
                     this._cleanupStorage();
                     // Try again after cleanup
                     try {
@@ -323,14 +323,14 @@ sap.ui.define([
             try {
                 const prefix = `cache_${namespace}:`;
                 const keysToRemove = [];
-                
+
                 for (let i = 0; i < sessionStorage.length; i++) {
                     const key = sessionStorage.key(i);
                     if (key && key.startsWith(prefix)) {
                         keysToRemove.push(key);
                     }
                 }
-                
+
                 keysToRemove.forEach(key => sessionStorage.removeItem(key));
             } catch (error) {
                 console.warn("Error clearing storage namespace:", error);
@@ -344,14 +344,14 @@ sap.ui.define([
         _clearAllStorage() {
             try {
                 const keysToRemove = [];
-                
+
                 for (let i = 0; i < sessionStorage.length; i++) {
                     const key = sessionStorage.key(i);
-                    if (key && key.startsWith('cache_')) {
+                    if (key && key.startsWith("cache_")) {
                         keysToRemove.push(key);
                     }
                 }
-                
+
                 keysToRemove.forEach(key => sessionStorage.removeItem(key));
             } catch (error) {
                 console.warn("Error clearing all storage:", error);
@@ -364,12 +364,12 @@ sap.ui.define([
          */
         _cleanupStorage() {
             try {
-                const now = Date.now();
+                const _now = Date.now();
                 const keysToRemove = [];
-                
+
                 for (let i = 0; i < sessionStorage.length; i++) {
                     const key = sessionStorage.key(i);
-                    if (key && key.startsWith('cache_')) {
+                    if (key && key.startsWith("cache_")) {
                         try {
                             const item = JSON.parse(sessionStorage.getItem(key));
                             if (!this._isValid(item)) {
@@ -380,7 +380,7 @@ sap.ui.define([
                         }
                     }
                 }
-                
+
                 keysToRemove.forEach(key => sessionStorage.removeItem(key));
             } catch (error) {
                 console.warn("Error during storage cleanup:", error);
@@ -403,7 +403,7 @@ sap.ui.define([
             if (!item || !item.createdAt) {
                 return false;
             }
-            
+
             const age = Date.now() - item.createdAt;
             return age < item.ttl;
         },
@@ -413,16 +413,16 @@ sap.ui.define([
          * @private
          */
         _getTTLForKey(key) {
-            if (key.includes('market') || key.includes('price')) {
+            if (key.includes("market") || key.includes("price")) {
                 return this._config.MARKET_DATA_TTL;
             }
-            if (key.includes('portfolio') || key.includes('balance')) {
+            if (key.includes("portfolio") || key.includes("balance")) {
                 return this._config.PORTFOLIO_TTL;
             }
-            if (key.includes('history') || key.includes('kline')) {
+            if (key.includes("history") || key.includes("kline")) {
                 return this._config.HISTORICAL_DATA_TTL;
             }
-            if (key.includes('symbol')) {
+            if (key.includes("symbol")) {
                 return this._config.SYMBOLS_TTL;
             }
             return this._config.DEFAULT_TTL;
@@ -433,13 +433,13 @@ sap.ui.define([
          * @private
          */
         _getPriorityForKey(key) {
-            if (key.includes('market') || key.includes('portfolio')) {
+            if (key.includes("market") || key.includes("portfolio")) {
                 return this.PRIORITY.CRITICAL;
             }
-            if (key.includes('order') || key.includes('position')) {
+            if (key.includes("order") || key.includes("position")) {
                 return this.PRIORITY.HIGH;
             }
-            if (key.includes('history')) {
+            if (key.includes("history")) {
                 return this.PRIORITY.MEDIUM;
             }
             return this.PRIORITY.LOW;
@@ -473,7 +473,7 @@ sap.ui.define([
          * @private
          */
         _cleanupExpiredItems() {
-            const now = Date.now();
+            const _now = Date.now();
             const keysToRemove = [];
 
             for (const [key, item] of this._memoryCache.entries()) {

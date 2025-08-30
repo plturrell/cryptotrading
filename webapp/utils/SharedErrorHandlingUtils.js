@@ -10,7 +10,7 @@ sap.ui.define([
      * Provides comprehensive error handling with trading-specific features including:
      * - Trading error categorization and handling
      * - Market data error recovery
-     * - Connection error management
+     * - Connection error managemen
      * - User-friendly error presentation
      * - Retry mechanisms with exponential backoff
      */
@@ -21,7 +21,7 @@ sap.ui.define([
          */
         SEVERITY: {
             CRITICAL: "critical",
-            HIGH: "high", 
+            HIGH: "high",
             MEDIUM: "medium",
             LOW: "low",
             INFO: "info"
@@ -53,8 +53,8 @@ sap.ui.define([
          */
         handleError(error, options = {}) {
             const errorInfo = this._parseError(error);
-            
-            // Enhance error info with trading context
+
+            // Enhance error info with trading contex
             errorInfo.context = options.context || "general";
             errorInfo.timestamp = new Date().toISOString();
             errorInfo.correlationId = options.correlationId || this._generateCorrelationId();
@@ -86,7 +86,7 @@ sap.ui.define([
                 severity: this._determineTradingSeverity(error),
                 showToUser: true,
                 retry: this._canRetryTradingError(error),
-                tradeContext: tradeContext
+                tradeContext: tradeContex
             };
 
             return this.handleError(error, options);
@@ -105,7 +105,7 @@ sap.ui.define([
                 retry: true,
                 retryDelay: 1000,
                 maxRetries: 3,
-                marketContext: marketContext
+                marketContext: marketContex
             };
 
             return this.handleError(error, options);
@@ -137,7 +137,7 @@ sap.ui.define([
          */
         showErrorDialog(errorInfo, options = {}) {
             const actions = [MessageBox.Action.OK];
-            
+
             if (options.retry && options.onRetry) {
                 actions.unshift("Retry");
             }
@@ -172,7 +172,7 @@ sap.ui.define([
         },
 
         /**
-         * Parses error object into standardized format
+         * Parses error object into standardized forma
          * @private
          */
         _parseError(error) {
@@ -229,17 +229,17 @@ sap.ui.define([
             }
 
             switch (errorInfo.severity) {
-                case this.SEVERITY.CRITICAL:
-                    Log.error("CRITICAL ERROR", logData);
-                    break;
-                case this.SEVERITY.HIGH:
-                    Log.error("HIGH SEVERITY ERROR", logData);
-                    break;
-                case this.SEVERITY.MEDIUM:
-                    Log.warning("MEDIUM SEVERITY ERROR", logData);
-                    break;
-                default:
-                    Log.info("ERROR", logData);
+            case this.SEVERITY.CRITICAL:
+                Log.error("CRITICAL ERROR", logData);
+                break;
+            case this.SEVERITY.HIGH:
+                Log.error("HIGH SEVERITY ERROR", logData);
+                break;
+            case this.SEVERITY.MEDIUM:
+                Log.warning("MEDIUM SEVERITY ERROR", logData);
+                break;
+            default:
+                Log.info("ERROR", logData);
             }
         },
 
@@ -249,19 +249,19 @@ sap.ui.define([
          */
         _displayErrorToUser(errorInfo, options) {
             switch (errorInfo.severity) {
-                case this.SEVERITY.CRITICAL:
-                case this.SEVERITY.HIGH:
+            case this.SEVERITY.CRITICAL:
+            case this.SEVERITY.HIGH:
+                this.showErrorDialog(errorInfo, options);
+                break;
+            case this.SEVERITY.MEDIUM:
+                if (errorInfo.type === this.ERROR_TYPES.TRADING) {
                     this.showErrorDialog(errorInfo, options);
-                    break;
-                case this.SEVERITY.MEDIUM:
-                    if (errorInfo.type === this.ERROR_TYPES.TRADING) {
-                        this.showErrorDialog(errorInfo, options);
-                    } else {
-                        this.showErrorToast(errorInfo);
-                    }
-                    break;
-                default:
+                } else {
                     this.showErrorToast(errorInfo);
+                }
+                break;
+            default:
+                this.showErrorToast(errorInfo);
             }
         },
 
@@ -271,18 +271,18 @@ sap.ui.define([
          */
         _determineTradingSeverity(error) {
             const message = error.message?.toLowerCase() || "";
-            
-            if (message.includes("insufficient funds") || 
+
+            if (message.includes("insufficient funds") ||
                 message.includes("balance") ||
                 message.includes("limit exceeded")) {
                 return this.SEVERITY.HIGH;
             }
-            
-            if (message.includes("invalid") || 
+
+            if (message.includes("invalid") ||
                 message.includes("validation")) {
                 return this.SEVERITY.MEDIUM;
             }
-            
+
             return this.SEVERITY.HIGH; // Default for trading errors
         },
 
@@ -292,14 +292,14 @@ sap.ui.define([
          */
         _canRetryTradingError(error) {
             const message = error.message?.toLowerCase() || "";
-            
+
             // Don't retry validation or insufficient funds errors
             if (message.includes("insufficient funds") ||
                 message.includes("invalid") ||
                 message.includes("validation")) {
                 return false;
             }
-            
+
             // Retry network and temporary errors
             return message.includes("network") ||
                    message.includes("timeout") ||
@@ -307,12 +307,12 @@ sap.ui.define([
         },
 
         /**
-         * Infers error type from error object
+         * Infers error type from error objec
          * @private
          */
         _inferErrorType(error) {
             const message = error.message?.toLowerCase() || "";
-            
+
             if (message.includes("trading") || message.includes("order")) {
                 return this.ERROR_TYPES.TRADING;
             }
@@ -331,12 +331,12 @@ sap.ui.define([
             if (message.includes("rate limit") || message.includes("too many")) {
                 return this.ERROR_TYPES.RATE_LIMIT;
             }
-            
+
             return this.ERROR_TYPES.NETWORK;
         },
 
         /**
-         * Infers error severity from error object
+         * Infers error severity from error objec
          * @private
          */
         _inferSeverity(error) {
@@ -355,19 +355,19 @@ sap.ui.define([
          */
         _formatErrorMessage(errorInfo, isToast = false) {
             let message = errorInfo.message;
-            
+
             // Add context for trading errors
             if (errorInfo.type === this.ERROR_TYPES.TRADING) {
                 message = `Trading Error: ${message}`;
             } else if (errorInfo.type === this.ERROR_TYPES.MARKET_DATA) {
                 message = `Market Data Error: ${message}`;
             }
-            
+
             // Truncate for toasts
             if (isToast && message.length > 100) {
                 message = message.substring(0, 97) + "...";
             }
-            
+
             return message;
         },
 
@@ -377,13 +377,13 @@ sap.ui.define([
          */
         _getErrorIcon(severity) {
             switch (severity) {
-                case this.SEVERITY.CRITICAL:
-                case this.SEVERITY.HIGH:
-                    return MessageBox.Icon.ERROR;
-                case this.SEVERITY.MEDIUM:
-                    return MessageBox.Icon.WARNING;
-                default:
-                    return MessageBox.Icon.INFORMATION;
+            case this.SEVERITY.CRITICAL:
+            case this.SEVERITY.HIGH:
+                return MessageBox.Icon.ERROR;
+            case this.SEVERITY.MEDIUM:
+                return MessageBox.Icon.WARNING;
+            default:
+                return MessageBox.Icon.INFORMATION;
             }
         },
 
@@ -393,16 +393,16 @@ sap.ui.define([
          */
         _getErrorTitle(errorInfo) {
             switch (errorInfo.type) {
-                case this.ERROR_TYPES.TRADING:
-                    return "Trading Error";
-                case this.ERROR_TYPES.MARKET_DATA:
-                    return "Market Data Error";
-                case this.ERROR_TYPES.CONNECTION:
-                    return "Connection Error";
-                case this.ERROR_TYPES.AUTHENTICATION:
-                    return "Authentication Error";
-                default:
-                    return "Error";
+            case this.ERROR_TYPES.TRADING:
+                return "Trading Error";
+            case this.ERROR_TYPES.MARKET_DATA:
+                return "Market Data Error";
+            case this.ERROR_TYPES.CONNECTION:
+                return "Connection Error";
+            case this.ERROR_TYPES.AUTHENTICATION:
+                return "Authentication Error";
+            default:
+                return "Error";
             }
         },
 
@@ -412,7 +412,7 @@ sap.ui.define([
          */
         _trackError(errorInfo, options) {
             // Implementation would send to analytics service
-            // For now, just log to console in development
+            // For now, just log to console in developmen
             if (window.location.hostname === "localhost") {
                 console.group(`Error Tracking: ${errorInfo.type}`);
                 console.log("Error Info:", errorInfo);

@@ -10,10 +10,10 @@ sap.ui.define([
     return BaseController.extend("com.rex.cryptotrading.controller.NewsPanel", {
 
         onInit: function () {
-            // Call parent onInit
+            // Call parent onIni
             BaseController.prototype.onInit.apply(this, arguments);
             // Initialize model
-            var oModel = new JSONModel({
+            const _oModel = new JSONModel({
                 articles: [],
                 loading: false,
                 hasError: false,
@@ -33,17 +33,17 @@ sap.ui.define([
         },
 
         onLanguageChange: function (oEvent) {
-            var sSelectedLanguage = oEvent.getParameter("key");
+            const sSelectedLanguage = oEvent.getParameter("key");
             this.getView().getModel().setProperty("/selectedLanguage", sSelectedLanguage);
             this._loadNews();
-            
-            MessageToast.show(sSelectedLanguage === "ru" ? 
-                "Переключено на русский язык" : 
+
+            MessageToast.show(sSelectedLanguage === "ru" ?
+                "Переключено на русский язык" :
                 "Switched to English");
         },
 
         onCategoryChange: function (oEvent) {
-            var sSelectedCategory = oEvent.getParameter("key");
+            const sSelectedCategory = oEvent.getParameter("key");
             this.getView().getModel().setProperty("/selectedCategory", sSelectedCategory);
             this._loadNews();
         },
@@ -58,40 +58,40 @@ sap.ui.define([
         },
 
         onArticlePress: function (oEvent) {
-            var oBindingContext = oEvent.getSource().getBindingContext();
-            var oArticle = oBindingContext.getObject();
-            
-            // Increment view count
+            const oBindingContext = oEvent.getSource().getBindingContext();
+            const oArticle = oBindingContext.getObject();
+
+            // Increment view coun
             this._incrementViewCount(oArticle.id);
-            
+
             // Open article in new tab
             if (oArticle.url) {
-                window.open(oArticle.url, '_blank');
+                window.open(oArticle.url, "_blank");
             }
         },
 
         onReadMore: function (oEvent) {
-            var oBindingContext = oEvent.getSource().getBindingContext();
-            var oArticle = oBindingContext.getObject();
-            
+            const oBindingContext = oEvent.getSource().getBindingContext();
+            const oArticle = oBindingContext.getObject();
+
             if (oArticle.url) {
-                window.open(oArticle.url, '_blank');
+                window.open(oArticle.url, "_blank");
             } else {
                 this._showArticleDetails(oArticle);
             }
         },
 
         onTranslateArticle: function (oEvent) {
-            var oBindingContext = oEvent.getSource().getBindingContext();
-            var oArticle = oBindingContext.getObject();
-            
+            const oBindingContext = oEvent.getSource().getBindingContext();
+            const oArticle = oBindingContext.getObject();
+
             this._translateArticle(oArticle.id);
         },
 
         onShareArticle: function (oEvent) {
-            var oBindingContext = oEvent.getSource().getBindingContext();
-            var oArticle = oBindingContext.getObject();
-            
+            const oBindingContext = oEvent.getSource().getBindingContext();
+            const oArticle = oBindingContext.getObject();
+
             if (navigator.share) {
                 navigator.share({
                     title: oArticle.title,
@@ -107,15 +107,15 @@ sap.ui.define([
         },
 
         onBookmarkArticle: function (oEvent) {
-            var oBindingContext = oEvent.getSource().getBindingContext();
-            var oArticle = oBindingContext.getObject();
-            
+            const oBindingContext = oEvent.getSource().getBindingContext();
+            const oArticle = oBindingContext.getObject();
+
             // Store bookmark in localStorage
-            var aBookmarks = JSON.parse(localStorage.getItem("newsBookmarks") || "[]");
-            var bAlreadyBookmarked = aBookmarks.some(function(bookmark) {
+            const aBookmarks = JSON.parse(localStorage.getItem("newsBookmarks") || "[]");
+            const bAlreadyBookmarked = aBookmarks.some(function(bookmark) {
                 return bookmark.id === oArticle.id;
             });
-            
+
             if (!bAlreadyBookmarked) {
                 aBookmarks.push({
                     id: oArticle.id,
@@ -141,19 +141,19 @@ sap.ui.define([
         // Private methods
 
         _loadNews: function (bForceRefresh) {
-            var oModel = this.getView().getModel();
-            var sLanguage = oModel.getProperty("/selectedLanguage");
-            var sCategory = oModel.getProperty("/selectedCategory");
-            
+            const _oModel = this.getView().getModel();
+            const sLanguage = oModel.getProperty("/selectedLanguage");
+            const sCategory = oModel.getProperty("/selectedCategory");
+
             oModel.setProperty("/loading", true);
             oModel.setProperty("/hasError", false);
-            
-            var sUrl = "/api/news/ui/latest";
-            var oParams = {
+
+            let sUrl = "/api/news/ui/latest";
+            const oParams = {
                 limit: 20,
                 language: sLanguage
             };
-            
+
             if (sCategory !== "all") {
                 if (sCategory === "russian_crypto") {
                     sUrl = "/api/news/ui/russian";
@@ -161,12 +161,12 @@ sap.ui.define([
                     oParams.category = sCategory;
                 }
             }
-            
+
             // Build query string
-            var sQueryString = Object.keys(oParams).map(function(key) {
-                return key + '=' + encodeURIComponent(oParams[key]);
-            }).join('&');
-            
+            const sQueryString = Object.keys(oParams).map(function(key) {
+                return key + "=" + encodeURIComponent(oParams[key]);
+            }).join("&");
+
             jQuery.ajax({
                 url: sUrl + "?" + sQueryString,
                 method: "GET",
@@ -175,7 +175,7 @@ sap.ui.define([
                     oModel.setProperty("/newsCount", oData.count || 0);
                     oModel.setProperty("/lastRefresh", new Date());
                     oModel.setProperty("/loading", false);
-                    
+
                     if (bForceRefresh) {
                         MessageToast.show("News refreshed successfully");
                     }
@@ -183,7 +183,7 @@ sap.ui.define([
                 error: function (oError) {
                     oModel.setProperty("/loading", false);
                     oModel.setProperty("/hasError", true);
-                    oModel.setProperty("/errorMessage", "Failed to load news: " + 
+                    oModel.setProperty("/errorMessage", "Failed to load news: " +
                         (oError.responseJSON?.error || oError.statusText));
                     MessageToast.show("Failed to load news");
                 }.bind(this)
@@ -191,11 +191,11 @@ sap.ui.define([
         },
 
         _fetchFreshNews: function () {
-            var oModel = this.getView().getModel();
-            var sLanguage = oModel.getProperty("/selectedLanguage");
-            
+            const _oModel = this.getView().getModel();
+            const sLanguage = oModel.getProperty("/selectedLanguage");
+
             MessageToast.show("Fetching fresh news from API...");
-            
+
             jQuery.ajax({
                 url: "/api/news/fetch/fresh",
                 method: "POST",
@@ -207,7 +207,7 @@ sap.ui.define([
                 success: function (oData) {
                     if (oData.success) {
                         MessageToast.show(`Fetched ${oData.fetched_count} new articles`);
-                        this._loadNews(); // Reload the news list
+                        this._loadNews(); // Reload the news lis
                     } else {
                         MessageToast.show("Failed to fetch fresh news: " + oData.error);
                     }
@@ -220,7 +220,7 @@ sap.ui.define([
 
         _translateArticle: function (sArticleId) {
             MessageToast.show("Translating article to Russian...");
-            
+
             jQuery.ajax({
                 url: "/api/news/translate/" + sArticleId,
                 method: "POST",
@@ -249,7 +249,7 @@ sap.ui.define([
                     timestamp: new Date().toISOString()
                 }),
                 success: function () {
-                    // Silently increment view count
+                    // Silently increment view coun
                 },
                 error: function () {
                     // Ignore tracking errors
@@ -258,18 +258,18 @@ sap.ui.define([
         },
 
         _loadMoreNews: function () {
-            var oModel = this.getView().getModel();
-            var aCurrentArticles = oModel.getProperty("/articles");
-            var sLanguage = oModel.getProperty("/selectedLanguage");
-            var sCategory = oModel.getProperty("/selectedCategory");
-            
-            var sUrl = "/api/news/ui/latest";
-            var oParams = {
+            const _oModel = this.getView().getModel();
+            const aCurrentArticles = oModel.getProperty("/articles");
+            const sLanguage = oModel.getProperty("/selectedLanguage");
+            const sCategory = oModel.getProperty("/selectedCategory");
+
+            let sUrl = "/api/news/ui/latest";
+            const oParams = {
                 limit: 10,
                 offset: aCurrentArticles.length,
                 language: sLanguage
             };
-            
+
             if (sCategory !== "all") {
                 if (sCategory === "russian_crypto") {
                     sUrl = "/api/news/ui/russian";
@@ -277,16 +277,16 @@ sap.ui.define([
                     oParams.category = sCategory;
                 }
             }
-            
-            var sQueryString = Object.keys(oParams).map(function(key) {
-                return key + '=' + encodeURIComponent(oParams[key]);
-            }).join('&');
-            
+
+            const sQueryString = Object.keys(oParams).map(function(key) {
+                return key + "=" + encodeURIComponent(oParams[key]);
+            }).join("&");
+
             jQuery.ajax({
                 url: sUrl + "?" + sQueryString,
                 method: "GET",
                 success: function (oData) {
-                    var aNewArticles = aCurrentArticles.concat(oData.articles || []);
+                    const aNewArticles = aCurrentArticles.concat(oData.articles || []);
                     oModel.setProperty("/articles", aNewArticles);
                     oModel.setProperty("/newsCount", aNewArticles.length);
                     MessageToast.show(`Loaded ${oData.articles?.length || 0} more articles`);
@@ -332,7 +332,7 @@ sap.ui.define([
         _setupAutoRefresh: function () {
             // Auto-refresh every 5 minutes
             setInterval(function () {
-                var oModel = this.getView().getModel();
+                const _oModel = this.getView().getModel();
                 if (!oModel.getProperty("/loading")) {
                     this._loadNews();
                 }

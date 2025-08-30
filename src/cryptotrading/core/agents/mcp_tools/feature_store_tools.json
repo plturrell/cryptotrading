@@ -1,0 +1,257 @@
+{
+  "name": "feature-store-mcp-tools",
+  "version": "1.0.0",
+  "description": "MCP tools for Feature Store Agent with CDS integration",
+  "tools": {
+    "compute_features": {
+      "description": "Compute features for a specific symbol with CDS monitoring",
+      "parameters": {
+        "symbol": {
+          "type": "string",
+          "description": "Trading symbol (e.g., BTC, ETH)"
+        },
+        "features": {
+          "type": "array",
+          "items": "string",
+          "description": "List of features to compute",
+          "optional": true
+        },
+        "use_cache": {
+          "type": "boolean",
+          "description": "Use cached results if available",
+          "default": true
+        },
+        "enable_monitoring": {
+          "type": "boolean",
+          "description": "Enable CDS operation monitoring",
+          "default": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "symbol": "string",
+          "features": "object",
+          "computation_time": "number",
+          "cache_hit": "boolean",
+          "monitoring_data": "object"
+        }
+      }
+    },
+    "get_feature_vector": {
+      "description": "Get feature vector for model input",
+      "parameters": {
+        "symbol": {
+          "type": "string",
+          "description": "Trading symbol"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "ISO timestamp for features",
+          "optional": true
+        },
+        "include_metadata": {
+          "type": "boolean",
+          "description": "Include feature metadata",
+          "default": false
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "vector": "array",
+          "feature_names": "array",
+          "timestamp": "string",
+          "metadata": "object"
+        }
+      }
+    },
+    "get_training_features": {
+      "description": "Prepare training data with transactional support",
+      "parameters": {
+        "symbols": {
+          "type": "array",
+          "items": "string",
+          "description": "Trading symbols"
+        },
+        "start_date": {
+          "type": "string",
+          "description": "Start date (ISO format)"
+        },
+        "end_date": {
+          "type": "string",
+          "description": "End date (ISO format)"
+        },
+        "include_labels": {
+          "type": "boolean",
+          "description": "Include training labels",
+          "default": true
+        },
+        "transaction_boundary": {
+          "type": "boolean",
+          "description": "Use transactional boundaries",
+          "default": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "features": "array",
+          "labels": "array",
+          "symbols": "array",
+          "date_range": "object",
+          "transaction_id": "string"
+        }
+      }
+    },
+    "get_feature_definitions": {
+      "description": "Get available feature definitions and metadata",
+      "parameters": {
+        "category": {
+          "type": "string",
+          "description": "Feature category filter",
+          "optional": true
+        },
+        "include_statistics": {
+          "type": "boolean",
+          "description": "Include feature statistics",
+          "default": false
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "features": "array",
+          "categories": "array",
+          "statistics": "object"
+        }
+      }
+    },
+    "get_feature_importance": {
+      "description": "Get feature importance rankings",
+      "parameters": {
+        "model_type": {
+          "type": "string",
+          "description": "Model type for importance ranking",
+          "optional": true
+        },
+        "top_n": {
+          "type": "integer",
+          "description": "Number of top features to return",
+          "default": 20
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "importance_ranking": "array",
+          "model_type": "string",
+          "total_features": "integer"
+        }
+      }
+    },
+    "validate_features": {
+      "description": "Validate feature quality and consistency",
+      "parameters": {
+        "features": {
+          "type": "object",
+          "description": "Features to validate"
+        },
+        "validation_rules": {
+          "type": "array",
+          "items": "string",
+          "description": "Validation rules to apply",
+          "optional": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "valid": "boolean",
+          "validation_results": "object",
+          "warnings": "array",
+          "errors": "array"
+        }
+      }
+    },
+    "cache_management": {
+      "description": "Manage feature cache operations",
+      "parameters": {
+        "operation": {
+          "type": "string",
+          "enum": ["clear", "refresh", "status", "optimize"],
+          "description": "Cache operation"
+        },
+        "symbol": {
+          "type": "string",
+          "description": "Symbol-specific operation",
+          "optional": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "operation": "string",
+          "status": "string",
+          "cache_stats": "object"
+        }
+      }
+    },
+    "monitor_performance": {
+      "description": "Monitor feature store performance with CDS integration",
+      "parameters": {
+        "metrics": {
+          "type": "array",
+          "items": "string",
+          "description": "Performance metrics to monitor",
+          "optional": true
+        },
+        "time_range": {
+          "type": "string",
+          "description": "Time range for metrics",
+          "default": "1h"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "performance_metrics": "object",
+          "cds_integration_stats": "object",
+          "recommendations": "array"
+        }
+      }
+    }
+  },
+  "capabilities": {
+    "feature_computation": [
+      "real_time_features",
+      "batch_processing",
+      "cached_computation",
+      "feature_validation"
+    ],
+    "data_preparation": [
+      "training_data_prep",
+      "feature_vectors",
+      "data_quality_checks",
+      "temporal_alignment"
+    ],
+    "metadata": [
+      "feature_definitions",
+      "importance_rankings",
+      "statistical_analysis",
+      "lineage_tracking"
+    ],
+    "performance": [
+      "cds_monitoring",
+      "transaction_tracking",
+      "cache_optimization",
+      "performance_metrics"
+    ],
+    "integration": [
+      "cds_registration",
+      "monitoring_integration",
+      "transactional_operations",
+      "health_checks"
+    ]
+  }
+}

@@ -1,40 +1,82 @@
 """
-Strands-Glean Integration Agent
+Strands-Glean Integration Agent (MCP-Compliant)
 Combines Strands framework with Glean code analysis for intelligent codebase navigation
+
+MCP COMPLIANCE NOTICE:
+- ALL functionality is accessed through MCP tools via process_mcp_request()
+- Direct method calls to public methods are not supported
+- Use MCP tool interface for all interactions
+- Available MCP tools: analyze_code, find_dependencies, search_symbols, 
+  analyze_architecture, analyze_data_flow, analyze_parameters, analyze_factors,
+  analyze_data_quality, get_context_summary, process_strand
 """
-from typing import Dict, Any, Optional, List, Tuple, Union, Set
-from dataclasses import dataclass, field
 import asyncio
-import logging
 import json
+import logging
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
+
+from ...protocols.a2a.a2a_protocol import A2A_CAPABILITIES, A2AAgentRegistry
+from ...protocols.a2a.blockchain_registration import EnhancedA2AAgentRegistry
+from ...protocols.cds.cds_client import A2AAgentCDSMixin
+
+# Enhanced CDS integration imports
+try:
+    from ...infrastructure.monitoring.cds_integration_monitor import get_cds_monitor, CDSOperationType
+    from ...infrastructure.transactions.cds_transactional_client import CDSTransactionalMixin
+    from ...infrastructure.transactions.agent_transaction_manager import transactional, TransactionIsolation
+    CDS_ENHANCED_FEATURES = True
+except ImportError:
+    # Fallback classes for compatibility
+    class CDSTransactionalMixin:
+        pass
+    def transactional(transaction_type=None, isolation_level=None):
+        def decorator(func):
+            return func
+        return decorator
+    class TransactionIsolation:
+        READ_COMMITTED = "READ_COMMITTED"
+    get_cds_monitor = None
+    CDSOperationType = None
+    CDS_ENHANCED_FEATURES = False
 
 # Conditional imports to handle missing dependencies
 try:
     from ..strands import StrandsAgent
+
     STRANDS_AVAILABLE = True
 except ImportError:
     from ..base import BaseAgent as StrandsAgent
+
     STRANDS_AVAILABLE = False
 
 try:
-    from ...infrastructure.analysis.vercel_glean_client import VercelGleanClient
-    from ...infrastructure.analysis.angle_parser import create_query, PYTHON_QUERIES
-    from ...infrastructure.analysis.scip_indexer import SCIPSymbol, SCIPDocument
-    from ...infrastructure.analysis.scip_data_flow_indexer import DataFlowSCIPIndexer
+    from ...infrastructure.analysis.angle_parser import PYTHON_QUERIES, create_query
     from ...infrastructure.analysis.glean_data_schemas import ALL_DATA_TRACKING_SCHEMAS
+    from ...infrastructure.analysis.scip_data_flow_indexer import DataFlowSCIPIndexer
+    from ...infrastructure.analysis.scip_indexer import SCIPDocument, SCIPSymbol
+    from ...infrastructure.analysis.vercel_glean_client import VercelGleanClient
+
     GLEAN_AVAILABLE = True
 except ImportError:
     GLEAN_AVAILABLE = False
+
     # Mock classes
     class VercelGleanClient:
-        def __init__(self, **kwargs): pass
+        def __init__(self, **kwargs):
+            pass
+
     class SCIPSymbol:
-        def __init__(self, **kwargs): pass
+        def __init__(self, **kwargs):
+            pass
+
     class SCIPDocument:
-        def __init__(self, **kwargs): pass
+        def __init__(self, **kwargs):
+            pass
+
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +84,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class StrandsGleanContext:
     """Context for Strands-Glean integration"""
+
     project_root: str
     indexed_files: Set[str] = field(default_factory=set)
     active_analysis: Optional[Dict[str, Any]] = None
@@ -74,10 +117,10 @@ class DependencyAnalysisCapability(CodeAnalysisCapability):
             results = await self.glean_client.query_angle(angle_query)
 
             # Update context with dependency information
-            if results and 'dependencies' in results:
-                for dep in results['dependencies']:
-                    source = dep.get('source', {}).get('file', '')
-                    target = dep.get('target', {}).get('file', '')
+            if results and "dependencies" in results:
+                for dep in results["dependencies"]:
+                    source = dep.get("source", {}).get("file", "")
+                    target = dep.get("target", {}).get("file", "")
                     if source and target:
                         if source not in context.dependency_graph:
                             context.dependency_graph[source] = set()
@@ -85,9 +128,9 @@ class DependencyAnalysisCapability(CodeAnalysisCapability):
 
             return {
                 "status": "success",
-                "dependencies": results.get('dependencies', []),
+                "dependencies": results.get("dependencies", []),
                 "graph": dict(context.dependency_graph),
-                "query": query
+                "query": query,
             }
         except Exception as e:
             logger.error(f"Dependency analysis failed: {e}")
@@ -110,26 +153,26 @@ class SymbolSearchCapability(CodeAnalysisCapability):
             results = await self.glean_client.query_angle(angle_query)
 
             # Update context with found symbols
-            if results and 'symbols' in results:
-                for symbol_data in results['symbols']:
-                    file_path = symbol_data.get('file', '')
+            if results and "symbols" in results:
+                for symbol_data in results["symbols"]:
+                    file_path = symbol_data.get("file", "")
                     if file_path not in context.code_symbols:
                         context.code_symbols[file_path] = []
 
                     # Create SCIPSymbol object
                     symbol = SCIPSymbol(
-                        name=symbol_data.get('name', ''),
-                        kind=symbol_data.get('kind', ''),
-                        position=symbol_data.get('position', {}),
-                        file_path=file_path
+                        name=symbol_data.get("name", ""),
+                        kind=symbol_data.get("kind", ""),
+                        position=symbol_data.get("position", {}),
+                        file_path=file_path,
                     )
                     context.code_symbols[file_path].append(symbol)
 
             return {
                 "status": "success",
-                "symbols": results.get('symbols', []),
-                "matches": len(results.get('symbols', [])),
-                "query": query
+                "symbols": results.get("symbols", []),
+                "matches": len(results.get("symbols", [])),
+                "query": query,
             }
         except Exception as e:
             logger.error(f"Symbol search failed: {e}")
@@ -153,17 +196,17 @@ class ArchitectureAnalysisCapability(CodeAnalysisCapability):
 
             return {
                 "status": "success",
-                "architecture": results.get('architecture', {}),
-                "violations": results.get('violations', []),
-                "patterns": results.get('patterns', []),
-                "query": query
+                "architecture": results.get("architecture", {}),
+                "violations": results.get("violations", []),
+                "patterns": results.get("patterns", []),
+                "query": query,
             }
         except Exception as e:
             logger.error(f"Architecture analysis failed: {e}")
             return {"status": "error", "error": str(e), "query": query}
 
 
-class StrandsGleanAgent(StrandsAgent):
+class StrandsGleanAgent(StrandsAgent, A2AAgentCDSMixin, CDSTransactionalMixin):
     """Strands agent with Glean integration for intelligent code analysis"""
 
     def __init__(
@@ -171,18 +214,38 @@ class StrandsGleanAgent(StrandsAgent):
         agent_id: str = "strands-glean-agent",
         project_root: str = None,
         glean_storage_path: Optional[Path] = None,
-        **kwargs
+        **kwargs,
     ):
-        super().__init__(agent_id=agent_id, **kwargs)
+        super().__init__(
+            agent_id=agent_id, 
+            agent_type="strands-glean",
+            capabilities=[
+                "code_analysis",
+                "dependency_analysis", 
+                "symbol_search",
+                "architecture_analysis",
+                "data_flow_analysis",
+                "parameter_analysis",
+                "factor_analysis",
+                "data_quality_analysis",
+                "clrs_analysis"
+            ],
+            **kwargs
+        )
 
         self.project_root = project_root or "/Users/apple/projects/cryptotrading"
         self.context = StrandsGleanContext(project_root=self.project_root)
 
+        # Initialize CDS monitoring if available
+        if CDS_ENHANCED_FEATURES and get_cds_monitor:
+            self._cds_monitor = get_cds_monitor()
+        else:
+            self._cds_monitor = None
+
         # Initialize Glean client if available
         if GLEAN_AVAILABLE:
             self.glean_client = VercelGleanClient(
-                project_root=self.project_root,
-                storage_path=glean_storage_path
+                project_root=self.project_root, storage_path=glean_storage_path
             )
         else:
             self.glean_client = None
@@ -191,20 +254,24 @@ class StrandsGleanAgent(StrandsAgent):
         # Initialize capabilities
         self.capabilities = {}
         if self.glean_client:
-            self.capabilities.update({
-                "dependency_analysis": DependencyAnalysisCapability(self.glean_client),
-                "symbol_search": SymbolSearchCapability(self.glean_client),
-                "architecture_analysis": ArchitectureAnalysisCapability(self.glean_client),
-                "data_flow_analysis": DataFlowAnalysisCapability(self.glean_client),
-                "parameter_analysis": ParameterAnalysisCapability(self.glean_client),
-                "factor_analysis": FactorAnalysisCapability(self.glean_client),
-                "data_quality_analysis": DataQualityAnalysisCapability(self.glean_client)
-            })
+            self.capabilities.update(
+                {
+                    "dependency_analysis": DependencyAnalysisCapability(self.glean_client),
+                    "symbol_search": SymbolSearchCapability(self.glean_client),
+                    "architecture_analysis": ArchitectureAnalysisCapability(self.glean_client),
+                    "data_flow_analysis": DataFlowAnalysisCapability(self.glean_client),
+                    "parameter_analysis": ParameterAnalysisCapability(self.glean_client),
+                    "factor_analysis": FactorAnalysisCapability(self.glean_client),
+                    "data_quality_analysis": DataQualityAnalysisCapability(self.glean_client),
+                }
+            )
 
         # Add CLRS algorithmic analysis capabilities
         try:
             from cryptotrading.infrastructure.analysis.clrs_tree_mcp_tools import (
-                CLRSMCPTools, TreeMCPTools, GleanAnalysisMCPTools
+                CLRSMCPTools,
+                GleanAnalysisMCPTools,
+                TreeMCPTools,
             )
             from cryptotrading.infrastructure.analysis.glean_client import GleanClient
 
@@ -214,13 +281,15 @@ class StrandsGleanAgent(StrandsAgent):
             self.enhanced_tools = GleanAnalysisMCPTools(self.glean_client or GleanClient())
 
             # Add CLRS capabilities
-            self.capabilities.update({
-                "clrs_dependency_analysis": CLRSAnalysisCapability(self.clrs_tools),
-                "clrs_code_similarity": CLRSCodeSimilarityCapability(self.clrs_tools),
-                "clrs_pattern_matching": CLRSPatternCapability(self.clrs_tools),
-                "tree_structure_analysis": TreeStructureCapability(self.tree_tools),
-                "comprehensive_analysis": ComprehensiveAnalysisCapability(self.enhanced_tools)
-            })
+            self.capabilities.update(
+                {
+                    "clrs_dependency_analysis": CLRSAnalysisCapability(self.clrs_tools),
+                    "clrs_code_similarity": CLRSCodeSimilarityCapability(self.clrs_tools),
+                    "clrs_pattern_matching": CLRSPatternCapability(self.clrs_tools),
+                    "tree_structure_analysis": TreeStructureCapability(self.tree_tools),
+                    "comprehensive_analysis": ComprehensiveAnalysisCapability(self.enhanced_tools),
+                }
+            )
 
             logger.info("CLRS algorithmic analysis capabilities enabled")
         except ImportError as e:
@@ -229,7 +298,85 @@ class StrandsGleanAgent(StrandsAgent):
         # Initialize memory system for code analysis caching
         asyncio.create_task(self._initialize_memory_system())
 
-        logger.info(f"StrandsGleanAgent initialized with {len(self.capabilities)} capabilities")
+        # Initialize MCP handlers mapping
+        self.mcp_handlers = {
+            "analyze_code": self._mcp_analyze_code,
+            "find_dependencies": self._mcp_find_dependencies,
+            "search_symbols": self._mcp_search_symbols,
+            "analyze_architecture": self._mcp_analyze_architecture,
+            "analyze_data_flow": self._mcp_analyze_data_flow,
+            "analyze_parameters": self._mcp_analyze_parameters,
+            "analyze_factors": self._mcp_analyze_factors,
+            "analyze_data_quality": self._mcp_analyze_data_quality,
+            "get_context_summary": self._mcp_get_context_summary,
+            "process_strand": self._mcp_process_strand,
+        }
+
+        # Register with A2A Agent Registry (including blockchain)
+
+
+        capabilities = A2A_CAPABILITIES.get(agent_id, [])
+
+
+        mcp_tools = list(self.mcp_handlers.keys()) if hasattr(self, 'mcp_handlers') else []
+
+
+        
+
+
+        # Try blockchain registration, fallback to local only
+
+
+        try:
+
+
+            import asyncio
+
+
+            asyncio.create_task(
+
+
+                EnhancedA2AAgentRegistry.register_agent_with_blockchain(
+
+
+                    agent_id=agent_id,
+
+
+                    capabilities=capabilities,
+
+
+                    agent_instance=self,
+
+
+                    agent_type="strands-glean",
+
+
+                    mcp_tools=mcp_tools
+
+
+                )
+
+
+            )
+
+
+            logger.info(f"Strands Glean Agent {agent_id} blockchain registration initiated")
+
+
+        except Exception as e:
+
+
+            # Fallback to local registration only
+
+
+            A2AAgentRegistry.register_agent(agent_id, capabilities, self)
+
+
+            logger.warning(f"Strands Glean Agent {agent_id} registered locally only (blockchain failed: {e})")
+
+        logger.info(
+            f"StrandsGleanAgent initialized with {len(self.capabilities)} capabilities and {len(self.mcp_handlers)} MCP handlers"
+        )
 
     async def _initialize_memory_system(self):
         """Initialize memory system for code analysis caching and learning"""
@@ -242,59 +389,103 @@ class StrandsGleanAgent(StrandsAgent):
                     "project_root": self.project_root,
                     "capabilities": list(self.capabilities.keys()),
                     "glean_available": GLEAN_AVAILABLE,
-                    "initialized_at": datetime.now().isoformat()
+                    "initialized_at": datetime.now().isoformat(),
                 },
-                {"type": "configuration", "persistent": True}
+                {"type": "configuration", "persistent": True},
             )
 
             # Initialize analysis cache
             await self.store_memory(
-                "analysis_cache",
-                {},
-                {"type": "analysis_cache", "persistent": True}
+                "analysis_cache", {}, {"type": "analysis_cache", "persistent": True}
             )
 
             # Initialize dependency graph cache
             await self.store_memory(
-                "dependency_graph_cache",
-                {},
-                {"type": "dependency_cache", "persistent": True}
+                "dependency_graph_cache", {}, {"type": "dependency_cache", "persistent": True}
             )
 
             # Initialize symbol search cache
             await self.store_memory(
-                "symbol_search_cache",
-                {},
-                {"type": "symbol_cache", "persistent": True}
+                "symbol_search_cache", {}, {"type": "symbol_cache", "persistent": True}
             )
 
             # Initialize query performance tracking
             await self.store_memory(
                 "query_performance",
                 {"total_queries": 0, "avg_response_time": 0, "success_rate": 0},
-                {"type": "performance_tracking", "persistent": True}
+                {"type": "performance_tracking", "persistent": True},
             )
 
             logger.info(f"Memory system initialized for Glean Agent {self.agent_id}")
         except Exception as e:
             logger.error(f"Failed to initialize Glean agent memory system: {e}")
 
-    async def initialize(self) -> bool:
-        """Initialize the agent and index the project"""
+    async def process_mcp_request(
+        self, tool_name: str, arguments: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Process MCP request - ONLY entry point for all functionality
+
+        Args:
+            tool_name: Name of the MCP tool to execute
+            arguments: Tool arguments
+
+        Returns:
+            Tool execution result
+        """
         try:
+            if tool_name not in self.mcp_handlers:
+                return {
+                    "status": "error",
+                    "error": f"Unknown MCP tool: {tool_name}",
+                    "available_tools": list(self.mcp_handlers.keys()),
+                }
+
+            handler = self.mcp_handlers[tool_name]
+            return await handler(arguments)
+        except Exception as e:
+            logger.error(f"MCP request failed for tool {tool_name}: {e}")
+            return {"status": "error", "error": str(e), "tool_name": tool_name}
+
+    async def initialize(self) -> bool:
+        """Initialize the agent and index the project with CDS integration"""
+        try:
+            logger.info(f"Initializing STRANDS Glean Agent {self.agent_id} with CDS")
+
+            # Initialize CDS connection
+            await self.initialize_cds()
+
+            # Register agent capabilities with CDS if available
+            if hasattr(self, '_cds_client') and self._cds_client:
+                await self.register_with_cds(capabilities={
+                    "code_analysis": True,
+                    "dependency_analysis": True, 
+                    "symbol_search": True,
+                    "architecture_analysis": True,
+                    "data_flow_analysis": True
+                })
+
             if not self.glean_client:
                 logger.warning("No Glean client available")
                 return True
 
-            # Index the project
-            logger.info("Indexing project for Glean analysis...")
-            index_result = await self.glean_client.index_project(
-                unit_name=f"strands-{self.agent_id}",
-                force_reindex=False
-            )
+            # Track indexing operation with CDS monitoring
+            if self._cds_monitor and CDSOperationType:
+                async with self._cds_monitor.track_operation(self.agent_id, CDSOperationType.INDEXING):
+                    # Index the project
+                    logger.info("Indexing project for Glean analysis...")
+                    index_result = await self.glean_client.index_project(
+                        unit_name=f"strands-{self.agent_id}", force_reindex=False
+                    )
+            else:
+                # Fallback without monitoring
+                logger.info("Indexing project for Glean analysis...")
+                index_result = await self.glean_client.index_project(
+                    unit_name=f"strands-{self.agent_id}", force_reindex=False
+                )
 
             if index_result.get("status") in ["success", "already_indexed"]:
                 logger.info(f"Project indexing completed: {index_result}")
+                logger.info(f"STRANDS Glean Agent {self.agent_id} initialized successfully with CDS")
                 return True
             else:
                 logger.error(f"Project indexing failed: {index_result}")
@@ -304,18 +495,67 @@ class StrandsGleanAgent(StrandsAgent):
             logger.error(f"Agent initialization failed: {e}")
             return False
 
-    async def analyze_code(
-        self,
-        analysis_type: str,
-        query: str,
-        context: Optional[Dict[str, Any]] = None
+    async def _mcp_analyze_code(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """MCP handler for code analysis"""
+        analysis_type = arguments.get("analysis_type", "")
+        query = arguments.get("query", "")
+        context = arguments.get("context")
+        return await self._analyze_code_internal(analysis_type, query, context)
+
+    async def _mcp_find_dependencies(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """MCP handler for finding dependencies"""
+        symbol = arguments.get("symbol", "")
+        return await self._analyze_code_internal("dependency_analysis", symbol)
+
+    async def _mcp_search_symbols(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """MCP handler for searching symbols"""
+        pattern = arguments.get("pattern", "")
+        return await self._analyze_code_internal("symbol_search", pattern)
+
+    async def _mcp_analyze_architecture(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """MCP handler for architecture analysis"""
+        component = arguments.get("component", "")
+        return await self._analyze_code_internal("architecture_analysis", component)
+
+    async def _mcp_analyze_data_flow(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """MCP handler for data flow analysis"""
+        symbol_or_component = arguments.get("symbol_or_component", "")
+        return await self._analyze_code_internal("data_flow_analysis", symbol_or_component)
+
+    async def _mcp_analyze_parameters(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """MCP handler for parameter analysis"""
+        category = arguments.get("category", "")
+        return await self._analyze_code_internal("parameter_analysis", category)
+
+    async def _mcp_analyze_factors(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """MCP handler for factor analysis"""
+        symbol = arguments.get("symbol", "")
+        return await self._analyze_code_internal("factor_analysis", symbol)
+
+    async def _mcp_analyze_data_quality(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """MCP handler for data quality analysis"""
+        data_id = arguments.get("data_id", "")
+        return await self._analyze_code_internal("data_quality_analysis", data_id)
+
+    async def _mcp_get_context_summary(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """MCP handler for getting context summary"""
+        return await self._get_context_summary_internal()
+
+    async def _mcp_process_strand(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """MCP handler for processing strands"""
+        strand_data = arguments.get("strand_data", {})
+        return await self._process_strand_internal(strand_data)
+
+    @transactional(transaction_type="CODE_ANALYSIS", isolation_level=TransactionIsolation.READ_COMMITTED)
+    async def _analyze_code_internal(
+        self, analysis_type: str, query: str, context: Optional[Dict[str, Any]] = None, transaction=None
     ) -> Dict[str, Any]:
         """Perform code analysis using specified capability with memory caching"""
         if analysis_type not in self.capabilities:
             return {
                 "status": "error",
                 "error": f"Unknown analysis type: {analysis_type}",
-                "available_types": list(self.capabilities.keys())
+                "available_types": list(self.capabilities.keys()),
             }
 
         try:
@@ -332,10 +572,18 @@ class StrandsGleanAgent(StrandsAgent):
                     if hasattr(self.context, key):
                         setattr(self.context, key, value)
 
-            # Perform analysis
+            # Perform analysis with CDS monitoring
             start_time = datetime.now()
-            capability = self.capabilities[analysis_type]
-            result = await capability.analyze(self.context, query)
+            
+            if self._cds_monitor and CDSOperationType:
+                async with self._cds_monitor.track_operation(self.agent_id, CDSOperationType.COMPUTATION):
+                    capability = self.capabilities[analysis_type]
+                    result = await capability.analyze(self.context, query)
+            else:
+                # Fallback without monitoring
+                capability = self.capabilities[analysis_type]
+                result = await capability.analyze(self.context, query)
+                
             end_time = datetime.now()
 
             # Cache successful results for 30 minutes
@@ -344,20 +592,24 @@ class StrandsGleanAgent(StrandsAgent):
                 await self.store_memory(
                     f"analysis_cache_{cache_key}",
                     result,
-                    {"type": "analysis_cache", "expires_at": expiration}
+                    {"type": "analysis_cache", "expires_at": expiration},
                 )
 
             # Update performance tracking
-            await self._track_query_performance(analysis_type, start_time, end_time, result.get("status") == "success")
+            await self._track_query_performance(
+                analysis_type, start_time, end_time, result.get("status") == "success"
+            )
 
             # Record query in history
-            self.context.query_history.append({
-                "timestamp": datetime.now().isoformat(),
-                "type": analysis_type,
-                "query": query,
-                "result_status": result.get("status", "unknown"),
-                "response_time_ms": (end_time - start_time).total_seconds() * 1000
-            })
+            self.context.query_history.append(
+                {
+                    "timestamp": datetime.now().isoformat(),
+                    "type": analysis_type,
+                    "query": query,
+                    "result_status": result.get("status", "unknown"),
+                    "response_time_ms": (end_time - start_time).total_seconds() * 1000,
+                }
+            )
 
             return result
         except Exception as e:
@@ -366,25 +618,24 @@ class StrandsGleanAgent(StrandsAgent):
                 "error": str(e),
                 "analysis_type": analysis_type,
                 "query": query,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
             await self.store_memory(
-                f"analysis_error_{datetime.now().timestamp()}",
-                error_data,
-                {"type": "error_log"}
+                f"analysis_error_{datetime.now().timestamp()}", error_data, {"type": "error_log"}
             )
             logger.error(f"Code analysis failed: {e}")
             return {"status": "error", "error": str(e)}
 
     async def _track_query_performance(
-        self, analysis_type: str, start_time: datetime,
-        end_time: datetime, success: bool
+        self, analysis_type: str, start_time: datetime, end_time: datetime, success: bool
     ):
         """Track query performance metrics in memory"""
         try:
             default_data = {
-                "total_queries": 0, "avg_response_time": 0,
-                "success_rate": 0, "by_type": {}
+                "total_queries": 0,
+                "avg_response_time": 0,
+                "success_rate": 0,
+                "by_type": {},
             }
             performance_data = await self.retrieve_memory("query_performance") or default_data
 
@@ -409,7 +660,9 @@ class StrandsGleanAgent(StrandsAgent):
             # Update by type metrics
             if analysis_type not in performance_data["by_type"]:
                 performance_data["by_type"][analysis_type] = {
-                    "count": 0, "avg_time": 0, "success_count": 0
+                    "count": 0,
+                    "avg_time": 0,
+                    "success_count": 0,
                 }
 
             type_data = performance_data["by_type"][analysis_type]
@@ -420,40 +673,14 @@ class StrandsGleanAgent(StrandsAgent):
             if success:
                 type_data["success_count"] += 1
 
-            await self.store_memory("query_performance", performance_data, {"type": "performance_tracking"})
+            await self.store_memory(
+                "query_performance", performance_data, {"type": "performance_tracking"}
+            )
 
         except Exception as e:
             logger.error(f"Failed to track query performance: {e}")
 
-    async def find_dependencies(self, symbol: str) -> Dict[str, Any]:
-        """Find dependencies for a symbol"""
-        return await self.analyze_code("dependency_analysis", symbol)
-
-    async def search_symbols(self, pattern: str) -> Dict[str, Any]:
-        """Search for symbols matching pattern"""
-        return await self.analyze_code("symbol_search", pattern)
-
-    async def analyze_architecture(self, component: str) -> Dict[str, Any]:
-        """Analyze architectural patterns for a component"""
-        return await self.analyze_code("architecture_analysis", component)
-
-    async def analyze_data_flow(self, symbol_or_component: str) -> Dict[str, Any]:
-        """Analyze data flow for a specific symbol or component"""
-        return await self.analyze_code("data_flow_analysis", symbol_or_component)
-
-    async def analyze_parameters(self, category: str = "") -> Dict[str, Any]:
-        """Analyze configuration parameters by category"""
-        return await self.analyze_code("parameter_analysis", category)
-
-    async def analyze_factors(self, symbol: str = "") -> Dict[str, Any]:
-        """Analyze crypto factors for a specific symbol or all symbols"""
-        return await self.analyze_code("factor_analysis", symbol)
-
-    async def analyze_data_quality(self, data_id: str = "") -> Dict[str, Any]:
-        """Analyze data quality metrics"""
-        return await self.analyze_code("data_quality_analysis", data_id)
-
-    async def get_context_summary(self) -> Dict[str, Any]:
+    async def _get_context_summary_internal(self) -> Dict[str, Any]:
         """Get summary of current analysis context"""
         return {
             "project_root": self.context.project_root,
@@ -463,10 +690,10 @@ class StrandsGleanAgent(StrandsAgent):
             "query_history": len(self.context.query_history),
             "capabilities": list(self.capabilities.keys()),
             "glean_available": GLEAN_AVAILABLE,
-            "strands_available": STRANDS_AVAILABLE
+            "strands_available": STRANDS_AVAILABLE,
         }
 
-    async def process_strand(self, strand_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _process_strand_internal(self, strand_data: Dict[str, Any]) -> Dict[str, Any]:
         """Process a strand with Glean-powered analysis"""
         try:
             strand_type = strand_data.get("type", "unknown")
@@ -474,55 +701,75 @@ class StrandsGleanAgent(StrandsAgent):
 
             if strand_type == "code_analysis":
                 analysis_type = strand_data.get("analysis_type", "symbol_search")
-                return await self.analyze_code(analysis_type, strand_query, strand_data.get("context"))
+                return await self._analyze_code_internal(
+                    analysis_type, strand_query, strand_data.get("context")
+                )
 
             elif strand_type == "dependency_trace":
-                return await self.find_dependencies(strand_query)
+                return await self._analyze_code_internal("dependency_analysis", strand_query)
 
             elif strand_type == "symbol_lookup":
-                return await self.search_symbols(strand_query)
+                return await self._analyze_code_internal("symbol_search", strand_query)
 
             elif strand_type == "architecture_review":
-                return await self.analyze_architecture(strand_query)
+                return await self._analyze_code_internal("architecture_analysis", strand_query)
 
             elif strand_type == "data_flow_analysis":
-                return await self.analyze_data_flow(strand_query)
+                return await self._analyze_code_internal("data_flow_analysis", strand_query)
 
             elif strand_type == "parameter_analysis":
-                return await self.analyze_parameters(strand_query)
+                return await self._analyze_code_internal("parameter_analysis", strand_query)
 
             elif strand_type == "factor_analysis":
-                return await self.analyze_factors(strand_query)
+                return await self._analyze_code_internal("factor_analysis", strand_query)
 
             elif strand_type == "data_quality_analysis":
-                return await self.analyze_data_quality(strand_query)
+                return await self._analyze_code_internal("data_quality_analysis", strand_query)
 
             elif strand_type == "clrs_dependency_analysis":
-                return await self.analyze_code("clrs_dependency_analysis", strand_query, strand_data.get("context"))
+                return await self._analyze_code_internal(
+                    "clrs_dependency_analysis", strand_query, strand_data.get("context")
+                )
 
             elif strand_type == "clrs_code_similarity":
-                return await self.analyze_code("clrs_code_similarity", strand_query, strand_data.get("context"))
+                return await self._analyze_code_internal(
+                    "clrs_code_similarity", strand_query, strand_data.get("context")
+                )
 
             elif strand_type == "clrs_pattern_matching":
-                return await self.analyze_code("clrs_pattern_matching", strand_query, strand_data.get("context"))
+                return await self._analyze_code_internal(
+                    "clrs_pattern_matching", strand_query, strand_data.get("context")
+                )
 
             elif strand_type == "tree_structure_analysis":
-                return await self.analyze_code("tree_structure_analysis", strand_query, strand_data.get("context"))
+                return await self._analyze_code_internal(
+                    "tree_structure_analysis", strand_query, strand_data.get("context")
+                )
 
             elif strand_type == "comprehensive_analysis":
-                return await self.analyze_code("comprehensive_analysis", strand_query, strand_data.get("context"))
+                return await self._analyze_code_internal(
+                    "comprehensive_analysis", strand_query, strand_data.get("context")
+                )
 
             else:
                 return {
                     "status": "error",
                     "error": f"Unknown strand type: {strand_type}",
                     "supported_types": [
-                        "code_analysis", "dependency_trace", "symbol_lookup",
-                        "architecture_review", "data_flow_analysis", "parameter_analysis",
-                        "factor_analysis", "data_quality_analysis", "clrs_dependency_analysis",
-                        "clrs_code_similarity", "clrs_pattern_matching", "tree_structure_analysis",
-                        "comprehensive_analysis"
-                    ]
+                        "code_analysis",
+                        "dependency_trace",
+                        "symbol_lookup",
+                        "architecture_review",
+                        "data_flow_analysis",
+                        "parameter_analysis",
+                        "factor_analysis",
+                        "data_quality_analysis",
+                        "clrs_dependency_analysis",
+                        "clrs_code_similarity",
+                        "clrs_pattern_matching",
+                        "tree_structure_analysis",
+                        "comprehensive_analysis",
+                    ],
                 }
         except Exception as e:
             logger.error(f"Strand processing failed: {e}")
@@ -531,15 +778,13 @@ class StrandsGleanAgent(StrandsAgent):
 
 # Factory function for easy instantiation
 async def create_strands_glean_agent(
-    project_root: str = None,
-    agent_id: str = None,
-    **kwargs
+    project_root: str = None, agent_id: str = None, **kwargs
 ) -> StrandsGleanAgent:
     """Create and initialize a StrandsGleanAgent"""
     agent = StrandsGleanAgent(
         agent_id=agent_id or f"strands-glean-{datetime.now().strftime('%Y%m%d-%H%M%S')}",
         project_root=project_root,
-        **kwargs
+        **kwargs,
     )
 
     # Initialize the agent
@@ -557,18 +802,20 @@ async def test_strands_glean_agent():
 
     print("=== StrandsGleanAgent Test ===")
 
-    # Get context summary
-    summary = await agent.get_context_summary()
+    # Get context summary via MCP
+    summary = await agent.process_mcp_request("get_context_summary", {})
     print(f"Context: {json.dumps(summary, indent=2)}")
 
-    # Test symbol search
-    symbol_results = await agent.search_symbols("Agent")
+    # Test symbol search via MCP
+    symbol_results = await agent.process_mcp_request("search_symbols", {"pattern": "Agent"})
     print(f"Symbol search results: {json.dumps(symbol_results, indent=2)}")
 
-    # Test dependency analysis
+    # Test dependency analysis via MCP
     if symbol_results.get("symbols"):
         first_symbol = symbol_results["symbols"][0]
-        dep_results = await agent.find_dependencies(first_symbol.get("name", ""))
+        dep_results = await agent.process_mcp_request(
+            "find_dependencies", {"symbol": first_symbol.get("name", "")}
+        )
         print(f"Dependency results: {json.dumps(dep_results, indent=2)}")
 
     return agent
@@ -585,33 +832,32 @@ class DataFlowAnalysisCapability(CodeAnalysisCapability):
         """Analyze data flow for a specific component or symbol"""
         try:
             # Create Angle query for data flow
-            angle_query = create_query("data_flow", {
-                "predicate": "crypto.DataInput",
-                "filter": {"symbol": query} if query else {}
-            })
+            angle_query = create_query(
+                "data_flow",
+                {"predicate": "crypto.DataInput", "filter": {"symbol": query} if query else {}},
+            )
 
             # Execute query
             results = await self.glean_client.query_angle(angle_query)
 
             # Also get data outputs and lineage
-            output_query = create_query("data_flow", {
-                "predicate": "crypto.DataOutput",
-                "filter": {"symbol": query} if query else {}
-            })
+            output_query = create_query(
+                "data_flow",
+                {"predicate": "crypto.DataOutput", "filter": {"symbol": query} if query else {}},
+            )
             output_results = await self.glean_client.query_angle(output_query)
 
-            lineage_query = create_query("data_flow", {
-                "predicate": "crypto.DataLineage",
-                "filter": {}
-            })
+            lineage_query = create_query(
+                "data_flow", {"predicate": "crypto.DataLineage", "filter": {}}
+            )
             lineage_results = await self.glean_client.query_angle(lineage_query)
 
             return {
                 "status": "success",
-                "inputs": results.get('results', []),
-                "outputs": output_results.get('results', []),
-                "lineage": lineage_results.get('results', []),
-                "query": query
+                "inputs": results.get("results", []),
+                "outputs": output_results.get("results", []),
+                "lineage": lineage_results.get("results", []),
+                "query": query,
             }
         except Exception as e:
             logger.error(f"Data flow analysis failed: {e}")
@@ -628,28 +874,28 @@ class ParameterAnalysisCapability(CodeAnalysisCapability):
         """Analyze parameters for a specific component or category"""
         try:
             # Create Angle query for parameters
-            angle_query = create_query("parameter_analysis", {
-                "predicate": "crypto.Parameter",
-                "filter": {"category": query} if query else {}
-            })
+            angle_query = create_query(
+                "parameter_analysis",
+                {"predicate": "crypto.Parameter", "filter": {"category": query} if query else {}},
+            )
 
             # Execute query
             results = await self.glean_client.query_angle(angle_query)
 
             # Analyze parameter patterns
-            parameters = results.get('results', [])
+            parameters = results.get("results", [])
             analysis = {
                 "total_parameters": len(parameters),
                 "by_type": {},
                 "by_category": {},
                 "value_ranges": {},
-                "most_common": []
+                "most_common": [],
             }
 
             for param in parameters:
-                value = param.get('value', {})
-                param_type = value.get('param_type', 'unknown')
-                category = value.get('category', 'unknown')
+                value = param.get("value", {})
+                param_type = value.get("param_type", "unknown")
+                category = value.get("category", "unknown")
 
                 analysis["by_type"][param_type] = analysis["by_type"].get(param_type, 0) + 1
                 analysis["by_category"][category] = analysis["by_category"].get(category, 0) + 1
@@ -658,7 +904,7 @@ class ParameterAnalysisCapability(CodeAnalysisCapability):
                 "status": "success",
                 "parameters": parameters,
                 "analysis": analysis,
-                "query": query
+                "query": query,
             }
         except Exception as e:
             logger.error(f"Parameter analysis failed: {e}")
@@ -675,24 +921,27 @@ class FactorAnalysisCapability(CodeAnalysisCapability):
         """Analyze factors for a specific symbol or category"""
         try:
             # Create Angle query for factors
-            angle_query = create_query("factor_analysis", {
-                "predicate": "crypto.Factor",
-                "filter": {"symbol": query} if query else {}
-            })
+            angle_query = create_query(
+                "factor_analysis",
+                {"predicate": "crypto.Factor", "filter": {"symbol": query} if query else {}},
+            )
 
             # Execute query
             results = await self.glean_client.query_angle(angle_query)
 
             # Get factor calculations
-            calc_query = create_query("factor_analysis", {
-                "predicate": "crypto.FactorCalculation",
-                "filter": {"symbol": query} if query else {}
-            })
+            calc_query = create_query(
+                "factor_analysis",
+                {
+                    "predicate": "crypto.FactorCalculation",
+                    "filter": {"symbol": query} if query else {},
+                },
+            )
             calc_results = await self.glean_client.query_angle(calc_query)
 
             # Analyze factor patterns
-            factors = results.get('results', [])
-            calculations = calc_results.get('results', [])
+            factors = results.get("results", [])
+            calculations = calc_results.get("results", [])
 
             analysis = {
                 "total_factors": len(factors),
@@ -701,15 +950,15 @@ class FactorAnalysisCapability(CodeAnalysisCapability):
                 "calculation_stats": {
                     "total_calculations": len(calculations),
                     "avg_execution_time": 0,
-                    "error_rate": 0
-                }
+                    "error_rate": 0,
+                },
             }
 
             # Analyze factors
             for factor in factors:
-                value = factor.get('value', {})
-                category = value.get('category', 'unknown')
-                symbol = factor.get('key', {}).get('symbol', 'unknown')
+                value = factor.get("value", {})
+                category = value.get("category", "unknown")
+                symbol = factor.get("key", {}).get("symbol", "unknown")
 
                 analysis["by_category"][category] = analysis["by_category"].get(category, 0) + 1
                 analysis["by_symbol"][symbol] = analysis["by_symbol"].get(symbol, 0) + 1
@@ -720,11 +969,11 @@ class FactorAnalysisCapability(CodeAnalysisCapability):
                 errors = 0
 
                 for calc in calculations:
-                    value = calc.get('value', {})
-                    exec_time = value.get('execution_time_ms', 0)
+                    value = calc.get("value", {})
+                    exec_time = value.get("execution_time_ms", 0)
                     total_time += exec_time
 
-                    if value.get('error'):
+                    if value.get("error"):
                         errors += 1
 
                 analysis["calculation_stats"]["avg_execution_time"] = total_time / len(calculations)
@@ -735,7 +984,7 @@ class FactorAnalysisCapability(CodeAnalysisCapability):
                 "factors": factors,
                 "calculations": calculations,
                 "analysis": analysis,
-                "query": query
+                "query": query,
             }
         except Exception as e:
             logger.error(f"Factor analysis failed: {e}")
@@ -752,31 +1001,31 @@ class DataQualityAnalysisCapability(CodeAnalysisCapability):
         """Analyze data quality for a specific data source or type"""
         try:
             # Create Angle query for data quality
-            angle_query = create_query("data_quality", {
-                "predicate": "crypto.DataQuality",
-                "filter": {"data_id": query} if query else {}
-            })
+            angle_query = create_query(
+                "data_quality",
+                {"predicate": "crypto.DataQuality", "filter": {"data_id": query} if query else {}},
+            )
 
             # Execute query
             results = await self.glean_client.query_angle(angle_query)
 
             # Analyze quality metrics
-            quality_data = results.get('results', [])
+            quality_data = results.get("results", [])
             analysis = {
                 "total_assessments": len(quality_data),
                 "avg_score": 0,
                 "by_metric": {},
                 "issues": [],
-                "trends": {}
+                "trends": {},
             }
 
             if quality_data:
                 total_score = 0
                 for assessment in quality_data:
-                    value = assessment.get('value', {})
-                    score = value.get('score', 0)
-                    metric = assessment.get('key', {}).get('metric', 'unknown')
-                    issues = value.get('issues', '[]')
+                    value = assessment.get("value", {})
+                    score = value.get("score", 0)
+                    metric = assessment.get("key", {}).get("metric", "unknown")
+                    issues = value.get("issues", "[]")
 
                     total_score += score
 
@@ -801,7 +1050,7 @@ class DataQualityAnalysisCapability(CodeAnalysisCapability):
                 "status": "success",
                 "quality_data": quality_data,
                 "analysis": analysis,
-                "query": query
+                "query": query,
             }
         except Exception as e:
             logger.error(f"Data quality analysis failed: {e}")
@@ -886,7 +1135,7 @@ class TreeStructureCapability(CodeAnalysisCapability):
             codebase = {
                 "files": list(context.indexed_files),
                 "symbols": context.code_symbols,
-                "dependencies": dict(context.dependency_graph)
+                "dependencies": dict(context.dependency_graph),
             }
 
             return await self.tree_tools.analyze_code_hierarchy(codebase)
@@ -909,9 +1158,9 @@ class ComprehensiveAnalysisCapability(CodeAnalysisCapability):
                 "modules": dict(context.dependency_graph),
                 "file_structure": {
                     "files": list(context.indexed_files),
-                    "symbols": context.code_symbols
+                    "symbols": context.code_symbols,
                 },
-                "code_samples": [query] if query else []
+                "code_samples": [query] if query else [],
             }
 
             return await self.enhanced_tools.comprehensive_code_analysis(codebase_data)
@@ -921,15 +1170,17 @@ class ComprehensiveAnalysisCapability(CodeAnalysisCapability):
 
 
 # Update the StrandsGleanAgent to include new capabilities
-def _update_agent_capabilities(agent: 'StrandsGleanAgent'):
+def _update_agent_capabilities(agent: "StrandsGleanAgent"):
     """Update agent with new data analysis capabilities"""
     if agent.glean_client and GLEAN_AVAILABLE:
-        agent.capabilities.update({
-            "data_flow_analysis": DataFlowAnalysisCapability(agent.glean_client),
-            "parameter_analysis": ParameterAnalysisCapability(agent.glean_client),
-            "factor_analysis": FactorAnalysisCapability(agent.glean_client),
-            "data_quality_analysis": DataQualityAnalysisCapability(agent.glean_client)
-        })
+        agent.capabilities.update(
+            {
+                "data_flow_analysis": DataFlowAnalysisCapability(agent.glean_client),
+                "parameter_analysis": ParameterAnalysisCapability(agent.glean_client),
+                "factor_analysis": FactorAnalysisCapability(agent.glean_client),
+                "data_quality_analysis": DataQualityAnalysisCapability(agent.glean_client),
+            }
+        )
 
 
 if __name__ == "__main__":

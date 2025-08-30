@@ -85,11 +85,7 @@ module.exports = {
         "eqeqeq": ["error", "always"],
         "no-floating-decimal": "error",
         "no-implicit-coercion": "error",
-        "no-magic-numbers": ["warn", { 
-            "ignore": [0, 1, -1, 100, 1000],
-            "ignoreArrayIndexes": true,
-            "detectObjects": false
-        }],
+        "no-magic-numbers": "off", // Disabled - constants are defined in Constants.js
         "no-multi-spaces": "error",
         "no-redeclare": "error",
         "no-self-assign": "error",

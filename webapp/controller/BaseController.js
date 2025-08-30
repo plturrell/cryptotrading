@@ -1,6 +1,6 @@
 /**
  * Crypto Trading Platform Base Controller
- * 
+ *
  * Enterprise-grade base controller providing standardized patterns for the crypto trading platform.
  * Adapted from FINSIGHT UI5 Template Framework standards.
  */
@@ -9,8 +9,9 @@ sap.ui.define([
     "sap/ui/core/mvc/Controller",
     "sap/m/MessageToast",
     "sap/m/MessageBox",
-    "sap/ui/model/json/JSONModel"
-], (Controller, MessageToast, MessageBox, JSONModel) => {
+    "sap/ui/model/json/JSONModel",
+    "../utils/Constants"
+], (Controller, MessageToast, MessageBox, JSONModel, Constants) => {
     "use strict";
 
     /**
@@ -195,7 +196,7 @@ sap.ui.define([
          * @function
          * @memberOf com.rex.cryptotrading.controller.BaseController
          * @public
-         * @param {sap.ui.model.Model} oModel The model to set
+         * @param {sap.ui.model.Model} oModel The model to se
          * @param {string} [sModelName] The name of the model
          * @since 1.0.0
          */
@@ -237,7 +238,7 @@ sap.ui.define([
          * @memberOf com.rex.cryptotrading.controller.BaseController
          * @public
          * @param {string} [sMessage] Loading message to display
-         * @param {string} [sSubMessage] Additional loading context
+         * @param {string} [sSubMessage] Additional loading contex
          * @since 1.0.0
          */
         showSpinnerLoading(sMessage, sSubMessage) {
@@ -439,7 +440,7 @@ sap.ui.define([
         /* =========================================================== */
 
         /**
-         * Shows a message toast
+         * Shows a message toas
          *
          * @function
          * @memberOf com.rex.cryptotrading.controller.BaseController
@@ -450,7 +451,7 @@ sap.ui.define([
          */
         showMessageToast(sMessage, oOptions = {}) {
             MessageToast.show(sMessage, {
-                duration: oOptions.duration || 3000,
+                duration: oOptions.duration || Constants.TIME.TOAST_DURATION,
                 at: oOptions.at || MessageToast.BOTTOM_CENTER,
                 ...oOptions
             });
@@ -532,7 +533,7 @@ sap.ui.define([
          * @returns {string} Formatted currency string
          * @since 1.0.0
          */
-        formatCurrency(nValue, sCurrency = "USD", nDecimals = 2) {
+        formatCurrency(nValue, sCurrency = "USD", nDecimals = Constants.NUMBERS.PERCENTAGE_PLACES) {
             if (typeof nValue !== "number" || isNaN(nValue)) {
                 return "0.00";
             }
@@ -555,7 +556,7 @@ sap.ui.define([
          * @returns {string} Formatted percentage string
          * @since 1.0.0
          */
-        formatPercentage(nValue, nDecimals = 2) {
+        formatPercentage(nValue, nDecimals = Constants.NUMBERS.PERCENTAGE_PLACES) {
             if (typeof nValue !== "number" || isNaN(nValue)) {
                 return "0.00%";
             }
@@ -612,8 +613,9 @@ sap.ui.define([
          */
         _generateCorrelationId() {
             return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-                const r = Math.random() * 16 | 0, v = c === "x" ? r : (r & 0x3 | 0x8);
-                return v.toString(16);
+                const r = Math.random() * Constants.NUMBERS.HEX_BASE | Constants.NUMBERS.ZERO,
+                    v = c === "x" ? r : (r & Constants.NUMBERS.HEX_MASK_LOW | Constants.NUMBERS.HEX_MASK_HIGH);
+                return v.toString(Constants.NUMBERS.HEX_BASE);
             });
         },
 
@@ -643,7 +645,7 @@ sap.ui.define([
                 }
             } catch (error) {
                 console.warn("Failed to fetch CSRF token:", error);
-                // Continue without CSRF in development
+                // Continue without CSRF in developmen
                 this.oUIModel.setProperty("/securityInitialized", true);
             }
         },
@@ -718,7 +720,7 @@ sap.ui.define([
          * @private
          * @param {string} sKey Text key
          * @param {array} [aArgs] Arguments for placeholders
-         * @returns {string} Localized text
+         * @returns {string} Localized tex
          * @since 1.0.0
          */
         _getText(sKey, aArgs) {
@@ -775,7 +777,7 @@ sap.ui.define([
                 return sInput;
             }
 
-            return sInput
+            return sInpu
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;")
                 .replace(/"/g, "&quot;")
@@ -805,7 +807,7 @@ sap.ui.define([
                 }
 
                 // Log security-related errors
-                if (response.status === 403 || response.status === 401) {
+                if (response.status === Constants.HTTP.FORBIDDEN || response.status === Constants.HTTP.UNAUTHORIZED) {
                     console.warn(`[SECURITY] ${response.status} response`);
                 }
 

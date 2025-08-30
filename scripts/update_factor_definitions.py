@@ -4,32 +4,34 @@ Update factor definitions to use only available data sources (Yahoo Finance and 
 """
 
 import sys
-sys.path.append('src')
+
+sys.path.append("src")
 
 # Read the current factor definitions file
-with open('src/cryptotrading/core/factors/factor_definitions.py', 'r') as f:
+with open("src/cryptotrading/core/factors/factor_definitions.py", "r") as f:
     content = f.read()
 
 # Replace all unsupported data sources with YAHOO or FRED
 replacements = [
     # Replace exchange sources with Yahoo
-    ('DataSource.BINANCE', 'DataSource.YAHOO'),
-    ('DataSource.COINBASE', 'DataSource.YAHOO'),
-    ('DataSource.KRAKEN', 'DataSource.YAHOO'),
-    
-    # Replace aggregator sources with Yahoo  
-    ('DataSource.COINGECKO', 'DataSource.YAHOO'),
-    ('DataSource.MESSARI', 'DataSource.YAHOO'),
-    ('DataSource.CRYPTOCOMPARE', 'DataSource.YAHOO'),
-    
+    ("DataSource.BINANCE", "DataSource.YAHOO"),
+    ("DataSource.COINBASE", "DataSource.YAHOO"),
+    ("DataSource.KRAKEN", "DataSource.YAHOO"),
+    # Replace aggregator sources with Yahoo
+    ("DataSource.COINGECKO", "DataSource.YAHOO"),
+    ("DataSource.MESSARI", "DataSource.YAHOO"),
+    ("DataSource.CRYPTOCOMPARE", "DataSource.YAHOO"),
     # Comment out unsupported factors rather than break them
-    ('required_sources=[DataSource.GLASSNODE]', 'required_sources=[]  # GLASSNODE not available'),
-    ('required_sources=[DataSource.SANTIMENT]', 'required_sources=[]  # SANTIMENT not available'),
-    ('required_sources=[DataSource.INTOTHEBLOCK]', 'required_sources=[]  # INTOTHEBLOCK not available'),
-    ('required_sources=[DataSource.LUNARCRUSH]', 'required_sources=[]  # LUNARCRUSH not available'),
-    ('required_sources=[DataSource.TWITTER]', 'required_sources=[]  # TWITTER not available'),
-    ('required_sources=[DataSource.REDDIT]', 'required_sources=[]  # REDDIT not available'),
-    ('required_sources=[DataSource.TRADINGECONOMICS]', 'required_sources=[DataSource.FRED]'),
+    ("required_sources=[DataSource.GLASSNODE]", "required_sources=[]  # GLASSNODE not available"),
+    ("required_sources=[DataSource.SANTIMENT]", "required_sources=[]  # SANTIMENT not available"),
+    (
+        "required_sources=[DataSource.INTOTHEBLOCK]",
+        "required_sources=[]  # INTOTHEBLOCK not available",
+    ),
+    ("required_sources=[DataSource.LUNARCRUSH]", "required_sources=[]  # LUNARCRUSH not available"),
+    ("required_sources=[DataSource.TWITTER]", "required_sources=[]  # TWITTER not available"),
+    ("required_sources=[DataSource.REDDIT]", "required_sources=[]  # REDDIT not available"),
+    ("required_sources=[DataSource.TRADINGECONOMICS]", "required_sources=[DataSource.FRED]"),
 ]
 
 # Apply replacements
@@ -58,13 +60,13 @@ first_end = updated_content.find(start_marker, first_start + 3) + 3
 updated_content = header_comment + updated_content[first_end:]
 
 # Write the updated file
-with open('src/cryptotrading/core/factors/factor_definitions.py', 'w') as f:
+with open("src/cryptotrading/core/factors/factor_definitions.py", "w") as f:
     f.write(updated_content)
 
 print("✅ Updated factor definitions to use available data sources")
 print("📊 Changes made:")
 print("   - Replaced BINANCE/COINBASE with YAHOO for crypto data")
-print("   - Replaced COINGECKO/MESSARI with YAHOO for price data") 
+print("   - Replaced COINGECKO/MESSARI with YAHOO for price data")
 print("   - Marked unavailable sources (GLASSNODE, SANTIMENT, etc.)")
 print("   - Updated macro data to use FRED where appropriate")
 print("   - Added documentation about data source availability")

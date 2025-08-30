@@ -9,46 +9,46 @@ sap.ui.define([
      * Follows SAP UI5 patterns with AI/ML integration
      */
     return DataManager.extend("com.rex.cryptotrading.model.MLDataManager", {
-        
+
         varructor: function() {
-            var oInitialData = this._getInitialMLData();
-            var oConfig = {
+            const oInitialData = this._getInitialMLData();
+            const oConfig = {
                 enableChangeDetection: true,
                 enableValidation: true,
                 enableHistory: true, // Track prediction history
                 maxHistorySize: 100
             };
-            
+
             DataManager.prototype.varructor.call(this, "ml", oInitialData, oConfig);
-            
+
             this._oEventBusManager = new EventBusManager();
             this._initializeValidationSchema();
             this._setupEventHandlers();
         },
-        
+
         /**
          * Update predictions for multiple symbols
          * @param {Object} oPredictions - Predictions data by symbol
          */
         updatePredictions: function(oPredictions) {
-            var oCurrentPredictions = this.getProperty("/predictions") || {};
-            var oUpdatedPredictions = Object.assign({}, oCurrentPredictions);
-            
+            const oCurrentPredictions = this.getProperty("/predictions") || {};
+            const oUpdatedPredictions = Object.assign({}, oCurrentPredictions);
+
             // Process each symbol's predictions
             Object.keys(oPredictions).forEach(sSymbol => {
-                var oPrediction = oPredictions[sSymbol];
+                const oPrediction = oPredictions[sSymbol];
                 if (this._validatePrediction(sSymbol, oPrediction)) {
                     oUpdatedPredictions[sSymbol] = this._processPrediction(oPrediction);
                 }
             });
-            
+
             this.setProperty("/predictions", oUpdatedPredictions);
             this.setProperty("/lastPredictionUpdate", new Date().toISOString());
-            
-            // Publish predictions updated event
+
+            // Publish predictions updated even
             this._oEventBusManager.publishPredictionsUpdated(oUpdatedPredictions);
         },
-        
+
         /**
          * Update prediction for single symbol
          * @param {string} sSymbol - Symbol to update
@@ -56,14 +56,14 @@ sap.ui.define([
          */
         updateSymbolPrediction: function(sSymbol, oPrediction) {
             if (this._validatePrediction(sSymbol, oPrediction)) {
-                var oProcessedPrediction = this._processPrediction(oPrediction);
+                const oProcessedPrediction = this._processPrediction(oPrediction);
                 this.setProperty(`/predictions/${sSymbol}`, oProcessedPrediction);
-                
+
                 // Add to prediction history
                 this._addToPredictionHistory(sSymbol, oProcessedPrediction);
             }
         },
-        
+
         /**
          * Update model performance metrics
          * @param {string} sModelName - Model name
@@ -71,30 +71,30 @@ sap.ui.define([
          */
         updateModelPerformance: function(sModelName, oMetrics) {
             if (this._validateMetrics(oMetrics)) {
-                var oProcessedMetrics = this._processMetrics(oMetrics);
+                const oProcessedMetrics = this._processMetrics(oMetrics);
                 this.setProperty(`/models/${sModelName}/performance`, oProcessedMetrics);
                 this.setProperty(`/models/${sModelName}/lastEvaluation`, new Date().toISOString());
             }
         },
-        
+
         /**
          * Start model training
          * @param {string} sModelName - Model name
          * @param {Object} oTrainingConfig - Training configuration
          */
         startModelTraining: function(sModelName, oTrainingConfig) {
-            var oTrainingData = {
+            const oTrainingData = {
                 status: "training",
                 progress: 0,
                 startedAt: new Date().toISOString(),
                 config: oTrainingConfig || {},
                 logs: []
             };
-            
+
             this.setProperty(`/models/${sModelName}/training`, oTrainingData);
             this.setProperty("/globalTrainingStatus", "active");
         },
-        
+
         /**
          * Update training progress
          * @param {string} sModelName - Model name
@@ -104,7 +104,7 @@ sap.ui.define([
         updateTrainingProgress: function(sModelName, nProgress, sMessage) {
             this.setProperty(`/models/${sModelName}/training/progress`, nProgress);
             this.setProperty(`/models/${sModelName}/training/lastUpdate`, new Date().toISOString());
-            
+
             if (sMessage) {
                 this.addToArray(`/models/${sModelName}/training/logs`, {
                     message: sMessage,
@@ -112,15 +112,15 @@ sap.ui.define([
                     timestamp: new Date().toISOString()
                 });
             }
-            
-            // Publish training progress event
+
+            // Publish training progress even
             this._oEventBusManager.publish(
                 this._oEventBusManager.CHANNELS.ML,
                 this._oEventBusManager.EVENTS.ML.TRAINING_PROGRESS,
                 { modelName: sModelName, progress: nProgress, message: sMessage }
             );
         },
-        
+
         /**
          * Compvare model training
          * @param {string} sModelName - Model name
@@ -133,42 +133,42 @@ sap.ui.define([
                 compvaredAt: new Date().toISOString(),
                 results: oResults || {}
             });
-            
+
             // Check if all models are done training
-            var oModels = this.getProperty("/models") || {};
-            var bAllCompvare = Object.values(oModels).every(model => 
+            const oModels = this.getProperty("/models") || {};
+            const bAllCompvare = Object.values(oModels).every(model =>
                 !model.training || model.training.status !== "training"
             );
-            
+
             if (bAllCompvare) {
                 this.setProperty("/globalTrainingStatus", "idle");
             }
-            
-            // Publish model trained event
+
+            // Publish model trained even
             this._oEventBusManager.publishModelTrained(sModelName, oResults);
         },
-        
+
         /**
          * Set training error
          * @param {string} sModelName - Model name
          * @param {Object|string} vError - Error data
          */
         setTrainingError: function(sModelName, vError) {
-            var oError = typeof vError === 'string' ? { message: vError } : vError;
-            
+            const oError = typeof vError === "string" ? { message: vError } : vError;
+
             this.updateObject(`/models/${sModelName}/training`, {
                 status: "error",
                 error: oError,
                 failedAt: new Date().toISOString()
             });
-            
+
             this._oEventBusManager.publish(
                 this._oEventBusManager.CHANNELS.ML,
                 this._oEventBusManager.EVENTS.ML.ERROR_OCCURRED,
                 { modelName: sModelName, error: oError }
             );
         },
-        
+
         /**
          * Get prediction for symbol
          * @param {string} sSymbol - Symbol
@@ -177,7 +177,7 @@ sap.ui.define([
         getPrediction: function(sSymbol) {
             return this.getProperty(`/predictions/${sSymbol}`) || {};
         },
-        
+
         /**
          * Get all predictions
          * @returns {Object} All predictions
@@ -185,7 +185,7 @@ sap.ui.define([
         getAllPredictions: function() {
             return this.getProperty("/predictions") || {};
         },
-        
+
         /**
          * Get model information
          * @param {string} sModelName - Model name
@@ -194,7 +194,7 @@ sap.ui.define([
         getModel: function(sModelName) {
             return this.getProperty(`/models/${sModelName}`) || {};
         },
-        
+
         /**
          * Get all models
          * @returns {Object} All models
@@ -202,7 +202,7 @@ sap.ui.define([
         getAllModels: function() {
             return this.getProperty("/models") || {};
         },
-        
+
         /**
          * Get prediction history for symbol
          * @param {string} sSymbol - Symbol
@@ -210,10 +210,10 @@ sap.ui.define([
          * @returns {Array} Prediction history
          */
         getPredictionHistory: function(sSymbol, iLimit) {
-            var aHistory = this.getProperty(`/predictionHistory/${sSymbol}`) || [];
+            const aHistory = this.getProperty(`/predictionHistory/${sSymbol}`) || [];
             return iLimit ? aHistory.slice(0, iLimit) : aHistory;
         },
-        
+
         /**
          * Get global ML statistics
          * @returns {Object} Statistics
@@ -221,7 +221,7 @@ sap.ui.define([
         getStatistics: function() {
             return this.getProperty("/statistics") || {};
         },
-        
+
         /**
          * Set loading state
          * @param {boolean} bLoading - Loading state
@@ -233,15 +233,15 @@ sap.ui.define([
                 this.setProperty("/currentOperation", sOperation);
             }
         },
-        
+
         /**
          * Set error state
          * @param {Object|string} vError - Error data
          */
         setError: function(vError) {
-            var oError = typeof vError === 'string' ? { message: vError } : vError;
+            const oError = typeof vError === "string" ? { message: vError } : vError;
             this.setProperty("/error", oError);
-            
+
             if (oError) {
                 this._oEventBusManager.publish(
                     this._oEventBusManager.CHANNELS.ML,
@@ -250,14 +250,14 @@ sap.ui.define([
                 );
             }
         },
-        
+
         /**
          * Clear error state
          */
         clearError: function() {
             this.setProperty("/error", null);
         },
-        
+
         /**
          * Get confidence level description
          * @param {number} nConfidence - Confidence value (0-1)
@@ -269,22 +269,22 @@ sap.ui.define([
             if (nConfidence >= 0.4) return "Low";
             return "Very Low";
         },
-        
+
         /**
          * Format prediction direction
          * @param {string} sSymbol - Symbol
          * @returns {string} Direction (Up, Down, Neutral)
          */
         getPredictionDirection: function(sSymbol) {
-            var oPrediction = this.getPrediction(sSymbol);
+            const oPrediction = this.getPrediction(sSymbol);
             if (!oPrediction.predictedChange) return "Neutral";
-            
-            var nChange = parseFloat(oPrediction.predictedChange);
+
+            const nChange = parseFloat(oPrediction.predictedChange);
             if (nChange > 1) return "Up";
             if (nChange < -1) return "Down";
             return "Neutral";
         },
-        
+
         /**
          * Initialize ML data structure
          * @private
@@ -324,7 +324,7 @@ sap.ui.define([
                 error: null
             };
         },
-        
+
         /**
          * Process prediction data
          * @private
@@ -342,7 +342,7 @@ sap.ui.define([
                 expiresAt: this._calculateExpiration(oPrediction.horizon)
             };
         },
-        
+
         /**
          * Process performance metrics
          * @private
@@ -359,89 +359,89 @@ sap.ui.define([
                 evaluatedAt: new Date().toISOString()
             };
         },
-        
+
         /**
          * Add prediction to history
          * @private
          */
         _addToPredictionHistory: function(sSymbol, oPrediction) {
-            var sPath = `/predictionHistory/${sSymbol}`;
+            const sPath = `/predictionHistory/${sSymbol}`;
             this.addToArray(sPath, oPrediction, 0); // Add to beginning
-            
+
             // Limit history size
-            var aHistory = this.getProperty(sPath) || [];
+            const aHistory = this.getProperty(sPath) || [];
             if (aHistory.length > 50) {
                 this.setProperty(sPath, aHistory.slice(0, 50));
             }
         },
-        
+
         /**
          * Calculate prediction expiration
          * @private
          */
         _calculateExpiration: function(sHorizon) {
-            var oNow = new Date();
-            var iHours = this._parseHorizon(sHorizon);
+            const oNow = new Date();
+            const iHours = this._parseHorizon(sHorizon);
             return new Date(oNow.getTime() + (iHours * 60 * 60 * 1000)).toISOString();
         },
-        
+
         /**
          * Parse horizon string to hours
          * @private
          */
         _parseHorizon: function(sHorizon) {
-            if (sHorizon.includes('h')) {
-                return parseInt(sHorizon.replace('h', ''));
+            if (sHorizon.includes("h")) {
+                return parseInt(sHorizon.replace("h", ""), 10);
             }
-            if (sHorizon.includes('d')) {
-                return parseInt(sHorizon.replace('d', '')) * 24;
+            if (sHorizon.includes("d")) {
+                return parseInt(sHorizon.replace("d", ""), 10) * 24;
             }
             return 24; // Default to 24 hours
         },
-        
+
         /**
          * Validate prediction data
          * @private
          */
         _validatePrediction: function(sSymbol, oPrediction) {
-            if (!sSymbol || typeof sSymbol !== 'string') {
+            if (!sSymbol || typeof sSymbol !== "string") {
                 console.error("Invalid symbol for prediction:", sSymbol);
                 return false;
             }
-            
-            if (!oPrediction || typeof oPrediction !== 'object') {
+
+            if (!oPrediction || typeof oPrediction !== "object") {
                 console.error("Invalid prediction data for", sSymbol);
                 return false;
             }
-            
-            if (typeof oPrediction.predictedPrice !== 'number' || oPrediction.predictedPrice <= 0) {
+
+            if (typeof oPrediction.predictedPrice !== "number" || oPrediction.predictedPrice <= 0) {
                 console.error("Invalid predicted price for", sSymbol);
                 return false;
             }
-            
+
             return true;
         },
-        
+
         /**
          * Validate metrics data
          * @private
          */
         _validateMetrics: function(oMetrics) {
-            return oMetrics && typeof oMetrics === 'object';
+            return oMetrics && typeof oMetrics === "object";
         },
-        
+
         /**
          * Initialize validation schema
          * @private
          */
         _initializeValidationSchema: function() {
             this._oValidationSchema = {
-                predictions: { type: 'object', required: false },
-                models: { type: 'object', required: true },
-                statistics: { type: 'object', required: false }
+                predictions: { type: "object", required: false },
+                models: { type: "object", required: true },
+                statistics: { type: "object", required: false }
             };
         },
-        
+
         /**
          * Setup event handlers
          * @private
@@ -455,7 +455,7 @@ sap.ui.define([
                 this
             );
         },
-        
+
         /**
          * Handle market data updates
          * @private
@@ -464,7 +464,7 @@ sap.ui.define([
             // Market data updated - could trigger new predictions
             // This would be handled by the component/service layer
         },
-        
+
         /**
          * Cleanup
          */
@@ -472,7 +472,7 @@ sap.ui.define([
             if (this._oEventBusManager) {
                 this._oEventBusManager.destroy();
             }
-            
+
             DataManager.prototype.destroy.apply(this, arguments);
         }
     });

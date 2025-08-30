@@ -3,22 +3,29 @@ Code Health Dashboard
 Real-time web dashboard for monitoring code health, issues, and automated fixes
 """
 
-import json
 import asyncio
-from pathlib import Path
-from typing import Dict, List, Any
-from datetime import datetime, timedelta
-from flask import Flask, render_template, jsonify, request
+import json
 from dataclasses import asdict
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List
 
-from .intelligent_code_manager import IntelligentCodeManager, CodeHealthMetrics
+from flask import Flask, jsonify, render_template, request
+
 from .automated_quality_monitor import AutomatedQualityMonitor
 from .database_adapter import CodeManagementDatabaseAdapter
+from .intelligent_code_manager import CodeHealthMetrics, IntelligentCodeManager
+
 
 class CodeHealthDashboard:
     """Web dashboard for code health monitoring"""
-    
-    def __init__(self, project_path: str, port: int = 5001, database_adapter: CodeManagementDatabaseAdapter = None):
+
+    def __init__(
+        self,
+        project_path: str,
+        port: int = 5001,
+        database_adapter: CodeManagementDatabaseAdapter = None,
+    ):
         self.project_path = Path(project_path)
         self.port = port
         self.app = Flask(__name__, template_folder=str(self.project_path / "templates"))
@@ -26,83 +33,88 @@ class CodeHealthDashboard:
         self.code_manager = IntelligentCodeManager(project_path, database_adapter)
         self.quality_monitor = AutomatedQualityMonitor(project_path, database_adapter)
         self.setup_routes()
-        
+
     def setup_routes(self):
         """Setup Flask routes for the dashboard"""
-        
-        @self.app.route('/')
+
+        @self.app.route("/")
         def dashboard():
             """Main dashboard page"""
-            return render_template('code_health_dashboard.html')
-        
-        @self.app.route('/api/health')
+            return render_template("code_health_dashboard.html")
+
+        @self.app.route("/api/health")
         def get_health():
             """Get current health metrics"""
             return jsonify(self.code_manager.get_health_dashboard())
-        
-        @self.app.route('/api/quality')
+
+        @self.app.route("/api/quality")
         def get_quality():
             """Get quality monitoring summary"""
             return jsonify(self.quality_monitor.get_quality_summary())
-        
-        @self.app.route('/api/issues')
+
+        @self.app.route("/api/issues")
         def get_issues():
             """Get current issues"""
             if self.database_adapter:
                 # Get issues from database
                 try:
-                    active_issues = asyncio.run(self.database_adapter.get_issues(status_filter="pending"))
+                    active_issues = asyncio.run(
+                        self.database_adapter.get_issues(status_filter="pending")
+                    )
                 except Exception as e:
                     print(f"Error getting issues from database: {e}")
                     active_issues = []
             else:
                 # Fallback to in-memory storage
                 active_issues = [
-                    issue for issue in self.code_manager.issues_db 
+                    issue
+                    for issue in self.code_manager.issues_db
                     if issue.fix_status.value != "completed"
                 ]
-            
-            return jsonify({
-                "total": len(active_issues),
-                "critical": len([i for i in active_issues if i.type.value == "critical"]),
-                "auto_fixable": len([i for i in active_issues if i.auto_fixable]),
-                "issues": [
-                    {
-                        "id": issue.id,
-                        "type": issue.type.value,
-                        "severity": issue.severity,
-                        "file": issue.file_path,
-                        "line": issue.line_number,
-                        "description": issue.description,
-                        "auto_fixable": issue.auto_fixable,
-                        "fix_status": issue.fix_status.value,
-                        "detected_at": issue.detected_at
-                    }
-                    for issue in active_issues[:50]  # Limit to 50 for performance
-                ]
-            })
-        
-        @self.app.route('/api/trends')
+
+            return jsonify(
+                {
+                    "total": len(active_issues),
+                    "critical": len([i for i in active_issues if i.type.value == "critical"]),
+                    "auto_fixable": len([i for i in active_issues if i.auto_fixable]),
+                    "issues": [
+                        {
+                            "id": issue.id,
+                            "type": issue.type.value,
+                            "severity": issue.severity,
+                            "file": issue.file_path,
+                            "line": issue.line_number,
+                            "description": issue.description,
+                            "auto_fixable": issue.auto_fixable,
+                            "fix_status": issue.fix_status.value,
+                            "detected_at": issue.detected_at,
+                        }
+                        for issue in active_issues[:50]  # Limit to 50 for performance
+                    ],
+                }
+            )
+
+        @self.app.route("/api/trends")
         def get_trends():
             """Get health trends over time"""
             history = self.code_manager.health_history[-30:]  # Last 30 entries
-            
+
             trends = {
                 "timestamps": [h.timestamp for h in history],
                 "coverage": [h.coverage_percentage for h in history],
                 "technical_debt": [h.technical_debt_score for h in history],
                 "maintainability": [h.maintainability_index for h in history],
-                "security": [h.security_score for h in history]
+                "security": [h.security_score for h in history],
             }
-            
+
             return jsonify(trends)
-        
-        @self.app.route('/api/fix-issue', methods=['POST'])
+
+        @self.app.route("/api/fix-issue", methods=["POST"])
         def fix_issue():
             """Trigger manual fix for an issue"""
             data = request.get_json()
-            issue_id = data.get('issue_id')
-            
+            issue_id = data.get("issue_id")
+
             # Find the issue
             if self.database_adapter:
                 try:
@@ -112,27 +124,27 @@ class CodeHealthDashboard:
                     issue = None
             else:
                 issue = next((i for i in self.code_manager.issues_db if i.id == issue_id), None)
-                
+
             if not issue:
                 return jsonify({"error": "Issue not found"}), 404
-            
+
             if not issue.auto_fixable:
                 return jsonify({"error": "Issue is not auto-fixable"}), 400
-            
+
             # Trigger async fix
             asyncio.create_task(self._fix_issue_async(issue))
-            
+
             return jsonify({"message": "Fix initiated", "issue_id": issue_id})
-        
-        @self.app.route('/api/run-check', methods=['POST'])
+
+        @self.app.route("/api/run-check", methods=["POST"])
         def run_check():
             """Trigger manual quality check"""
             # Trigger async quality check
             asyncio.create_task(self._run_quality_check_async())
-            
+
             return jsonify({"message": "Quality check initiated"})
-        
-        @self.app.route('/api/refactoring-recommendations')
+
+        @self.app.route("/api/refactoring-recommendations")
         def get_refactoring_recommendations():
             """Get refactoring recommendations"""
             # This would be populated by the intelligent code manager
@@ -143,26 +155,29 @@ class CodeHealthDashboard:
                     "function": "execute_trade",
                     "current_complexity": 12,
                     "suggested_refactoring": "Extract method for validation logic",
-                    "priority": "high"
+                    "priority": "high",
                 },
                 {
                     "type": "duplication_removal",
-                    "files": ["src/cryptotrading/data/loader.py", "src/cryptotrading/data/processor.py"],
+                    "files": [
+                        "src/cryptotrading/data/loader.py",
+                        "src/cryptotrading/data/processor.py",
+                    ],
                     "lines": [45, 67],
                     "suggested_refactoring": "Extract common data validation function",
-                    "priority": "medium"
-                }
+                    "priority": "medium",
+                },
             ]
-            
+
             return jsonify({"recommendations": recommendations})
-    
+
     async def _fix_issue_async(self, issue):
         """Async wrapper for fixing issues"""
         try:
             await self.code_manager.auto_fix_issues([issue])
         except Exception as e:
             print(f"Error fixing issue {issue.id}: {e}")
-    
+
     async def _run_quality_check_async(self):
         """Async wrapper for quality checks"""
         try:
@@ -171,13 +186,13 @@ class CodeHealthDashboard:
             await self.quality_monitor.auto_fix_issues(issues)
         except Exception as e:
             print(f"Error running quality check: {e}")
-    
+
     def create_dashboard_template(self):
         """Create the HTML template for the dashboard"""
         template_dir = self.project_path / "templates"
         template_dir.mkdir(exist_ok=True)
-        
-        template_content = '''<!DOCTYPE html>
+
+        template_content = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -557,29 +572,31 @@ class CodeHealthDashboard:
         setInterval(loadData, 30000);
     </script>
 </body>
-</html>'''
-        
+</html>"""
+
         template_file = template_dir / "code_health_dashboard.html"
         with open(template_file, "w") as f:
             f.write(template_content)
-        
+
         print(f"✅ Dashboard template created at {template_file}")
-    
+
     def run(self, debug: bool = False):
         """Run the dashboard server"""
         self.create_dashboard_template()
         print(f"🚀 Starting Code Health Dashboard on http://localhost:{self.port}")
-        self.app.run(host='0.0.0.0', port=self.port, debug=debug)
+        self.app.run(host="0.0.0.0", port=self.port, debug=debug)
+
 
 def main():
     """Main entry point for the dashboard"""
     import sys
-    
+
     project_path = sys.argv[1] if len(sys.argv) > 1 else "/Users/apple/projects/cryptotrading"
     port = int(sys.argv[2]) if len(sys.argv) > 2 else 5001
-    
+
     dashboard = CodeHealthDashboard(project_path, port)
     dashboard.run(debug=True)
+
 
 if __name__ == "__main__":
     main()

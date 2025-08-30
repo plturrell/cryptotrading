@@ -4,16 +4,19 @@ Tracks data inputs, outputs, parameters, and factor calculations
 """
 import ast
 import logging
-from typing import Dict, List, Any, Set, Optional, Tuple
-from pathlib import Path
 import uuid
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, Tuple
 
-from .scip_indexer import PythonSCIPIndexer, SCIPSymbol, SCIPDocument
 from .glean_data_schemas import (
-    DataInputFact, DataOutputFact, ParameterFact,
-    FactorFact, DataLineageFact
+    DataInputFact,
+    DataLineageFact,
+    DataOutputFact,
+    FactorFact,
+    ParameterFact,
 )
+from .scip_indexer import PythonSCIPIndexer, SCIPDocument, SCIPSymbol
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +57,7 @@ class DataFlowVisitor(ast.NodeVisitor):
 
         # Extract function parameters as configuration parameters
         for arg in node.args.args:
-            if arg.arg not in ['self', 'cls']:
+            if arg.arg not in ["self", "cls"]:
                 # Try to infer parameter type from defaults or annotations
                 param_type = "any"
                 default_value = None
@@ -70,12 +73,14 @@ class DataFlowVisitor(ast.NodeVisitor):
 
                 param_fact = ParameterFact(
                     name=arg.arg,
-                    context=f"{self.current_class}.{node.name}" if self.current_class else node.name,
+                    context=f"{self.current_class}.{node.name}"
+                    if self.current_class
+                    else node.name,
                     file=self.file_path,
                     param_type=param_type,
                     value=default_value or "undefined",
                     default=default_value,
-                    category="function_parameter"
+                    category="function_parameter",
                 )
                 self.parameters.append(param_fact)
 
@@ -119,10 +124,22 @@ class DataFlowVisitor(ast.NodeVisitor):
                 var_name = target.id
 
                 # Common parameter patterns
-                if any(pattern in var_name.lower() for pattern in
-                       ['threshold', 'window', 'period', 'factor', 'weight',
-                        'alpha', 'beta', 'gamma', 'epsilon', 'rate', 'size']):
-
+                if any(
+                    pattern in var_name.lower()
+                    for pattern in [
+                        "threshold",
+                        "window",
+                        "period",
+                        "factor",
+                        "weight",
+                        "alpha",
+                        "beta",
+                        "gamma",
+                        "epsilon",
+                        "rate",
+                        "size",
+                    ]
+                ):
                     value = self._get_literal_value(node.value)
                     if value is not None:
                         context_name = (
@@ -136,7 +153,7 @@ class DataFlowVisitor(ast.NodeVisitor):
                             file=self.file_path,
                             param_type=type(value).__name__,
                             value=value,
-                            category="configuration"
+                            category="configuration",
                         )
                         self.parameters.append(param_fact)
 
@@ -148,30 +165,24 @@ class DataFlowVisitor(ast.NodeVisitor):
 
         # Common data source patterns
         data_sources = {
-            'yfinance': ['download', 'Ticker'],
-            'yahoo_finance': ['get_data', 'fetch_prices'],
-            'binance': ['get_historical_klines', 'get_ticker'],
-            'ccxt': ['fetch_ohlcv', 'fetch_ticker'],
-            'fred': ['get_series', 'get_data'],
-            'pandas_datareader': ['DataReader', 'get_data_yahoo'],
-            'requests': ['get', 'post'],  # API calls
+            "yfinance": ["download", "Ticker"],
+            "yahoo_finance": ["get_data", "fetch_prices"],
+            "binance": ["get_historical_klines", "get_ticker"],
+            "ccxt": ["fetch_ohlcv", "fetch_ticker"],
+            "fred": ["get_series", "get_data"],
+            "pandas_datareader": ["DataReader", "get_data_yahoo"],
+            "requests": ["get", "post"],  # API calls
         }
 
         for source, methods in data_sources.items():
             if any(method in func_name for method in methods):
-                return {
-                    'source': source,
-                    'method': func_name,
-                    'line': node.lineno
-                }
+                return {"source": source, "method": func_name, "line": node.lineno}
 
         # Check for DataFrame read operations
-        if any(pattern in func_name for pattern in ['read_csv', 'read_json', 'read_sql', 'from_dict']):
-            return {
-                'source': 'file_system',
-                'method': func_name,
-                'line': node.lineno
-            }
+        if any(
+            pattern in func_name for pattern in ["read_csv", "read_json", "read_sql", "from_dict"]
+        ):
+            return {"source": "file_system", "method": func_name, "line": node.lineno}
 
         return None
 
@@ -181,9 +192,24 @@ class DataFlowVisitor(ast.NodeVisitor):
 
         # Common technical indicator patterns
         indicators = [
-            'rsi', 'macd', 'bollinger', 'ema', 'sma', 'adx', 'atr',
-            'stochastic', 'williams', 'obv', 'vwap', 'fibonacci',
-            'ichimoku', 'parabolic', 'cci', 'mfi', 'roc', 'momentum'
+            "rsi",
+            "macd",
+            "bollinger",
+            "ema",
+            "sma",
+            "adx",
+            "atr",
+            "stochastic",
+            "williams",
+            "obv",
+            "vwap",
+            "fibonacci",
+            "ichimoku",
+            "parabolic",
+            "cci",
+            "mfi",
+            "roc",
+            "momentum",
         ]
 
         return any(indicator in func_name for indicator in indicators)
@@ -194,9 +220,18 @@ class DataFlowVisitor(ast.NodeVisitor):
 
         # Common output patterns
         outputs = [
-            'predict', 'forecast', 'signal', 'score', 'classify',
-            'recommend', 'alert', 'trigger', 'calculate_return',
-            'generate_signal', 'evaluate', 'backtest'
+            "predict",
+            "forecast",
+            "signal",
+            "score",
+            "classify",
+            "recommend",
+            "alert",
+            "trigger",
+            "calculate_return",
+            "generate_signal",
+            "evaluate",
+            "backtest",
         ]
 
         return any(output in func_name for output in outputs)
@@ -207,20 +242,20 @@ class DataFlowVisitor(ast.NodeVisitor):
         params = self._extract_call_parameters(node)
 
         # Try to identify symbol from parameters
-        symbol = params.get('symbol', params.get('ticker', ''))
+        symbol = params.get("symbol", params.get("ticker", ""))
         if not symbol and node.args:
             # First argument might be symbol
-            symbol = self._get_literal_value(node.args[0]) or ''
+            symbol = self._get_literal_value(node.args[0]) or ""
 
         input_fact = DataInputFact(
             function=self.current_function or "module",
             file=self.file_path,
             line=node.lineno,
             input_id=str(uuid.uuid4()),
-            data_type=self._infer_data_type(data_source['method']),
-            source=data_source['source'],
+            data_type=self._infer_data_type(data_source["method"]),
+            source=data_source["source"],
             symbol=str(symbol),
-            parameters=params
+            parameters=params,
         )
         self.data_inputs.append(input_fact)
 
@@ -230,17 +265,17 @@ class DataFlowVisitor(ast.NodeVisitor):
         params = self._extract_call_parameters(node)
 
         # Extract common factor parameters
-        period = params.get('period', params.get('window', params.get('length', 14)))
+        period = params.get("period", params.get("window", params.get("length", 14)))
 
         factor_fact = FactorFact(
             name=func_name.lower(),
-            symbol=params.get('symbol', ''),
-            timeframe=params.get('timeframe', '1d'),
+            symbol=params.get("symbol", ""),
+            timeframe=params.get("timeframe", "1d"),
             category=self._categorize_factor(func_name),
-            calculation={'function': func_name, 'parameters': params},
+            calculation={"function": func_name, "parameters": params},
             dependencies=self._extract_dependencies(node),
             formula=f"{func_name}({period})" if period else func_name,
-            result_type="float"
+            result_type="float",
         )
         self.factors.append(factor_fact)
 
@@ -255,9 +290,9 @@ class DataFlowVisitor(ast.NodeVisitor):
             line=node.lineno,
             output_id=str(uuid.uuid4()),
             output_type=self._infer_output_type(func_name),
-            data_shape={'dimensions': 'unknown'},  # Would need more analysis
-            symbol=params.get('symbol', ''),
-            metadata={'function_called': func_name, 'parameters': params}
+            data_shape={"dimensions": "unknown"},  # Would need more analysis
+            symbol=params.get("symbol", ""),
+            metadata={"function_called": func_name, "parameters": params},
         )
         self.data_outputs.append(output_fact)
 
@@ -273,7 +308,7 @@ class DataFlowVisitor(ast.NodeVisitor):
                 current = current.value
             if isinstance(current, ast.Name):
                 parts.append(current.id)
-            return '.'.join(reversed(parts))
+            return ".".join(reversed(parts))
         return "unknown"
 
     def _extract_call_parameters(self, node: ast.Call) -> Dict[str, Any]:
@@ -322,37 +357,37 @@ class DataFlowVisitor(ast.NodeVisitor):
     def _infer_data_type(self, method: str) -> str:
         """Infer data type from method name"""
         method_lower = method.lower()
-        if any(x in method_lower for x in ['price', 'ohlcv', 'ticker']):
+        if any(x in method_lower for x in ["price", "ohlcv", "ticker"]):
             return "market_data"
-        elif any(x in method_lower for x in ['volume']):
+        elif any(x in method_lower for x in ["volume"]):
             return "volume"
-        elif any(x in method_lower for x in ['series', 'indicator']):
+        elif any(x in method_lower for x in ["series", "indicator"]):
             return "economic_indicator"
         return "generic"
 
     def _categorize_factor(self, func_name: str) -> str:
         """Categorize a factor based on its name"""
         func_lower = func_name.lower()
-        if any(x in func_lower for x in ['rsi', 'stoch', 'williams', 'cci']):
+        if any(x in func_lower for x in ["rsi", "stoch", "williams", "cci"]):
             return "momentum"
-        elif any(x in func_lower for x in ['macd', 'ema', 'sma']):
+        elif any(x in func_lower for x in ["macd", "ema", "sma"]):
             return "trend"
-        elif any(x in func_lower for x in ['bollinger', 'atr', 'std']):
+        elif any(x in func_lower for x in ["bollinger", "atr", "std"]):
             return "volatility"
-        elif any(x in func_lower for x in ['obv', 'vwap', 'mfi']):
+        elif any(x in func_lower for x in ["obv", "vwap", "mfi"]):
             return "volume"
         return "technical"
 
     def _infer_output_type(self, func_name: str) -> str:
         """Infer output type from function name"""
         func_lower = func_name.lower()
-        if 'predict' in func_lower:
+        if "predict" in func_lower:
             return "prediction"
-        elif 'signal' in func_lower:
+        elif "signal" in func_lower:
             return "signal"
-        elif 'score' in func_lower:
+        elif "score" in func_lower:
             return "score"
-        elif 'forecast' in func_lower:
+        elif "forecast" in func_lower:
             return "forecast"
         return "calculation"
 
@@ -377,11 +412,11 @@ class DataFlowSCIPIndexer(PythonSCIPIndexer):
         result = {"status": "success", "file": file_path}
 
         try:
-            if hasattr(super(), 'index_file'):
+            if hasattr(super(), "index_file"):
                 parent_result = super().index_file(file_path)
-                if parent_result and parent_result.get('status') == 'success':
+                if parent_result and parent_result.get("status") == "success":
                     result = parent_result
-                elif parent_result and parent_result.get('status') != 'success':
+                elif parent_result and parent_result.get("status") != "success":
                     return parent_result
         except Exception as e:
             # Continue with data flow indexing even if base indexing fails
@@ -393,7 +428,7 @@ class DataFlowSCIPIndexer(PythonSCIPIndexer):
 
         try:
             # Now extract data flow
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 source_code = f.read()
 
             tree = ast.parse(source_code, filename=file_path)
@@ -423,18 +458,18 @@ class DataFlowSCIPIndexer(PythonSCIPIndexer):
             self.data_flow_facts.extend(facts)
 
             # Add to result
-            result['data_flow'] = {
-                'inputs': len(visitor.data_inputs),
-                'outputs': len(visitor.data_outputs),
-                'parameters': len(visitor.parameters),
-                'factors': len(visitor.factors)
+            result["data_flow"] = {
+                "inputs": len(visitor.data_inputs),
+                "outputs": len(visitor.data_outputs),
+                "parameters": len(visitor.parameters),
+                "factors": len(visitor.factors),
             }
 
             logger.info(f"Extracted data flow from {file_path}: {result['data_flow']}")
 
         except Exception as e:
             logger.error(f"Failed to extract data flow from {file_path}: {e}")
-            result['data_flow_error'] = str(e)
+            result["data_flow_error"] = str(e)
 
         return result
 

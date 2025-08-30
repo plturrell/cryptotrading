@@ -1,0 +1,336 @@
+<mvc:View
+    controllerName="com.rex.cryptotrading.controller.MCPMonitoring"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:f="sap.f"
+    xmlns:card="sap.f.cards"
+    xmlns:viz="sap.viz.ui5.controls"
+    xmlns:viz.feeds="sap.viz.ui5.controls.common.feeds"
+    xmlns:viz.data="sap.viz.ui5.data"
+    displayBlock="true">
+    
+    <f:DynamicPage id="mcpMonitoringPage" headerExpanded="true">
+        <f:title>
+            <f:DynamicPageTitle>
+                <f:heading>
+                    <Title text="MCP Tools Monitoring Dashboard" />
+                </f:heading>
+                <f:expandedContent>
+                    <HBox alignItems="Center">
+                        <ObjectStatus text="Online" state="Success" class="sapUiSmallMarginEnd"/>
+                        <ObjectStatus text="{/activeTools} Tools Active" state="Information" class="sapUiSmallMarginEnd"/>
+                        <ObjectStatus text="{/totalRequests} Requests Today" state="None"/>
+                    </HBox>
+                </f:expandedContent>
+                <f:snappedContent>
+                    <HBox alignItems="Center">
+                        <ObjectStatus text="Online" state="Success" inverted="true"/>
+                    </HBox>
+                </f:snappedContent>
+                <f:actions>
+                    <Button text="Refresh" type="Emphasized" press="onRefresh" icon="sap-icon://refresh"/>
+                    <Button text="Settings" press="onSettings" icon="sap-icon://action-settings"/>
+                    <Button text="Export" press="onExport" icon="sap-icon://download"/>
+                </f:actions>
+            </f:DynamicPageTitle>
+        </f:title>
+        
+        <f:header>
+            <f:DynamicPageHeader pinnable="true">
+                <f:content>
+                    <FlexBox alignItems="Start" justifyContent="SpaceBetween">
+                        <items>
+                            <VBox class="sapUiMediumMarginEnd">
+                                <Title text="Performance" level="H5" class="sapUiTinyMarginBottom"/>
+                                <Label text="Avg Response Time: {/avgResponseTime}ms"/>
+                                <Label text="Success Rate: {/successRate}%"/>
+                                <Label text="Active Traces: {/activeTraces}"/>
+                            </VBox>
+                            <VBox class="sapUiMediumMarginEnd">
+                                <Title text="Tools" level="H5" class="sapUiTinyMarginBottom"/>
+                                <Label text="Total Tools: {/totalTools}"/>
+                                <Label text="Healthy: {/healthyTools}"/>
+                                <Label text="Versions: {/toolVersions}"/>
+                            </VBox>
+                            <VBox class="sapUiMediumMarginEnd">
+                                <Title text="Load Balancing" level="H5" class="sapUiTinyMarginBottom"/>
+                                <Label text="Active Servers: {/activeServers}"/>
+                                <Label text="Load Distribution: {/loadDistribution}"/>
+                                <Label text="Failovers Today: {/failovers}"/>
+                            </VBox>
+                        </items>
+                    </FlexBox>
+                </f:content>
+            </f:DynamicPageHeader>
+        </f:header>
+        
+        <f:content>
+            <VBox class="sapUiContentPadding">
+                <!-- Tool Performance Grid -->
+                <Title text="Tool Performance Metrics" level="H3" class="sapUiMediumMarginBottom"/>
+                
+                <f:GridContainer id="toolMetricsGrid" class="sapUiMediumMarginBottom">
+                    <f:Card>
+                        <f:header>
+                            <card:Header
+                                title="Technical Analysis Tool"
+                                subtitle="Version 2.1.0"
+                                iconSrc="sap-icon://line-chart"
+                                statusText="Healthy">
+                                <card:action>
+                                    <Button icon="sap-icon://navigation-right-arrow" type="Transparent" press="onToolDetails"/>
+                                </card:action>
+                            </card:Header>
+                        </f:header>
+                        <f:content>
+                            <VBox class="sapUiContentPadding">
+                                <HBox justifyContent="SpaceBetween">
+                                    <Label text="Requests/min:"/>
+                                    <Text text="245"/>
+                                </HBox>
+                                <HBox justifyContent="SpaceBetween">
+                                    <Label text="Avg Latency:"/>
+                                    <Text text="45ms"/>
+                                </HBox>
+                                <HBox justifyContent="SpaceBetween">
+                                    <Label text="Success Rate:"/>
+                                    <ObjectStatus text="99.8%" state="Success"/>
+                                </HBox>
+                                <ProgressIndicator percentValue="85" displayValue="85% CPU" state="Warning" class="sapUiTinyMarginTop"/>
+                            </VBox>
+                        </f:content>
+                    </f:Card>
+                    
+                    <f:Card>
+                        <f:header>
+                            <card:Header
+                                title="ML Models Tool"
+                                subtitle="Version 1.5.3"
+                                iconSrc="sap-icon://learning-assistant"
+                                statusText="Healthy">
+                                <card:action>
+                                    <Button icon="sap-icon://navigation-right-arrow" type="Transparent" press="onToolDetails"/>
+                                </card:action>
+                            </card:Header>
+                        </f:header>
+                        <f:content>
+                            <VBox class="sapUiContentPadding">
+                                <HBox justifyContent="SpaceBetween">
+                                    <Label text="Requests/min:"/>
+                                    <Text text="156"/>
+                                </HBox>
+                                <HBox justifyContent="SpaceBetween">
+                                    <Label text="Avg Latency:"/>
+                                    <Text text="320ms"/>
+                                </HBox>
+                                <HBox justifyContent="SpaceBetween">
+                                    <Label text="Success Rate:"/>
+                                    <ObjectStatus text="98.5%" state="Success"/>
+                                </HBox>
+                                <ProgressIndicator percentValue="60" displayValue="60% Memory" state="Success" class="sapUiTinyMarginTop"/>
+                            </VBox>
+                        </f:content>
+                    </f:Card>
+                    
+                    <f:Card>
+                        <f:header>
+                            <card:Header
+                                title="Historical Data Tool"
+                                subtitle="Version 1.1.0"
+                                iconSrc="sap-icon://history"
+                                statusText="Healthy">
+                                <card:action>
+                                    <Button icon="sap-icon://navigation-right-arrow" type="Transparent" press="onToolDetails"/>
+                                </card:action>
+                            </card:Header>
+                        </f:header>
+                        <f:content>
+                            <VBox class="sapUiContentPadding">
+                                <HBox justifyContent="SpaceBetween">
+                                    <Label text="Requests/min:"/>
+                                    <Text text="89"/>
+                                </HBox>
+                                <HBox justifyContent="SpaceBetween">
+                                    <Label text="Avg Latency:"/>
+                                    <Text text="150ms"/>
+                                </HBox>
+                                <HBox justifyContent="SpaceBetween">
+                                    <Label text="Success Rate:"/>
+                                    <ObjectStatus text="99.9%" state="Success"/>
+                                </HBox>
+                                <ProgressIndicator percentValue="35" displayValue="35% CPU" state="Success" class="sapUiTinyMarginTop"/>
+                            </VBox>
+                        </f:content>
+                    </f:Card>
+                    
+                    <f:Card>
+                        <f:header>
+                            <card:Header
+                                title="AWS Data Exchange"
+                                subtitle="Version 1.1.1"
+                                iconSrc="sap-icon://cloud"
+                                statusText="Degraded">
+                                <card:action>
+                                    <Button icon="sap-icon://navigation-right-arrow" type="Transparent" press="onToolDetails"/>
+                                </card:action>
+                            </card:Header>
+                        </f:header>
+                        <f:content>
+                            <VBox class="sapUiContentPadding">
+                                <HBox justifyContent="SpaceBetween">
+                                    <Label text="Requests/min:"/>
+                                    <Text text="12"/>
+                                </HBox>
+                                <HBox justifyContent="SpaceBetween">
+                                    <Label text="Avg Latency:"/>
+                                    <Text text="2500ms"/>
+                                </HBox>
+                                <HBox justifyContent="SpaceBetween">
+                                    <Label text="Success Rate:"/>
+                                    <ObjectStatus text="87.2%" state="Warning"/>
+                                </HBox>
+                                <ProgressIndicator percentValue="95" displayValue="95% API Limit" state="Error" class="sapUiTinyMarginTop"/>
+                            </VBox>
+                        </f:content>
+                    </f:Card>
+                </f:GridContainer>
+                
+                <!-- Request Distribution Chart -->
+                <Title text="Request Distribution (Last 24h)" level="H3" class="sapUiMediumMarginBottom"/>
+                
+                <viz:VizFrame id="requestChart" 
+                    vizType="timeseries_line"
+                    height="300px"
+                    width="100%"
+                    uiConfig="{applicationSet:'fiori'}">
+                    <viz:dataset>
+                        <viz.data:FlattenedDataset data="{/requestTimeline}">
+                            <viz.data:dimensions>
+                                <viz.data:DimensionDefinition name="Time" value="{time}"/>
+                            </viz.data:dimensions>
+                            <viz.data:measures>
+                                <viz.data:MeasureDefinition name="Requests" value="{requests}"/>
+                                <viz.data:MeasureDefinition name="Errors" value="{errors}"/>
+                            </viz.data:measures>
+                        </viz.data:FlattenedDataset>
+                    </viz:dataset>
+                    <viz:feeds>
+                        <viz.feeds:FeedItem uid="timeAxis" type="Dimension" values="Time"/>
+                        <viz.feeds:FeedItem uid="valueAxis" type="Measure" values="Requests,Errors"/>
+                    </viz:feeds>
+                </viz:VizFrame>
+                
+                <!-- Distributed Tracing Table -->
+                <Title text="Recent Traces" level="H3" class="sapUiMediumMarginTop sapUiMediumMarginBottom"/>
+                
+                <Table id="tracesTable" 
+                    items="{/traces}"
+                    mode="SingleSelectMaster"
+                    growing="true"
+                    growingThreshold="20">
+                    <headerToolbar>
+                        <OverflowToolbar>
+                            <content>
+                                <Title text="Distributed Traces" level="H4"/>
+                                <ToolbarSpacer/>
+                                <SearchField liveChange="onSearchTraces" width="200px"/>
+                                <Button icon="sap-icon://filter" press="onFilterTraces"/>
+                            </content>
+                        </OverflowToolbar>
+                    </headerToolbar>
+                    <columns>
+                        <Column>
+                            <Text text="Trace ID"/>
+                        </Column>
+                        <Column>
+                            <Text text="Tool"/>
+                        </Column>
+                        <Column>
+                            <Text text="Method"/>
+                        </Column>
+                        <Column>
+                            <Text text="Duration"/>
+                        </Column>
+                        <Column>
+                            <Text text="Status"/>
+                        </Column>
+                        <Column>
+                            <Text text="Timestamp"/>
+                        </Column>
+                    </columns>
+                    <items>
+                        <ColumnListItem press="onTraceDetails">
+                            <cells>
+                                <Text text="{traceId}"/>
+                                <Text text="{tool}"/>
+                                <Text text="{method}"/>
+                                <ObjectNumber number="{duration}" unit="ms" state="{
+                                    path: 'duration',
+                                    formatter: '.formatDurationState'
+                                }"/>
+                                <ObjectStatus text="{status}" state="{
+                                    path: 'status',
+                                    formatter: '.formatStatusState'
+                                }"/>
+                                <Text text="{
+                                    path: 'timestamp',
+                                    formatter: '.formatTimestamp'
+                                }"/>
+                            </cells>
+                        </ColumnListItem>
+                    </items>
+                </Table>
+                
+                <!-- Version Compatibility Matrix -->
+                <Title text="Tool Version Compatibility" level="H3" class="sapUiMediumMarginTop sapUiMediumMarginBottom"/>
+                
+                <ScrollContainer horizontal="true" vertical="false" height="300px">
+                    <Table id="compatibilityTable" fixedLayout="false">
+                        <columns>
+                            <Column width="150px">
+                                <Text text="Tool"/>
+                            </Column>
+                            <Column width="100px">
+                                <Text text="Version"/>
+                            </Column>
+                            <Column width="120px">
+                                <Text text="Technical Analysis"/>
+                            </Column>
+                            <Column width="120px">
+                                <Text text="ML Models"/>
+                            </Column>
+                            <Column width="120px">
+                                <Text text="Historical Data"/>
+                            </Column>
+                            <Column width="120px">
+                                <Text text="Feature Engineering"/>
+                            </Column>
+                        </columns>
+                        <items>
+                            <ColumnListItem>
+                                <cells>
+                                    <Text text="Technical Analysis"/>
+                                    <Text text="2.1.0"/>
+                                    <Icon src="sap-icon://accept" color="Positive"/>
+                                    <Icon src="sap-icon://accept" color="Positive"/>
+                                    <Icon src="sap-icon://accept" color="Positive"/>
+                                    <Icon src="sap-icon://message-warning" color="Critical"/>
+                                </cells>
+                            </ColumnListItem>
+                            <ColumnListItem>
+                                <cells>
+                                    <Text text="ML Models"/>
+                                    <Text text="1.5.3"/>
+                                    <Icon src="sap-icon://accept" color="Positive"/>
+                                    <Icon src="sap-icon://accept" color="Positive"/>
+                                    <Icon src="sap-icon://accept" color="Positive"/>
+                                    <Icon src="sap-icon://accept" color="Positive"/>
+                                </cells>
+                            </ColumnListItem>
+                        </items>
+                    </Table>
+                </ScrollContainer>
+            </VBox>
+        </f:content>
+    </f:DynamicPage>
+</mvc:View>

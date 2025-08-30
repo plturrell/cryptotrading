@@ -14,15 +14,16 @@ Features:
 
 import hashlib
 import hmac
+import logging
 import os
-from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-import logging
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
     import jwt
+
     JWT_AVAILABLE = True
 except ImportError:
     jwt = None
@@ -49,6 +50,7 @@ class AuthorizationError(Exception):
 
 class TokenScope(Enum):
     """Token scopes for different operations"""
+
     READ_TOOLS = "tools:read"
     CALL_TOOLS = "tools:call"
     READ_RESOURCES = "resources:read"
@@ -59,6 +61,7 @@ class TokenScope(Enum):
 @dataclass
 class AuthToken:
     """Authentication token data"""
+
     user_id: str
     scopes: List[str]
     issued_at: datetime
@@ -82,28 +85,27 @@ class AuthToken:
         return {
             "user_id": self.user_id,
             "scopes": self.scopes,
-            "iat": int(
-                self.issued_at.timestamp()),
-            "exp": int(
-                self.expires_at.timestamp()) if self.expires_at else None,
-            "api_key_id": self.api_key_id}
+            "iat": int(self.issued_at.timestamp()),
+            "exp": int(self.expires_at.timestamp()) if self.expires_at else None,
+            "api_key_id": self.api_key_id,
+        }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'AuthToken':
+    def from_dict(cls, data: Dict[str, Any]) -> "AuthToken":
         """Create from dictionary (JWT payload)"""
         return cls(
             user_id=data["user_id"],
             scopes=data["scopes"],
-            issued_at=datetime.fromtimestamp(
-                data["iat"]),
-            expires_at=datetime.fromtimestamp(
-                data["exp"]) if data.get("exp") else None,
-            api_key_id=data.get("api_key_id"))
+            issued_at=datetime.fromtimestamp(data["iat"]),
+            expires_at=datetime.fromtimestamp(data["exp"]) if data.get("exp") else None,
+            api_key_id=data.get("api_key_id"),
+        )
 
 
 @dataclass
 class APIKey:
     """API key configuration"""
+
     key_id: str
     key_hash: str  # SHA-256 hash of the actual key
     name: str
@@ -135,10 +137,7 @@ class APIKey:
 class JWTManager:
     """JWT token management"""
 
-    def __init__(
-            self,
-            secret_key: Optional[str] = None,
-            algorithm: str = "HS256"):
+    def __init__(self, secret_key: Optional[str] = None, algorithm: str = "HS256"):
         """
         Initialize JWT manager
 
@@ -152,14 +151,19 @@ class JWTManager:
         self.secret_key = secret_key or os.getenv("VERCEL_JWT_SECRET")
         if not self.secret_key:
             raise ValueError(
-                "JWT secret key not provided. Set VERCEL_JWT_SECRET environment variable.")
+                "JWT secret key not provided. Set VERCEL_JWT_SECRET environment variable."
+            )
 
         self.algorithm = algorithm
         self.default_expiry = timedelta(hours=24)
 
-    def create_token(self, user_id: str, scopes: List[str],
-                     expires_in: Optional[timedelta] = None,
-                     api_key_id: Optional[str] = None) -> str:
+    def create_token(
+        self,
+        user_id: str,
+        scopes: List[str],
+        expires_in: Optional[timedelta] = None,
+        api_key_id: Optional[str] = None,
+    ) -> str:
         """
         Create a new JWT token
 
@@ -180,7 +184,7 @@ class JWTManager:
             scopes=scopes,
             issued_at=now,
             expires_at=expires_at,
-            api_key_id=api_key_id
+            api_key_id=api_key_id,
         )
 
         payload = token.to_dict()
@@ -200,9 +204,7 @@ class JWTManager:
             AuthenticationError: If token is invalid or expired
         """
         try:
-            payload = jwt.decode(
-                token, self.secret_key, algorithms=[
-                    self.algorithm])
+            payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
             auth_token = AuthToken.from_dict(payload)
 
             if auth_token.is_expired():
@@ -215,10 +217,7 @@ class JWTManager:
         except jwt.InvalidTokenError as e:
             raise AuthenticationError(f"Invalid token: {str(e)}") from e
 
-    def refresh_token(
-            self,
-            token: str,
-            extends_by: Optional[timedelta] = None) -> str:
+    def refresh_token(self, token: str, extends_by: Optional[timedelta] = None) -> str:
         """
         Refresh an existing token
 
@@ -236,7 +235,7 @@ class JWTManager:
             user_id=auth_token.user_id,
             scopes=auth_token.scopes,
             expires_in=extends_by or self.default_expiry,
-            api_key_id=auth_token.api_key_id
+            api_key_id=auth_token.api_key_id,
         )
 
 
@@ -250,8 +249,7 @@ class APIKeyManager:
         Args:
             storage_path: Path to store API keys (defaults to VERCEL_API_KEYS env var)
         """
-        self.storage_path = storage_path or os.getenv(
-            "VERCEL_API_KEYS", "/tmp/api_keys.json")
+        self.storage_path = storage_path or os.getenv("VERCEL_API_KEYS", "/tmp/api_keys.json")
         self.keys: Dict[str, APIKey] = {}
         self.usage_tracking: Dict[str, List[datetime]] = {}
         self._load_keys()
@@ -263,7 +261,7 @@ class APIKeyManager:
             from pathlib import Path
 
             if Path(self.storage_path).exists():
-                with open(self.storage_path, 'r', encoding='utf-8') as f:
+                with open(self.storage_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
 
                 for key_data in data.get("keys", []):
@@ -273,15 +271,15 @@ class APIKeyManager:
                         name=key_data["name"],
                         scopes=key_data["scopes"],
                         rate_limit=key_data["rate_limit"],
-                        created_at=datetime.fromisoformat(
-                            key_data["created_at"]),
-                        expires_at=datetime.fromisoformat(
-                            key_data["expires_at"]) if key_data.get("expires_at") else None,
-                        last_used=datetime.fromisoformat(
-                            key_data["last_used"]) if key_data.get("last_used") else None,
-                        usage_count=key_data.get(
-                            "usage_count",
-                            0))
+                        created_at=datetime.fromisoformat(key_data["created_at"]),
+                        expires_at=datetime.fromisoformat(key_data["expires_at"])
+                        if key_data.get("expires_at")
+                        else None,
+                        last_used=datetime.fromisoformat(key_data["last_used"])
+                        if key_data.get("last_used")
+                        else None,
+                        usage_count=key_data.get("usage_count", 0),
+                    )
                     self.keys[key.key_id] = key
 
         except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
@@ -307,24 +305,25 @@ class APIKeyManager:
                         "created_at": key.created_at.isoformat(),
                         "expires_at": key.expires_at.isoformat() if key.expires_at else None,
                         "last_used": key.last_used.isoformat() if key.last_used else None,
-                        "usage_count": key.usage_count
+                        "usage_count": key.usage_count,
                     }
                     for key in self.keys.values()
                 ]
             }
 
-            with open(self.storage_path, 'w', encoding='utf-8') as f:
+            with open(self.storage_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
 
         except (OSError, json.JSONEncodeError) as e:
             logger.error("Failed to save API keys: %s", str(e))
 
-    def create_api_key(self,
-                       name: str,
-                       scopes: List[str],
-                       rate_limit: int = 100,
-                       expires_in: Optional[timedelta] = None) -> Tuple[str,
-                                                                        str]:
+    def create_api_key(
+        self,
+        name: str,
+        scopes: List[str],
+        rate_limit: int = 100,
+        expires_in: Optional[timedelta] = None,
+    ) -> Tuple[str, str]:
         """
         Create a new API key
 
@@ -355,7 +354,7 @@ class APIKeyManager:
             scopes=scopes,
             rate_limit=rate_limit,
             created_at=now,
-            expires_at=now + expires_in if expires_in else None
+            expires_at=now + expires_in if expires_in else None,
         )
 
         # Store key
@@ -415,8 +414,7 @@ class APIKeyManager:
 
         # Remove old usage records
         self.usage_tracking[key_id] = [
-            usage_time for usage_time in self.usage_tracking[key_id]
-            if usage_time > minute_ago
+            usage_time for usage_time in self.usage_tracking[key_id] if usage_time > minute_ago
         ]
 
         # Check if under limit
@@ -463,7 +461,7 @@ class APIKeyManager:
                 "expires_at": key.expires_at.isoformat() if key.expires_at else None,
                 "last_used": key.last_used.isoformat() if key.last_used else None,
                 "usage_count": key.usage_count,
-                "is_expired": key.is_expired()
+                "is_expired": key.is_expired(),
             }
             for key in self.keys.values()
         ]
@@ -472,8 +470,7 @@ class APIKeyManager:
 class AuthenticationMiddleware:
     """Authentication middleware for MCP servers"""
 
-    def __init__(self, jwt_manager: JWTManager,
-                 api_key_manager: APIKeyManager):
+    def __init__(self, jwt_manager: JWTManager, api_key_manager: APIKeyManager):
         """
         Initialize authentication middleware
 
@@ -498,11 +495,7 @@ class AuthenticationMiddleware:
             AuthenticationError: If authentication fails
         """
         # Check Authorization header (case insensitive)
-        auth_header = headers.get(
-            "authorization",
-            "") or headers.get(
-            "Authorization",
-            "")
+        auth_header = headers.get("authorization", "") or headers.get("Authorization", "")
         auth_header = auth_header.strip()
 
         if auth_header.startswith("Bearer "):
@@ -531,7 +524,7 @@ class AuthenticationMiddleware:
                 scopes=verified_key.scopes,
                 issued_at=verified_key.created_at,
                 expires_at=verified_key.expires_at,
-                api_key_id=verified_key.key_id
+                api_key_id=verified_key.key_id,
             )
 
         # Check for X-API-Key header (case insensitive)
@@ -550,16 +543,12 @@ class AuthenticationMiddleware:
                 scopes=verified_key.scopes,
                 issued_at=verified_key.created_at,
                 expires_at=verified_key.expires_at,
-                api_key_id=verified_key.key_id
+                api_key_id=verified_key.key_id,
             )
 
-        raise AuthenticationError(
-            "No valid authentication credentials provided")
+        raise AuthenticationError("No valid authentication credentials provided")
 
-    def check_authorization(
-            self,
-            auth_token: AuthToken,
-            required_scope: str) -> bool:
+    def check_authorization(self, auth_token: AuthToken, required_scope: str) -> bool:
         """
         Check if token has required authorization
 
@@ -574,8 +563,7 @@ class AuthenticationMiddleware:
             AuthorizationError: If not authorized
         """
         if not auth_token.has_scope(required_scope):
-            raise AuthorizationError(
-                f"Insufficient permissions. Required scope: {required_scope}")
+            raise AuthorizationError(f"Insufficient permissions. Required scope: {required_scope}")
 
         return True
 

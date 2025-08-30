@@ -106,7 +106,7 @@ sap.ui.define([
          */
         applyStrategy: function (sStrategyId, oParameters) {
             return new Promise(function (resolve, reject) {
-                var oStrategy = this._getStrategy(sStrategyId);
+                const oStrategy = this._getStrategy(sStrategyId);
                 if (!oStrategy) {
                     reject(new Error("Strategy not found: " + sStrategyId));
                     return;
@@ -152,18 +152,18 @@ sap.ui.define([
         _initializeRiskParameters: function () {
             this._oRiskParams = {
                 maxPositionSize: 0.1, // 10% of portfolio
-                maxDailyLoss: 0.05,   // 5% daily loss limit
-                maxDrawdown: 0.15,    // 15% maximum drawdown
+                maxDailyLoss: 0.05, // 5% daily loss limi
+                maxDrawdown: 0.15, // 15% maximum drawdown
                 stopLossPercent: 0.02, // 2% stop loss
-                takeProfitPercent: 0.04 // 4% take profit
+                takeProfitPercent: 0.04 // 4% take profi
             };
         },
 
         /**
          * Validate order parameters
          * @private
-         * @param {Object} oOrder Order object
-         * @returns {boolean} Validation result
+         * @param {Object} oOrder Order objec
+         * @returns {boolean} Validation resul
          */
         _validateOrder: function (oOrder) {
             if (!oOrder || !oOrder.symbol || !oOrder.quantity || !oOrder.type) {
@@ -184,14 +184,14 @@ sap.ui.define([
         /**
          * Check risk limits
          * @private
-         * @param {Object} oOrder Order object
-         * @returns {boolean} Risk check result
+         * @param {Object} oOrder Order objec
+         * @returns {boolean} Risk check resul
          */
         _checkRiskLimits: function (oOrder) {
             // Implement risk limit checks
-            var fOrderValue = oOrder.quantity * (oOrder.price || 0);
-            var fPortfolioValue = this._getPortfolioValue();
-            
+            const fOrderValue = oOrder.quantity * (oOrder.price || 0);
+            const fPortfolioValue = this._getPortfolioValue();
+
             if (fOrderValue > fPortfolioValue * this._oRiskParams.maxPositionSize) {
                 return false;
             }
@@ -202,7 +202,7 @@ sap.ui.define([
         /**
          * Process order execution
          * @private
-         * @param {Object} oOrder Order object
+         * @param {Object} oOrder Order objec
          * @returns {Promise} Processing promise
          */
         _processOrder: function (oOrder) {
@@ -224,7 +224,7 @@ sap.ui.define([
          * Get strategy by ID
          * @private
          * @param {string} sStrategyId Strategy ID
-         * @returns {Object|null} Strategy object
+         * @returns {Object|null} Strategy objec
          */
         _getStrategy: function (sStrategyId) {
             return this._mStrategies[sStrategyId] || null;

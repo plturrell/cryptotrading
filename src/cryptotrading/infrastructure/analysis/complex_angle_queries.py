@@ -3,23 +3,25 @@ Advanced Angle Query Templates for Glean Code Analysis
 Sophisticated query patterns for comprehensive codebase understanding
 """
 
-from typing import Dict, List, Any, Optional, Union
-from dataclasses import dataclass, field
-from enum import Enum
 import json
 import re
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
 
 class QueryComplexity(Enum):
     """Query complexity levels"""
+
     SIMPLE = "simple"
-    INTERMEDIATE = "intermediate" 
+    INTERMEDIATE = "intermediate"
     ADVANCED = "advanced"
     EXPERT = "expert"
 
 
 class AnalysisScope(Enum):
     """Scope of analysis"""
+
     FILE = "file"
     MODULE = "module"
     PACKAGE = "package"
@@ -30,6 +32,7 @@ class AnalysisScope(Enum):
 @dataclass
 class QueryTemplate:
     """Advanced query template with metadata"""
+
     name: str
     description: str
     complexity: QueryComplexity
@@ -39,31 +42,31 @@ class QueryTemplate:
     output_format: str = "json"
     use_cases: List[str] = field(default_factory=list)
     examples: List[Dict[str, Any]] = field(default_factory=list)
-    
+
     def render(self, **kwargs) -> str:
         """Render query with parameters"""
         formatted_query = self.query_pattern
-        
+
         # Apply template parameters
         for param, value in {**self.parameters, **kwargs}.items():
             placeholder = f"{{{param}}}"
             if placeholder in formatted_query:
                 formatted_query = formatted_query.replace(placeholder, str(value))
-        
+
         return formatted_query
 
 
 class AdvancedAngleQueryBuilder:
     """Builder for sophisticated Angle queries"""
-    
+
     def __init__(self):
         self.templates = self._initialize_templates()
         self.custom_templates: Dict[str, QueryTemplate] = {}
-    
+
     def _initialize_templates(self) -> Dict[str, QueryTemplate]:
         """Initialize predefined advanced query templates"""
         templates = {}
-        
+
         # Architecture Analysis Templates
         templates["dependency_graph"] = QueryTemplate(
             name="dependency_graph",
@@ -91,12 +94,12 @@ class AdvancedAngleQueryBuilder:
             parameters={"root": "src/"},
             use_cases=[
                 "Architecture visualization",
-                "Dependency analysis", 
+                "Dependency analysis",
                 "Circular dependency detection",
-                "Module coupling analysis"
-            ]
+                "Module coupling analysis",
+            ],
         )
-        
+
         templates["code_complexity_analysis"] = QueryTemplate(
             name="code_complexity_analysis",
             description="Analyze code complexity metrics across the codebase",
@@ -135,12 +138,12 @@ class AdvancedAngleQueryBuilder:
                 "Code quality assessment",
                 "Refactoring prioritization",
                 "Technical debt analysis",
-                "Performance optimization targets"
-            ]
+                "Performance optimization targets",
+            ],
         )
-        
+
         templates["api_surface_analysis"] = QueryTemplate(
-            name="api_surface_analysis", 
+            name="api_surface_analysis",
             description="Analyze public API surface and usage patterns",
             complexity=QueryComplexity.ADVANCED,
             scope=AnalysisScope.MODULE,
@@ -182,12 +185,12 @@ class AdvancedAngleQueryBuilder:
             parameters={"module_pattern": "src/api/"},
             use_cases=[
                 "API design review",
-                "Breaking change impact analysis", 
+                "Breaking change impact analysis",
                 "Documentation coverage",
-                "Public interface optimization"
-            ]
+                "Public interface optimization",
+            ],
         )
-        
+
         templates["security_pattern_analysis"] = QueryTemplate(
             name="security_pattern_analysis",
             description="Identify potential security vulnerabilities and patterns",
@@ -249,10 +252,10 @@ class AdvancedAngleQueryBuilder:
                 "Security code review",
                 "Vulnerability assessment",
                 "Compliance auditing",
-                "Security pattern enforcement"
-            ]
+                "Security pattern enforcement",
+            ],
         )
-        
+
         templates["performance_hotspot_analysis"] = QueryTemplate(
             name="performance_hotspot_analysis",
             description="Identify performance bottlenecks and optimization opportunities",
@@ -303,10 +306,10 @@ class AdvancedAngleQueryBuilder:
                 "Performance optimization",
                 "Code profiling preparation",
                 "Scalability analysis",
-                "Resource usage optimization"
-            ]
+                "Resource usage optimization",
+            ],
         )
-        
+
         templates["test_coverage_analysis"] = QueryTemplate(
             name="test_coverage_analysis",
             description="Analyze test coverage and testing patterns",
@@ -360,10 +363,10 @@ class AdvancedAngleQueryBuilder:
                 "Test coverage assessment",
                 "Testing strategy planning",
                 "Quality assurance review",
-                "CI/CD optimization"
-            ]
+                "CI/CD optimization",
+            ],
         )
-        
+
         templates["refactoring_opportunities"] = QueryTemplate(
             name="refactoring_opportunities",
             description="Identify code duplication and refactoring opportunities",
@@ -429,10 +432,10 @@ class AdvancedAngleQueryBuilder:
                 "Code refactoring planning",
                 "Technical debt reduction",
                 "Code quality improvement",
-                "Maintenance cost reduction"
-            ]
+                "Maintenance cost reduction",
+            ],
         )
-        
+
         templates["architecture_metrics"] = QueryTemplate(
             name="architecture_metrics",
             description="Calculate comprehensive architecture and design metrics",
@@ -506,97 +509,100 @@ class AdvancedAngleQueryBuilder:
                 "Architecture assessment",
                 "Design quality evaluation",
                 "Technical debt measurement",
-                "Refactoring prioritization"
-            ]
+                "Refactoring prioritization",
+            ],
         )
-        
+
         return templates
-    
+
     def get_template(self, name: str) -> Optional[QueryTemplate]:
         """Get a query template by name"""
         return self.templates.get(name) or self.custom_templates.get(name)
-    
-    def list_templates(self, complexity: Optional[QueryComplexity] = None,
-                      scope: Optional[AnalysisScope] = None) -> List[QueryTemplate]:
+
+    def list_templates(
+        self, complexity: Optional[QueryComplexity] = None, scope: Optional[AnalysisScope] = None
+    ) -> List[QueryTemplate]:
         """List available templates with optional filtering"""
         all_templates = list(self.templates.values()) + list(self.custom_templates.values())
-        
+
         filtered = all_templates
         if complexity:
             filtered = [t for t in filtered if t.complexity == complexity]
         if scope:
             filtered = [t for t in filtered if t.scope == scope]
-        
+
         return filtered
-    
+
     def add_custom_template(self, template: QueryTemplate):
         """Add a custom query template"""
         self.custom_templates[template.name] = template
-    
+
     def generate_query(self, template_name: str, **parameters) -> str:
         """Generate a query from a template with parameters"""
         template = self.get_template(template_name)
         if not template:
             raise ValueError(f"Template '{template_name}' not found")
-        
+
         return template.render(**parameters)
-    
+
     def get_query_suggestions(self, keywords: List[str]) -> List[QueryTemplate]:
         """Get query template suggestions based on keywords"""
         suggestions = []
         all_templates = list(self.templates.values()) + list(self.custom_templates.values())
-        
+
         for template in all_templates:
             score = 0
-            searchable_text = f"{template.name} {template.description} {' '.join(template.use_cases)}"
-            
+            searchable_text = (
+                f"{template.name} {template.description} {' '.join(template.use_cases)}"
+            )
+
             for keyword in keywords:
                 if keyword.lower() in searchable_text.lower():
                     score += 1
-            
+
             if score > 0:
                 suggestions.append((template, score))
-        
+
         # Sort by relevance score
         suggestions.sort(key=lambda x: x[1], reverse=True)
         return [template for template, _ in suggestions]
-    
+
     def create_composite_query(self, template_names: List[str], **parameters) -> str:
         """Create a composite query from multiple templates"""
         queries = []
-        
+
         for template_name in template_names:
             template = self.get_template(template_name)
             if template:
                 query = template.render(**parameters)
                 queries.append(f"// Query: {template.name}\n{query}")
-        
+
         return "\n\n".join(queries)
-    
+
     def validate_query_syntax(self, query: str) -> Dict[str, Any]:
         """Basic validation of Angle query syntax"""
-        validation_result = {
-            "valid": True,
-            "errors": [],
-            "warnings": []
-        }
-        
+        validation_result = {"valid": True, "errors": [], "warnings": []}
+
         # Check for basic syntax elements
-        if not re.search(r'query\s+\w+', query):
+        if not re.search(r"query\s+\w+", query):
             validation_result["errors"].append("Query must start with 'query QueryName'")
             validation_result["valid"] = False
-        
+
         # Check for balanced braces
-        open_braces = query.count('{')
-        close_braces = query.count('}')
+        open_braces = query.count("{")
+        close_braces = query.count("}")
         if open_braces != close_braces:
-            validation_result["errors"].append(f"Unbalanced braces: {open_braces} open, {close_braces} close")
+            validation_result["errors"].append(
+                f"Unbalanced braces: {open_braces} open, {close_braces} close"
+            )
             validation_result["valid"] = False
-        
+
         # Check for common patterns
-        if 'codebase.' not in query:
-            validation_result["warnings"].append("Query doesn't reference 'codebase' - may not return results")
-        
+        if "codebase." not in query:
+            validation_result["warnings"].append(
+                "Query doesn't reference 'codebase' - may not return results"
+            )
+
         return validation_result
 
 
@@ -604,26 +610,13 @@ class AdvancedAngleQueryBuilder:
 QUERY_COLLECTIONS = {
     "code_quality": [
         "code_complexity_analysis",
-        "test_coverage_analysis", 
-        "refactoring_opportunities"
-    ],
-    "architecture": [
-        "dependency_graph",
-        "architecture_metrics",
-        "api_surface_analysis"
-    ],
-    "security": [
-        "security_pattern_analysis"
-    ],
-    "performance": [
-        "performance_hotspot_analysis",
-        "code_complexity_analysis"
-    ],
-    "maintenance": [
-        "refactoring_opportunities",
         "test_coverage_analysis",
-        "dependency_graph"
-    ]
+        "refactoring_opportunities",
+    ],
+    "architecture": ["dependency_graph", "architecture_metrics", "api_surface_analysis"],
+    "security": ["security_pattern_analysis"],
+    "performance": ["performance_hotspot_analysis", "code_complexity_analysis"],
+    "maintenance": ["refactoring_opportunities", "test_coverage_analysis", "dependency_graph"],
 }
 
 
@@ -641,17 +634,17 @@ def get_query_collection(collection_name: str) -> List[str]:
 if __name__ == "__main__":
     # Example usage
     builder = create_advanced_query_builder()
-    
+
     # List all templates
     print("Available Query Templates:")
     for template in builder.list_templates():
         print(f"- {template.name} ({template.complexity.value}) - {template.description}")
-    
+
     # Generate a specific query
     print("\nGenerated Dependency Graph Query:")
     dependency_query = builder.generate_query("dependency_graph", root="src/cryptotrading/")
     print(dependency_query)
-    
+
     # Get suggestions based on keywords
     print("\nSuggestions for 'security performance':")
     suggestions = builder.get_query_suggestions(["security", "performance"])

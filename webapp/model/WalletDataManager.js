@@ -9,23 +9,23 @@ sap.ui.define([
      * Follows SAP UI5 patterns with blockchain integration
      */
     return DataManager.extend("com.rex.cryptotrading.model.WalletDataManager", {
-        
+
         constructor: function() {
-            var oInitialData = this._getInitialWalletData();
-            var oConfig = {
+            const oInitialData = this._getInitialWalletData();
+            const oConfig = {
                 enableChangeDetection: true,
                 enableValidation: true,
                 enableHistory: true, // Track wallet state changes
                 maxHistorySize: 50
             };
-            
+
             DataManager.prototype.constructor.call(this, "wallet", oInitialData, oConfig);
-            
+
             this._oEventBusManager = new EventBusManager();
             this._initializeValidationSchema();
             this._setupEventHandlers();
         },
-        
+
         /**
          * Connect wallet with provider
          * @param {string} sProvider - Wallet provider (metamask, walletconnect, etc.)
@@ -37,8 +37,8 @@ sap.ui.define([
             if (!this._validateAddress(sAddress)) {
                 throw new Error("Invalid wallet address");
             }
-            
-            var oConnectionData = {
+
+            const oConnectionData = {
                 connected: true,
                 provider: sProvider,
                 address: sAddress,
@@ -47,26 +47,26 @@ sap.ui.define([
                 connectedAt: new Date().toISOString(),
                 lastActivity: new Date().toISOString()
             };
-            
+
             this.updateObject("/connection", oConnectionData);
             this.setProperty("/status", "connected");
-            
-            // Initialize empty balances for connected wallet
+
+            // Initialize empty balances for connected walle
             this.setProperty("/balances", {});
-            
-            // Publish connection event
+
+            // Publish connection even
             this._oEventBusManager.publishWalletConnectionChanged(
                 true, sAddress, sProvider
             );
         },
-        
+
         /**
-         * Disconnect wallet
+         * Disconnect walle
          */
         disconnectWallet: function() {
-            var sAddress = this.getProperty("/connection/address");
-            var sProvider = this.getProperty("/connection/provider");
-            
+            const sAddress = this.getProperty("/connection/address");
+            const sProvider = this.getProperty("/connection/provider");
+
             this.setProperty("/connection", {
                 connected: false,
                 provider: null,
@@ -76,17 +76,17 @@ sap.ui.define([
                 connectedAt: null,
                 disconnectedAt: new Date().toISOString()
             });
-            
+
             this.setProperty("/status", "disconnected");
             this.setProperty("/balances", {});
             this.setProperty("/transactions", []);
-            
-            // Publish disconnection event
+
+            // Publish disconnection even
             this._oEventBusManager.publishWalletConnectionChanged(
                 false, sAddress, sProvider
             );
         },
-        
+
         /**
          * Update wallet balances
          * @param {Object} oBalances - Balance data by token/coin
@@ -96,13 +96,13 @@ sap.ui.define([
                 console.warn("Cannot update balances: wallet not connected");
                 return;
             }
-            
-            var oCurrentBalances = this.getProperty("/balances") || {};
-            var oUpdatedBalances = Object.assign({}, oCurrentBalances);
-            
+
+            const oCurrentBalances = this.getProperty("/balances") || {};
+            const oUpdatedBalances = Object.assign({}, oCurrentBalances);
+
             // Process each balance update
             Object.keys(oBalances).forEach(function(sToken) {
-                var vBalance = oBalances[sToken];
+                const vBalance = oBalances[sToken];
                 if (this._validateBalance(vBalance)) {
                     oUpdatedBalances[sToken] = {
                         amount: vBalance.amount || vBalance,
@@ -112,14 +112,14 @@ sap.ui.define([
                     };
                 }
             }.bind(this));
-            
+
             this.setProperty("/balances", oUpdatedBalances);
             this.setProperty("/lastBalanceUpdate", new Date().toISOString());
-            
-            // Publish balance update event
+
+            // Publish balance update even
             this._oEventBusManager.publishBalanceUpdated(oUpdatedBalances);
         },
-        
+
         /**
          * Get wallet connection status
          * @returns {boolean} Connection status
@@ -127,7 +127,7 @@ sap.ui.define([
         isConnected: function() {
             return this.getProperty("/connection/connected") || false;
         },
-        
+
         /**
          * Get wallet address
          * @returns {string} Wallet address
@@ -135,7 +135,7 @@ sap.ui.define([
         getAddress: function() {
             return this.getProperty("/connection/address");
         },
-        
+
         /**
          * Get balance for specific token
          * @param {string} sToken - Token symbol
@@ -144,15 +144,15 @@ sap.ui.define([
         getBalance: function(sToken) {
             return this.getProperty("/balances/" + sToken) || { amount: 0 };
         },
-        
+
         /**
          * Set wallet error
          * @param {Object|string} vError - Error data
          */
         setError: function(vError) {
-            var oError = typeof vError === 'string' ? { message: vError } : vError;
+            const oError = typeof vError === "string" ? { message: vError } : vError;
             this.setProperty("/error", oError);
-            
+
             if (oError) {
                 this._oEventBusManager.publish(
                     this._oEventBusManager.CHANNELS.WALLET,
@@ -161,7 +161,7 @@ sap.ui.define([
                 );
             }
         },
-        
+
         /**
          * Initialize wallet data structure
          * @private
@@ -183,32 +183,32 @@ sap.ui.define([
                 error: null
             };
         },
-        
+
         /**
          * Validate wallet address
          * @private
          */
         _validateAddress: function(sAddress) {
             // Basic Ethereum address validation
-            return sAddress && 
-                   typeof sAddress === 'string' && 
-                   sAddress.length === 42 && 
-                   sAddress.startsWith('0x');
+            return sAddress &&
+                   typeof sAddress === "string" &&
+                   sAddress.length === 42 &&
+                   sAddress.startsWith("0x");
         },
-        
+
         /**
          * Validate balance data
          * @private
          */
         _validateBalance: function(vBalance) {
-            if (typeof vBalance === 'number') return vBalance >= 0;
-            if (typeof vBalance === 'string') return !isNaN(parseFloat(vBalance));
-            if (typeof vBalance === 'object') {
+            if (typeof vBalance === "number") return vBalance >= 0;
+            if (typeof vBalance === "string") return !isNaN(parseFloat(vBalance));
+            if (typeof vBalance === "object") {
                 return vBalance.amount !== undefined && !isNaN(parseFloat(vBalance.amount));
             }
             return false;
         },
-        
+
         /**
          * Initialize validation schema
          * @private
@@ -216,16 +216,16 @@ sap.ui.define([
         _initializeValidationSchema: function() {
             this._oValidationSchema = {
                 connection: {
-                    type: 'object',
+                    type: "object",
                     required: true
                 },
                 balances: {
-                    type: 'object',
+                    type: "object",
                     required: false
                 }
             };
         },
-        
+
         /**
          * Setup event handlers
          * @private
@@ -239,7 +239,7 @@ sap.ui.define([
                 this
             );
         },
-        
+
         /**
          * Handle market data updates for portfolio calculation
          * @private
@@ -249,7 +249,7 @@ sap.ui.define([
                 // Could update portfolio values here
             }
         },
-        
+
         /**
          * Cleanup
          */
@@ -257,7 +257,7 @@ sap.ui.define([
             if (this._oEventBusManager) {
                 this._oEventBusManager.destroy();
             }
-            
+
             DataManager.prototype.destroy.apply(this, arguments);
         }
     });

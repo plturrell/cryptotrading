@@ -7,15 +7,15 @@ Includes crypto trading tools, analysis tools, and administrative tools.
 
 import logging
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
-from datetime import datetime
 
 from .clrs_algorithms import (
-    CLRSSortingAlgorithms,
-    CLRSSearchAlgorithms,
-    CLRSGraphAlgorithms,
     CLRSDynamicProgramming,
+    CLRSGraphAlgorithms,
+    CLRSSearchAlgorithms,
+    CLRSSortingAlgorithms,
     CLRSStringAlgorithms,
 )
 from .mcp_agent_segregation import (
@@ -28,6 +28,7 @@ from .mcp_agent_segregation import (
 # Import S3 storage tools
 try:
     from ..mcp.s3_storage_mcp_tools import get_s3_storage_tools
+
     S3_STORAGE_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"S3 storage tools not available: {e}")
@@ -692,7 +693,7 @@ def create_all_segregated_tools() -> Dict[str, Any]:
         "clrs_analysis": CLRSAnalysisTool(),
         # Note: Other analysis tools would be imported here
     }
-    
+
     # Add S3 storage tools if available
     if S3_STORAGE_AVAILABLE:
         try:
@@ -702,17 +703,17 @@ def create_all_segregated_tools() -> Dict[str, Any]:
             logger.info(f"Added {len(s3_tools_list)} S3 storage tools to MCP tools")
         except Exception as e:
             logger.error(f"Failed to add S3 storage tools: {e}")
-    
+
     return tools
 
 
 def get_all_mcp_tools_with_schemas() -> List[Dict[str, Any]]:
     """Get all MCP tools with their schemas for registration"""
     all_tools = []
-    
+
     # Add existing tools (would need to be defined with schemas)
     # ... existing tool schemas ...
-    
+
     # Add S3 storage tools with schemas
     if S3_STORAGE_AVAILABLE:
         try:
@@ -721,5 +722,5 @@ def get_all_mcp_tools_with_schemas() -> List[Dict[str, Any]]:
             logger.info(f"Added {len(s3_tools)} S3 storage tools with schemas")
         except Exception as e:
             logger.error(f"Failed to get S3 tools with schemas: {e}")
-    
+
     return all_tools

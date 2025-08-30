@@ -213,6 +213,98 @@
         </tileContent>
     </GenericTile>
     
+    <!-- MCP Tools Monitoring Tile -->
+    <GenericTile 
+        header="MCP Monitoring"
+        subheader="Tool performance & tracing"
+        press="onMCPMonitoringPress"
+        state="{= ${app>/mcpStatus/state} === 'healthy' ? 'Loaded' : 'Failed' }"
+        size="M">
+        <layoutData>
+            <f:GridContainerItemLayoutData columns="12" rows="14"/>
+        </layoutData>
+        <tileContent>
+            <TileContent>
+                <content>
+                    <NumericContent
+                        value="{app>/mcpStatus/activeTools}"
+                        scale="Tools Active"
+                        indicator="{= ${app>/mcpStatus/successRate} > 95 ? 'Up' : 'Down' }"
+                        valueColor="{= ${app>/mcpStatus/successRate} > 95 ? 'Good' : 'Critical' }"
+                        withMargin="false"/>
+                </content>
+            </TileContent>
+        </tileContent>
+    </GenericTile>
+    
+    <!-- AWS Data Exchange Tile -->
+    <GenericTile 
+        header="AWS Data Exchange"
+        subheader="Financial datasets & feeds"
+        press="onAWSDataExchangePress"
+        state="Loaded"
+        size="M">
+        <layoutData>
+            <f:GridContainerItemLayoutData columns="12" rows="14"/>
+        </layoutData>
+        <tileContent>
+            <TileContent>
+                <content>
+                    <NumericContent
+                        value="{app>/awsDataExchange/datasets}"
+                        scale="Datasets"
+                        valueColor="Neutral"
+                        withMargin="false"/>
+                </content>
+            </TileContent>
+        </tileContent>
+    </GenericTile>
+    
+    <!-- Data Loading Service Tile -->
+    <GenericTile 
+        header="Data Loading"
+        subheader="Real-time data ingestion"
+        press="onDataLoadingPress"
+        state="{= ${app>/dataLoading/status} === 'running' ? 'Loading' : 'Loaded' }"
+        size="M">
+        <layoutData>
+            <f:GridContainerItemLayoutData columns="12" rows="14"/>
+        </layoutData>
+        <tileContent>
+            <TileContent>
+                <content>
+                    <NumericContent
+                        value="{app>/dataLoading/recordsPerSec}"
+                        scale="rec/s"
+                        indicator="Up"
+                        valueColor="Good"
+                        withMargin="false"/>
+                </content>
+            </TileContent>
+        </tileContent>
+    </GenericTile>
+    
+    <!-- News Panel Tile -->
+    <GenericTile 
+        header="News & Sentiment"
+        subheader="Market news analysis"
+        press="onNewsPanelPress"
+        state="Loaded"
+        size="M">
+        <layoutData>
+            <f:GridContainerItemLayoutData columns="12" rows="14"/>
+        </layoutData>
+        <tileContent>
+            <TileContent>
+                <content>
+                    <NewsContent
+                        contentText="{app>/news/latest/title}"
+                        subheader="{app>/news/sentiment}"/>
+                </content>
+            </TileContent>
+        </tileContent>
+    </GenericTile>
+    
     <!-- System Settings Tile -->
     <GenericTile 
         header="System Settings"

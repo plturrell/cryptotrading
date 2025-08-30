@@ -2,21 +2,26 @@
 Runtime data collection decorators for Glean
 Captures data inputs, outputs, parameters, and factors during execution
 """
+import asyncio
 import functools
 import inspect
-import logging
-import asyncio
 import json
+import logging
 import uuid
-from typing import Any, Callable, Dict, List, Optional, Union
 from datetime import datetime
-import pandas as pd
+from typing import Any, Callable, Dict, List, Optional, Union
+
 import numpy as np
+import pandas as pd
 
 from .glean_data_schemas import (
-    DataInputFact, DataOutputFact, ParameterFact,
-    FactorFact, DataLineageFact
+    DataInputFact,
+    DataLineageFact,
+    DataOutputFact,
+    FactorFact,
+    ParameterFact,
 )
+
 # Conditional import for GleanStorage
 try:
     from .glean_storage import GleanStorage
@@ -25,8 +30,10 @@ except ImportError:
     class GleanStorage:
         def __init__(self, *args, **kwargs):
             pass
+
         async def store_facts(self, facts, unit):
             return {"stored": 0}
+
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +70,7 @@ class GleanCollector:
         try:
             # Store fact in the appropriate unit
             result = await self.storage.store_facts([fact], unit_name)
-            return result.get('stored', 0) > 0
+            return result.get("stored", 0) > 0
         except Exception as e:
             logger.error(f"Failed to store fact: {e}")
             return False
@@ -85,18 +92,15 @@ class GleanCollector:
         if frame and frame.f_back and frame.f_back.f_back:
             caller_frame = frame.f_back.f_back
             return {
-                'file': caller_frame.f_code.co_filename,
-                'function': caller_frame.f_code.co_name,
-                'line': caller_frame.f_lineno
+                "file": caller_frame.f_code.co_filename,
+                "function": caller_frame.f_code.co_name,
+                "line": caller_frame.f_lineno,
             }
-        return {'file': 'unknown', 'function': 'unknown', 'line': 0}
+        return {"file": "unknown", "function": "unknown", "line": 0}
 
 
 def track_data_input(
-    source: str,
-    data_type: str,
-    symbol: Optional[str] = None,
-    timeframe: Optional[str] = None
+    source: str, data_type: str, symbol: Optional[str] = None, timeframe: Optional[str] = None
 ):
     """
     Decorator to track data inputs to functions
@@ -105,6 +109,7 @@ def track_data_input(
     def fetch_bitcoin_data():
         ...
     """
+
     def decorator(func: Callable) -> Callable:
         collector = GleanCollector()
 
@@ -119,9 +124,9 @@ def track_data_input(
                 input_id=str(uuid.uuid4()),
                 data_type=data_type,
                 source=source,
-                symbol=symbol or kwargs.get('symbol', ''),
-                timeframe=timeframe or kwargs.get('timeframe', ''),
-                parameters={**kwargs}
+                symbol=symbol or kwargs.get("symbol", ""),
+                timeframe=timeframe or kwargs.get("timeframe", ""),
+                parameters={**kwargs},
             )
 
             # Store fact
@@ -143,9 +148,9 @@ def track_data_input(
                 input_id=str(uuid.uuid4()),
                 data_type=data_type,
                 source=source,
-                symbol=symbol or kwargs.get('symbol', ''),
-                timeframe=timeframe or kwargs.get('timeframe', ''),
-                parameters={**kwargs}
+                symbol=symbol or kwargs.get("symbol", ""),
+                timeframe=timeframe or kwargs.get("timeframe", ""),
+                parameters={**kwargs},
             )
 
             # Store fact synchronously
@@ -170,6 +175,7 @@ def track_data_output(output_type: str):
     def predict_price():
         ...
     """
+
     def decorator(func: Callable) -> Callable:
         collector = GleanCollector()
 
@@ -186,8 +192,8 @@ def track_data_output(output_type: str):
                 output_id=str(uuid.uuid4()),
                 output_type=output_type,
                 data_shape=_analyze_data_shape(result),
-                symbol=kwargs.get('symbol', ''),
-                metadata={'args': str(args)[:100], 'kwargs': str(kwargs)[:100]}
+                symbol=kwargs.get("symbol", ""),
+                metadata={"args": str(args)[:100], "kwargs": str(kwargs)[:100]},
             )
 
             # Store fact
@@ -208,8 +214,8 @@ def track_data_output(output_type: str):
                 output_id=str(uuid.uuid4()),
                 output_type=output_type,
                 data_shape=_analyze_data_shape(result),
-                symbol=kwargs.get('symbol', ''),
-                metadata={'args': str(args)[:100], 'kwargs': str(kwargs)[:100]}
+                symbol=kwargs.get("symbol", ""),
+                metadata={"args": str(args)[:100], "kwargs": str(kwargs)[:100]},
             )
 
             # Store fact synchronously
@@ -234,6 +240,7 @@ def track_parameters(**param_specs):
     def calculate_signal(window=14, threshold=0.5):
         ...
     """
+
     def decorator(func: Callable) -> Callable:
         collector = GleanCollector()
 
@@ -251,13 +258,13 @@ def track_parameters(**param_specs):
                         name=param_name,
                         context=func.__name__,
                         file=func.__code__.co_filename,
-                        param_type=spec.get('type', type(param_value).__name__),
+                        param_type=spec.get("type", type(param_value).__name__),
                         value=param_value,
-                        range_min=spec.get('range_min'),
-                        range_max=spec.get('range_max'),
-                        default=spec.get('default'),
-                        description=spec.get('description', ''),
-                        category=spec.get('category', 'runtime')
+                        range_min=spec.get("range_min"),
+                        range_max=spec.get("range_max"),
+                        default=spec.get("default"),
+                        description=spec.get("description", ""),
+                        category=spec.get("category", "runtime"),
                     )
                     await collector.store_fact(param_fact.to_fact())
 
@@ -278,13 +285,13 @@ def track_parameters(**param_specs):
                         name=param_name,
                         context=func.__name__,
                         file=func.__code__.co_filename,
-                        param_type=spec.get('type', type(param_value).__name__),
+                        param_type=spec.get("type", type(param_value).__name__),
                         value=param_value,
-                        range_min=spec.get('range_min'),
-                        range_max=spec.get('range_max'),
-                        default=spec.get('default'),
-                        description=spec.get('description', ''),
-                        category=spec.get('category', 'runtime')
+                        range_min=spec.get("range_min"),
+                        range_max=spec.get("range_max"),
+                        default=spec.get("default"),
+                        description=spec.get("description", ""),
+                        category=spec.get("category", "runtime"),
                     )
                     if collector.storage:
                         asyncio.create_task(collector.store_fact(param_fact.to_fact()))
@@ -297,11 +304,7 @@ def track_parameters(**param_specs):
     return decorator
 
 
-def track_factor(
-    factor_name: str,
-    category: str,
-    formula: Optional[str] = None
-):
+def track_factor(factor_name: str, category: str, formula: Optional[str] = None):
     """
     Decorator to track factor calculations
 
@@ -309,6 +312,7 @@ def track_factor(
     def calculate_rsi(prices, period=14):
         ...
     """
+
     def decorator(func: Callable) -> Callable:
         collector = GleanCollector()
 
@@ -324,17 +328,17 @@ def track_factor(
 
             factor_fact = FactorFact(
                 name=factor_name,
-                symbol=kwargs.get('symbol', ''),
-                timeframe=kwargs.get('timeframe', '1d'),
+                symbol=kwargs.get("symbol", ""),
+                timeframe=kwargs.get("timeframe", "1d"),
                 category=category,
                 calculation={
-                    'function': func.__name__,
-                    'execution_time_ms': execution_time,
-                    'parameters': {k: collector._serialize_value(v) for k, v in kwargs.items()}
+                    "function": func.__name__,
+                    "execution_time_ms": execution_time,
+                    "parameters": {k: collector._serialize_value(v) for k, v in kwargs.items()},
                 },
                 dependencies=_extract_dependencies(args, kwargs),
                 formula=formula or func.__name__,
-                result_type=type(result).__name__
+                result_type=type(result).__name__,
             )
 
             # Store fact
@@ -354,17 +358,17 @@ def track_factor(
 
             factor_fact = FactorFact(
                 name=factor_name,
-                symbol=kwargs.get('symbol', ''),
-                timeframe=kwargs.get('timeframe', '1d'),
+                symbol=kwargs.get("symbol", ""),
+                timeframe=kwargs.get("timeframe", "1d"),
                 category=category,
                 calculation={
-                    'function': func.__name__,
-                    'execution_time_ms': execution_time,
-                    'parameters': {k: collector._serialize_value(v) for k, v in kwargs.items()}
+                    "function": func.__name__,
+                    "execution_time_ms": execution_time,
+                    "parameters": {k: collector._serialize_value(v) for k, v in kwargs.items()},
                 },
                 dependencies=_extract_dependencies(args, kwargs),
                 formula=formula or func.__name__,
-                result_type=type(result).__name__
+                result_type=type(result).__name__,
             )
 
             # Store fact synchronously
@@ -386,6 +390,7 @@ def track_lineage(source_type: str, target_type: str, edge_type: str = "transfor
     def calculate_indicator(market_data):
         ...
     """
+
     def decorator(func: Callable) -> Callable:
         collector = GleanCollector()
 
@@ -407,7 +412,7 @@ def track_lineage(source_type: str, target_type: str, edge_type: str = "transfor
                 target_type=target_type,
                 transformation=func.__name__,
                 file=func.__code__.co_filename,
-                line=func.__code__.co_firstlineno
+                line=func.__code__.co_firstlineno,
             )
 
             # Store fact
@@ -433,7 +438,7 @@ def track_lineage(source_type: str, target_type: str, edge_type: str = "transfor
                 target_type=target_type,
                 transformation=func.__name__,
                 file=func.__code__.co_filename,
-                line=func.__code__.co_firstlineno
+                line=func.__code__.co_firstlineno,
             )
 
             # Store fact synchronously
@@ -452,40 +457,21 @@ def _analyze_data_shape(data: Any) -> Dict[str, Any]:
     """Analyze the shape and structure of data"""
     if isinstance(data, pd.DataFrame):
         return {
-            'type': 'DataFrame',
-            'shape': data.shape,
-            'columns': list(data.columns),
-            'dtypes': {col: str(dtype) for col, dtype in data.dtypes.items()}
+            "type": "DataFrame",
+            "shape": data.shape,
+            "columns": list(data.columns),
+            "dtypes": {col: str(dtype) for col, dtype in data.dtypes.items()},
         }
     elif isinstance(data, pd.Series):
-        return {
-            'type': 'Series',
-            'shape': data.shape,
-            'dtype': str(data.dtype)
-        }
+        return {"type": "Series", "shape": data.shape, "dtype": str(data.dtype)}
     elif isinstance(data, np.ndarray):
-        return {
-            'type': 'ndarray',
-            'shape': data.shape,
-            'dtype': str(data.dtype)
-        }
+        return {"type": "ndarray", "shape": data.shape, "dtype": str(data.dtype)}
     elif isinstance(data, list):
-        return {
-            'type': 'list',
-            'length': len(data),
-            'sample': str(data[:3]) if data else []
-        }
+        return {"type": "list", "length": len(data), "sample": str(data[:3]) if data else []}
     elif isinstance(data, dict):
-        return {
-            'type': 'dict',
-            'keys': list(data.keys()),
-            'size': len(data)
-        }
+        return {"type": "dict", "keys": list(data.keys()), "size": len(data)}
     else:
-        return {
-            'type': type(data).__name__,
-            'value': str(data)[:100]
-        }
+        return {"type": type(data).__name__, "value": str(data)[:100]}
 
 
 def _extract_dependencies(args: tuple, kwargs: dict) -> List[str]:
@@ -498,12 +484,12 @@ def _extract_dependencies(args: tuple, kwargs: dict) -> List[str]:
             dependencies.append("DataFrame")
         elif isinstance(arg, pd.Series):
             dependencies.append("Series")
-        elif hasattr(arg, '__name__'):
+        elif hasattr(arg, "__name__"):
             dependencies.append(arg.__name__)
 
     # Check kwargs for named dependencies
     for key, value in kwargs.items():
-        if key in ['data', 'prices', 'market_data', 'indicators']:
+        if key in ["data", "prices", "market_data", "indicators"]:
             dependencies.append(f"{key}:{type(value).__name__}")
 
     return dependencies

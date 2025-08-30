@@ -42,13 +42,13 @@ sap.ui.define([
         calculateIndicator: function (aData, sIndicator, oParams) {
             return new Promise(function (resolve, reject) {
                 try {
-                    var oIndicatorFunc = this._mIndicators[sIndicator];
+                    const oIndicatorFunc = this._mIndicators[sIndicator];
                     if (!oIndicatorFunc) {
                         reject(new Error("Indicator not found: " + sIndicator));
                         return;
                     }
 
-                    var aResult = oIndicatorFunc.calculate(aData, oParams || {});
+                    const aResult = oIndicatorFunc.calculate(aData, oParams || {});
                     resolve({
                         indicator: sIndicator,
                         data: aResult,
@@ -82,12 +82,12 @@ sap.ui.define([
         /**
          * Perform market analysis
          * @public
-         * @param {Object} oMarketData Market data object
+         * @param {Object} oMarketData Market data objec
          * @returns {Promise} Analysis promise
          */
         performMarketAnalysis: function (oMarketData) {
             return new Promise(function (resolve) {
-                var oAnalysis = {
+                const oAnalysis = {
                     trend: this._analyzeTrend(oMarketData),
                     momentum: this._analyzeMomentum(oMarketData),
                     volatility: this._analyzeVolatility(oMarketData),
@@ -108,34 +108,34 @@ sap.ui.define([
             this._mIndicators = {
                 sma: {
                     calculate: function (aData, oParams) {
-                        var iPeriod = oParams.period || 20;
+                        const iPeriod = oParams.period || 20;
                         return this._calculateSMA(aData, iPeriod);
                     }.bind(this)
                 },
                 ema: {
                     calculate: function (aData, oParams) {
-                        var iPeriod = oParams.period || 20;
+                        const iPeriod = oParams.period || 20;
                         return this._calculateEMA(aData, iPeriod);
                     }.bind(this)
                 },
                 rsi: {
                     calculate: function (aData, oParams) {
-                        var iPeriod = oParams.period || 14;
+                        const iPeriod = oParams.period || 14;
                         return this._calculateRSI(aData, iPeriod);
                     }.bind(this)
                 },
                 macd: {
                     calculate: function (aData, oParams) {
-                        var iFastPeriod = oParams.fastPeriod || 12;
-                        var iSlowPeriod = oParams.slowPeriod || 26;
-                        var iSignalPeriod = oParams.signalPeriod || 9;
+                        const iFastPeriod = oParams.fastPeriod || 12;
+                        const iSlowPeriod = oParams.slowPeriod || 26;
+                        const iSignalPeriod = oParams.signalPeriod || 9;
                         return this._calculateMACD(aData, iFastPeriod, iSlowPeriod, iSignalPeriod);
                     }.bind(this)
                 },
                 bollinger: {
                     calculate: function (aData, oParams) {
-                        var iPeriod = oParams.period || 20;
-                        var fStdDev = oParams.stdDev || 2;
+                        const iPeriod = oParams.period || 20;
+                        const fStdDev = oParams.stdDev || 2;
                         return this._calculateBollingerBands(aData, iPeriod, fStdDev);
                     }.bind(this)
                 }
@@ -167,10 +167,10 @@ sap.ui.define([
          * @returns {Array} SMA values
          */
         _calculateSMA: function (aData, iPeriod) {
-            var aResult = [];
-            for (var i = iPeriod - 1; i < aData.length; i++) {
-                var fSum = 0;
-                for (var j = 0; j < iPeriod; j++) {
+            const aResult = [];
+            for (let i = iPeriod - 1; i < aData.length; i++) {
+                let fSum = 0;
+                for (let j = 0; j < iPeriod; j++) {
                     fSum += aData[i - j].close;
                 }
                 aResult.push({
@@ -189,16 +189,16 @@ sap.ui.define([
          * @returns {Array} EMA values
          */
         _calculateEMA: function (aData, iPeriod) {
-            var aResult = [];
-            var fMultiplier = 2 / (iPeriod + 1);
-            var fEMA = aData[0].close;
+            const aResult = [];
+            const fMultiplier = 2 / (iPeriod + 1);
+            let fEMA = aData[0].close;
 
             aResult.push({
                 timestamp: aData[0].timestamp,
                 value: fEMA
             });
 
-            for (var i = 1; i < aData.length; i++) {
+            for (let i = 1; i < aData.length; i++) {
                 fEMA = (aData[i].close * fMultiplier) + (fEMA * (1 - fMultiplier));
                 aResult.push({
                     timestamp: aData[i].timestamp,
@@ -216,23 +216,23 @@ sap.ui.define([
          * @returns {Array} RSI values
          */
         _calculateRSI: function (aData, iPeriod) {
-            var aResult = [];
-            var aGains = [];
-            var aLosses = [];
+            const aResult = [];
+            const aGains = [];
+            const aLosses = [];
 
             // Calculate gains and losses
-            for (var i = 1; i < aData.length; i++) {
-                var fChange = aData[i].close - aData[i - 1].close;
+            for (let i = 1; i < aData.length; i++) {
+                const fChange = aData[i].close - aData[i - 1].close;
                 aGains.push(fChange > 0 ? fChange : 0);
                 aLosses.push(fChange < 0 ? Math.abs(fChange) : 0);
             }
 
             // Calculate RSI
-            for (var j = iPeriod - 1; j < aGains.length; j++) {
-                var fAvgGain = aGains.slice(j - iPeriod + 1, j + 1).reduce((a, b) => a + b) / iPeriod;
-                var fAvgLoss = aLosses.slice(j - iPeriod + 1, j + 1).reduce((a, b) => a + b) / iPeriod;
-                var fRS = fAvgGain / fAvgLoss;
-                var fRSI = 100 - (100 / (1 + fRS));
+            for (let j = iPeriod - 1; j < aGains.length; j++) {
+                const fAvgGain = aGains.slice(j - iPeriod + 1, j + 1).reduce((a, b) => a + b) / iPeriod;
+                const fAvgLoss = aLosses.slice(j - iPeriod + 1, j + 1).reduce((a, b) => a + b) / iPeriod;
+                const fRS = fAvgGain / fAvgLoss;
+                const fRSI = 100 - (100 / (1 + fRS));
 
                 aResult.push({
                     timestamp: aData[j + 1].timestamp,

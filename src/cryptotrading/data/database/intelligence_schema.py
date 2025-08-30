@@ -3,25 +3,30 @@ Database schema for persistent AI intelligence and memory
 Stores all insights, decisions, and accumulated knowledge
 """
 from datetime import datetime
-from typing import Dict, Any, List, Optional
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
 
 class IntelligenceType(Enum):
     """Types of intelligence stored"""
+
     AI_INSIGHT = "ai_insight"
-    MCTS_DECISION = "mcts_decision" 
+    MCTS_DECISION = "mcts_decision"
     ML_PREDICTION = "ml_prediction"
     MARKET_ANALYSIS = "market_analysis"
     RISK_ASSESSMENT = "risk_assessment"
     STRATEGY_EVALUATION = "strategy_evaluation"
 
+
 class DecisionStatus(Enum):
     """Status of decisions"""
+
     PROPOSED = "proposed"
     EXECUTED = "executed"
     SUCCESSFUL = "successful"
     FAILED = "failed"
     CANCELLED = "cancelled"
+
 
 def get_intelligence_schemas() -> Dict[str, Dict[str, str]]:
     """Get database schemas for intelligence storage"""
@@ -66,9 +71,8 @@ def get_intelligence_schemas() -> Dict[str, Dict[str, str]]:
                 CREATE INDEX IF NOT EXISTS idx_ai_insights_symbol ON ai_insights(symbol);
                 CREATE INDEX IF NOT EXISTS idx_ai_insights_created ON ai_insights(created_at);
                 CREATE INDEX IF NOT EXISTS idx_ai_insights_session ON ai_insights(session_id);
-            """
+            """,
         },
-        
         "trading_decisions": {
             "sqlite": """
                 CREATE TABLE IF NOT EXISTS trading_decisions (
@@ -119,9 +123,8 @@ def get_intelligence_schemas() -> Dict[str, Dict[str, str]]:
                 CREATE INDEX IF NOT EXISTS idx_decisions_symbol ON trading_decisions(symbol);
                 CREATE INDEX IF NOT EXISTS idx_decisions_status ON trading_decisions(status);
                 CREATE INDEX IF NOT EXISTS idx_decisions_created ON trading_decisions(created_at);
-            """
+            """,
         },
-        
         "ml_predictions": {
             "sqlite": """
                 CREATE TABLE IF NOT EXISTS ml_predictions (
@@ -168,9 +171,8 @@ def get_intelligence_schemas() -> Dict[str, Dict[str, str]]:
                 CREATE INDEX IF NOT EXISTS idx_predictions_symbol ON ml_predictions(symbol);
                 CREATE INDEX IF NOT EXISTS idx_predictions_created ON ml_predictions(created_at);
                 CREATE INDEX IF NOT EXISTS idx_predictions_target ON ml_predictions(target_date);
-            """
+            """,
         },
-        
         "agent_memory": {
             "sqlite": """
                 CREATE TABLE IF NOT EXISTS agent_memory (
@@ -215,9 +217,8 @@ def get_intelligence_schemas() -> Dict[str, Dict[str, str]]:
                 CREATE INDEX IF NOT EXISTS idx_memory_agent ON agent_memory(agent_id);
                 CREATE INDEX IF NOT EXISTS idx_memory_importance ON agent_memory(importance);
                 CREATE INDEX IF NOT EXISTS idx_memory_accessed ON agent_memory(accessed_at);
-            """
+            """,
         },
-        
         "knowledge_graph": {
             "sqlite": """
                 CREATE TABLE IF NOT EXISTS knowledge_graph (
@@ -258,9 +259,8 @@ def get_intelligence_schemas() -> Dict[str, Dict[str, str]]:
                 
                 CREATE INDEX IF NOT EXISTS idx_knowledge_entity ON knowledge_graph(entity_type, entity_id);
                 CREATE INDEX IF NOT EXISTS idx_knowledge_related ON knowledge_graph(related_entity_type, related_entity_id);
-            """
+            """,
         },
-        
         "decision_outcomes": {
             "sqlite": """
                 CREATE TABLE IF NOT EXISTS decision_outcomes (
@@ -301,9 +301,8 @@ def get_intelligence_schemas() -> Dict[str, Dict[str, str]]:
                 
                 CREATE INDEX IF NOT EXISTS idx_outcomes_decision ON decision_outcomes(decision_id);
                 CREATE INDEX IF NOT EXISTS idx_outcomes_success ON decision_outcomes(success);
-            """
+            """,
         },
-        
         "conversation_history": {
             "sqlite": """
                 CREATE TABLE IF NOT EXISTS conversation_history (
@@ -336,9 +335,8 @@ def get_intelligence_schemas() -> Dict[str, Dict[str, str]]:
                 CREATE INDEX IF NOT EXISTS idx_conversation_session ON conversation_history(session_id);
                 CREATE INDEX IF NOT EXISTS idx_conversation_agent ON conversation_history(agent_id);
                 CREATE INDEX IF NOT EXISTS idx_conversation_created ON conversation_history(created_at);
-            """
+            """,
         },
-        
         "ml_model_registry": {
             "sqlite": """
                 CREATE TABLE IF NOT EXISTS ml_model_registry (
@@ -383,9 +381,8 @@ def get_intelligence_schemas() -> Dict[str, Dict[str, str]]:
                 CREATE INDEX IF NOT EXISTS idx_model_registry_type ON ml_model_registry(model_type);
                 CREATE INDEX IF NOT EXISTS idx_model_registry_status ON ml_model_registry(status);
                 CREATE INDEX IF NOT EXISTS idx_model_registry_created ON ml_model_registry(created_at);
-            """
+            """,
         },
-        
         "system_metrics": {
             "sqlite": """
                 CREATE TABLE IF NOT EXISTS system_metrics (
@@ -418,9 +415,8 @@ def get_intelligence_schemas() -> Dict[str, Dict[str, str]]:
                 CREATE INDEX IF NOT EXISTS idx_metrics_name ON system_metrics(metric_name);
                 CREATE INDEX IF NOT EXISTS idx_metrics_timestamp ON system_metrics(timestamp);
                 CREATE INDEX IF NOT EXISTS idx_metrics_service ON system_metrics(service_name);
-            """
+            """,
         },
-        
         "feature_cache": {
             "sqlite": """
                 CREATE TABLE IF NOT EXISTS feature_cache (
@@ -453,9 +449,8 @@ def get_intelligence_schemas() -> Dict[str, Dict[str, str]]:
                 CREATE INDEX IF NOT EXISTS idx_feature_cache_symbol ON feature_cache(symbol);
                 CREATE INDEX IF NOT EXISTS idx_feature_cache_key ON feature_cache(cache_key);
                 CREATE INDEX IF NOT EXISTS idx_feature_cache_expires ON feature_cache(expires_at);
-            """
+            """,
         },
-        
         "error_logs": {
             "sqlite": """
                 CREATE TABLE IF NOT EXISTS error_logs (
@@ -490,9 +485,8 @@ def get_intelligence_schemas() -> Dict[str, Dict[str, str]]:
                 CREATE INDEX IF NOT EXISTS idx_errors_type ON error_logs(error_type);
                 CREATE INDEX IF NOT EXISTS idx_errors_created ON error_logs(created_at);
                 CREATE INDEX IF NOT EXISTS idx_errors_service ON error_logs(service_name);
-            """
+            """,
         },
-        
         "cache_entries": {
             "sqlite": """
                 CREATE TABLE IF NOT EXISTS cache_entries (
@@ -527,9 +521,8 @@ def get_intelligence_schemas() -> Dict[str, Dict[str, str]]:
                 CREATE INDEX IF NOT EXISTS idx_cache_key ON cache_entries(cache_key);
                 CREATE INDEX IF NOT EXISTS idx_cache_expires ON cache_entries(expires_at);
                 CREATE INDEX IF NOT EXISTS idx_cache_type ON cache_entries(cache_type);
-            """
+            """,
         },
-        
         "system_health": {
             "sqlite": """
                 CREATE TABLE IF NOT EXISTS system_health (
@@ -564,9 +557,8 @@ def get_intelligence_schemas() -> Dict[str, Dict[str, str]]:
                 CREATE INDEX IF NOT EXISTS idx_health_component ON system_health(component);
                 CREATE INDEX IF NOT EXISTS idx_health_status ON system_health(status);
                 CREATE INDEX IF NOT EXISTS idx_health_checked ON system_health(checked_at);
-            """
+            """,
         },
-        
         "api_credentials": {
             "sqlite": """
                 CREATE TABLE IF NOT EXISTS api_credentials (
@@ -603,21 +595,19 @@ def get_intelligence_schemas() -> Dict[str, Dict[str, str]]:
                 CREATE INDEX IF NOT EXISTS idx_credentials_service ON api_credentials(service_name);
                 CREATE INDEX IF NOT EXISTS idx_credentials_active ON api_credentials(is_active);
                 CREATE INDEX IF NOT EXISTS idx_credentials_expires ON api_credentials(expires_at);
-            """
-        }
+            """,
+        },
     }
+
 
 def get_all_intelligence_schemas() -> Dict[str, str]:
     """Get all intelligence schemas combined for unified database creation"""
     schemas = get_intelligence_schemas()
-    
+
     # Combine all SQLite schemas
     sqlite_combined = "\n\n".join([schema["sqlite"] for schema in schemas.values()])
-    
+
     # Combine all PostgreSQL schemas
     postgres_combined = "\n\n".join([schema["postgres"] for schema in schemas.values()])
-    
-    return {
-        "sqlite": sqlite_combined,
-        "postgres": postgres_combined
-    }
+
+    return {"sqlite": sqlite_combined, "postgres": postgres_combined}

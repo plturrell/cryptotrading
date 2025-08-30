@@ -67,7 +67,7 @@ sap.ui.define([
          */
         getService: function (sServiceName) {
             if (!this._mServices[sServiceName]) {
-                var oConfig = this._mConfigurations[sServiceName];
+                const oConfig = this._mConfigurations[sServiceName];
                 if (oConfig) {
                     this._mServices[sServiceName] = this._createServiceInstance(sServiceName, oConfig);
                 }
@@ -207,7 +207,7 @@ sap.ui.define([
          * @returns {Object} Service instance
          */
         _createServiceInstance: function (sServiceName, oConfig) {
-            var oServiceInstance = {
+            const oServiceInstance = {
                 name: sServiceName,
                 config: oConfig,
                 status: "initialized",
@@ -234,36 +234,36 @@ sap.ui.define([
 
             // Add service-specific methods based on type
             switch (oConfig.type) {
-                case "websocket":
-                    oServiceInstance.connect = function () {
-                        this.updateStatus("connecting");
-                        // WebSocket connection logic would go here
-                        this.updateStatus("connected");
-                    };
-                    oServiceInstance.disconnect = function () {
-                        this.updateStatus("disconnected");
-                    };
-                    break;
+            case "websocket":
+                oServiceInstance.connect = function () {
+                    this.updateStatus("connecting");
+                    // WebSocket connection logic would go here
+                    this.updateStatus("connected");
+                };
+                oServiceInstance.disconnect = function () {
+                    this.updateStatus("disconnected");
+                };
+                break;
 
-                case "rest":
-                    oServiceInstance.request = function (sMethod, sEndpoint, oData) {
-                        return new Promise(function (resolve, reject) {
-                            // REST request logic would go here
-                            setTimeout(function () {
-                                resolve({ success: true, data: {} });
-                            }, 100);
-                        });
-                    };
-                    break;
+            case "rest":
+                oServiceInstance.request = function (sMethod, sEndpoint, oData) {
+                    return new Promise(function (resolve, reject) {
+                        // REST request logic would go here
+                        setTimeout(function () {
+                            resolve({ success: true, data: {} });
+                        }, 100);
+                    });
+                };
+                break;
 
-                case "blockchain":
-                    oServiceInstance.connectWallet = function (sWalletType) {
-                        return new Promise(function (resolve, reject) {
-                            // Wallet connection logic would go here
-                            resolve({ connected: true, address: "0x..." });
-                        });
-                    };
-                    break;
+            case "blockchain":
+                oServiceInstance.connectWallet = function (sWalletType) {
+                    return new Promise(function (resolve, reject) {
+                        // Wallet connection logic would go here
+                        resolve({ connected: true, address: "0x..." });
+                    });
+                };
+                break;
             }
 
             return oServiceInstance;
@@ -285,7 +285,7 @@ sap.ui.define([
          * @returns {boolean} Health status
          */
         isServiceHealthy: function (sServiceName) {
-            var oService = this.getService(sServiceName);
+            const oService = this.getService(sServiceName);
             return oService ? oService.isHealthy() : false;
         },
 
@@ -296,7 +296,7 @@ sap.ui.define([
          * @returns {string} Service status
          */
         getServiceStatus: function (sServiceName) {
-            var oService = this.getService(sServiceName);
+            const oService = this.getService(sServiceName);
             return oService ? oService.status : "not_found";
         },
 
@@ -307,7 +307,7 @@ sap.ui.define([
         destroy: function () {
             // Cleanup all service instances
             Object.keys(this._mServices).forEach(function (sServiceName) {
-                var oService = this._mServices[sServiceName];
+                const oService = this._mServices[sServiceName];
                 if (oService && oService.destroy) {
                     oService.destroy();
                 }

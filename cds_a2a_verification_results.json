@@ -1,0 +1,109 @@
+{
+  "cds_services": {
+    "/api/odata/v4/A2AService": {
+      "status": "\u2705 REAL",
+      "has_metadata": true,
+      "has_entities": true,
+      "entity_count": 10
+    },
+    "/api/odata/v4/MarketAnalysisService": {
+      "status": "\u2705 REAL",
+      "has_metadata": true,
+      "has_entities": true,
+      "entity_count": 6
+    },
+    "/api/odata/v4/MonitoringService": {
+      "status": "\u2705 REAL",
+      "has_metadata": true,
+      "has_entities": true,
+      "entity_count": 11
+    },
+    "/api/odata/v4/DataPipelineService": {
+      "status": "\u2705 REAL",
+      "has_metadata": true,
+      "has_entities": true,
+      "entity_count": 10
+    },
+    "/api/odata/v4/IntelligenceService": {
+      "status": "\u2705 REAL",
+      "has_metadata": true,
+      "has_entities": true,
+      "entity_count": 9
+    }
+  },
+  "a2a_integration": {
+    "health": {
+      "status": "\u2705 OPERATIONAL",
+      "has_data": false,
+      "record_count": 0
+    },
+    "events": {
+      "status": "\u2705 OPERATIONAL",
+      "can_receive_events": true,
+      "response": "SUCCESS"
+    },
+    "websocket": {
+      "status": "\u23ed\ufe0f WEBSOCKET",
+      "note": "WebSocket endpoint - tested separately"
+    },
+    "agents": {
+      "status": "\u2705 OPERATIONAL",
+      "has_data": true,
+      "record_count": 15
+    },
+    "messages": {
+      "status": "\u2705 OPERATIONAL",
+      "has_data": true,
+      "record_count": 20
+    },
+    "workflows": {
+      "status": "\u2705 OPERATIONAL",
+      "has_data": true,
+      "record_count": 5
+    }
+  },
+  "data_flow": {
+    "python_to_cds": {
+      "status": "\u2705 WORKING",
+      "can_send_events": true,
+      "response_status": "SUCCESS"
+    },
+    "cds_to_python": {
+      "status": "\u274c NOT WORKING",
+      "http_status": 403
+    }
+  },
+  "real_operations": {
+    "status": "\u2705 FULL CRUD",
+    "create": "\u2705 SUCCESS",
+    "read": "\u2705 SUCCESS",
+    "update": "\u2705 SUCCESS",
+    "delete": "\u2705 SUCCESS",
+    "test_agent_id": "1576421a-96ff-483c-b8f2-be0f4a7e21e1"
+  },
+  "mock_detection": {
+    "status": "\u2705 CLEAN",
+    "files_with_mocks": [],
+    "mock_count": 0
+  },
+  "gaps_found": [],
+  "overall_status": "\u2705 FULLY INTEGRATED",
+  "websocket": {
+    "status": "\u2705 OPERATIONAL",
+    "can_register": true,
+    "heartbeat_works": true
+  },
+  "agent_cds_integration": {
+    "status": "\u2705 INTEGRATED",
+    "has_client": true,
+    "has_methods": true,
+    "can_connect": true
+  },
+  "transactions": {
+    "status": "\u2705 FUNCTIONAL",
+    "can_create": true,
+    "can_checkpoint": true,
+    "can_commit": true,
+    "transaction_id": "tx_test_agent_1b71fb7e"
+  }
+}

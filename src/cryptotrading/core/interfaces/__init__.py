@@ -5,103 +5,91 @@ Breaks circular dependencies by defining abstract interfaces
 
 from .agent_interfaces import (
     IAgent,
+    IContextManager,
     IMemoryAgent,
     IToolExecutor,
     IWorkflowExecutor,
-    IContextManager
 )
-
-from .database_interfaces import (
-    IDatabaseClient,
-    IDatabaseManager,
-    IConnectionPool
-)
-
 from .communication_interfaces import (
+    ICircuitBreaker,
+    ICommunicationManager,
+    IEventBus,
+    ILoadBalancer,
     IMessage,
     IMessageHandler,
-    ITransport,
-    ICommunicationManager,
     IProtocolHandler,
     IServiceDiscovery,
-    ILoadBalancer,
-    ICircuitBreaker,
-    IEventBus,
+    ITransport,
+    MessagePriority,
     MessageType,
-    MessagePriority
 )
-
+from .database_interfaces import IConnectionPool, IDatabaseClient, IDatabaseManager
+from .infrastructure_interfaces import (
+    ICache,
+    IConfigProvider,
+    IFileStorage,
+    IHealthChecker,
+    ILockManager,
+    ILogger,
+    IMetricsCollector,
+    IResourceManager,
+    IServiceRegistry,
+    ITaskScheduler,
+    ServiceStatus,
+)
 from .security_interfaces import (
     IAuthenticator,
-    ISecurityManager,
+    ICryptoProvider,
+    IInputValidator,
     IPermissionChecker,
     IRateLimiter,
-    IInputValidator,
-    ICryptoProvider,
     ISecurityAuditor,
-    SecurityLevel
-)
-
-from .infrastructure_interfaces import (
-    IConfigProvider,
-    IServiceRegistry,
-    IHealthChecker,
-    IMetricsCollector,
-    ILogger,
-    ICache,
-    ITaskScheduler,
-    IResourceManager,
-    ILockManager,
-    IFileStorage,
-    ServiceStatus
+    ISecurityManager,
+    SecurityLevel,
 )
 
 __all__ = [
     # Agent interfaces
-    'IAgent',
-    'IMemoryAgent', 
-    'IToolExecutor',
-    'IWorkflowExecutor',
-    'IContextManager',
-    
+    "IAgent",
+    "IMemoryAgent",
+    "IToolExecutor",
+    "IWorkflowExecutor",
+    "IContextManager",
     # Database interfaces
-    'IDatabaseClient',
-    'IDatabaseManager',
-    'IConnectionPool',
-    
+    "IDatabaseClient",
+    "IDatabaseManager",
+    "IConnectionPool",
     # Communication interfaces
-    'IMessage',
-    'IMessageHandler',
-    'ITransport',
-    'ICommunicationManager',
-    'IProtocolHandler',
-    'IServiceDiscovery',
-    'ILoadBalancer',
-    'ICircuitBreaker',
-    'IEventBus',
-    'MessageType',
-    'MessagePriority',
-    
+    "IMessage",
+    "IMessageHandler",
+    "ITransport",
+    "ICommunicationManager",
+    "IProtocolHandler",
+    "IServiceDiscovery",
+    "ILoadBalancer",
+    "ICircuitBreaker",
+    "IEventBus",
+    "MessageType",
+    "MessagePriority",
     # Security interfaces
-    'IAuthenticator',
-    'ISecurityManager',
-    'IPermissionChecker',
-    'IRateLimiter',
-    'IInputValidator',
-    'ICryptoProvider',
-    'ISecurityAuditor',
-    'SecurityLevel',
-    
+    "IAuthenticator",
+    "ISecurityManager",
+    "IPermissionChecker",
+    "IRateLimiter",
+    "IInputValidator",
+    "ICryptoProvider",
+    "ISecurityAuditor",
+    "SecurityLevel",
     # Infrastructure interfaces
-    'IConfigProvider',
-    'IServiceRegistry',
-    'IHealthChecker',
-    'IMetricsCollector',
-    'ILogger',
-    'ICache',
-    'ITaskScheduler',
-    'IResourceManager',
-    'ILockManager',
-    'IFileStorage',
-    'ServiceStatus'
+    "IConfigProvider",
+    "IServiceRegistry",
+    "IHealthChecker",
+    "IMetricsCollector",
+    "ILogger",
+    "ICache",
+    "ITaskScheduler",
+    "IResourceManager",
+    "ILockManager",
+    "IFileStorage",
+    "ServiceStatus",
 ]
