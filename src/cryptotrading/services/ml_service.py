@@ -60,7 +60,10 @@ class MLModelRegistry:
         if not matching_models:
             return None
         
-        best_model = max(matching_models, key=lambda x: x[1]["performance"].get(metric, 0))
+        def get_performance_metric(model_tuple):
+            return model_tuple[1]["performance"].get(metric, 0)
+        
+        best_model = max(matching_models, key=get_performance_metric)
         return best_model[1]
 
 

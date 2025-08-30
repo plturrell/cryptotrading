@@ -10,8 +10,8 @@ sap.ui.define([
      */
     return BaseObject.extend("com.rex.cryptotrading.model.EventBusManager", {
         
-        varructor: function() {
-            BaseObject.prototype.varructor.apply(this, arguments);
+        constructor: function() {
+            BaseObject.prototype.constructor.apply(this, arguments);
             this._oEventBus = EventBus.getInstance();
             this._mEventChannels = {};
             this._aSubscriptions = [];
@@ -22,7 +22,7 @@ sap.ui.define([
          */
         CHANNELS: {
             MARKET: "market",
-            WALLET: "walvar", 
+            WALLET: "wallet", 
             ML: "ml",
             UI: "ui",
             NAVIGATION: "navigation",

@@ -155,7 +155,7 @@ class Grok4Client:
             }}"""
             
             payload = {
-                'model': 'grok-2-1212',
+                'model': 'grok-4-0709',
                 'messages': [
                     {'role': 'system', 'content': 'You are an expert cryptocurrency market analyst with deep knowledge of trading patterns, market sentiment, and risk assessment.'},
                     {'role': 'user', 'content': prompt}
@@ -253,7 +253,7 @@ class Grok4Client:
             }}"""
             
             payload = {
-                'model': 'grok-2-1212',
+                'model': 'grok-4-0709',
                 'messages': [
                     {'role': 'system', 'content': 'You are an expert portfolio risk analyst specializing in cryptocurrency trading and risk management.'},
                     {'role': 'user', 'content': prompt}
@@ -344,7 +344,7 @@ class Grok4Client:
             }}"""
             
             payload = {
-                'model': 'grok-2-1212',
+                'model': 'grok-4-0709',
                 'messages': [
                     {'role': 'system', 'content': 'You are an expert cryptocurrency market analyst specializing in price prediction and trend analysis.'},
                     {'role': 'user', 'content': prompt}
@@ -435,7 +435,7 @@ class Grok4Client:
             }}"""
             
             payload = {
-                'model': 'grok-2-1212',
+                'model': 'grok-4-0709',
                 'messages': [
                     {'role': 'system', 'content': 'You are an expert quantitative analyst specializing in cryptocurrency trading strategy evaluation and risk assessment.'},
                     {'role': 'user', 'content': prompt}
@@ -525,7 +525,7 @@ class Grok4Client:
             }}"""
             
             payload = {
-                'model': 'grok-2-1212',
+                'model': 'grok-4-0709',
                 'messages': [
                     {'role': 'system', 'content': 'You are an expert quantitative analyst specializing in cryptocurrency correlation analysis and portfolio diversification.'},
                     {'role': 'user', 'content': prompt}

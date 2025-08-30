@@ -1,0 +1,1218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Capabilities.V1.xml">
+    <edmx:Include Alias="Capabilities" Namespace="Org.OData.Capabilities.V1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/Common.xml">
+    <edmx:Include Alias="Common" Namespace="com.sap.vocabularies.Common.v1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Core.V1.xml">
+    <edmx:Include Alias="Core" Namespace="Org.OData.Core.V1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/UI.xml">
+    <edmx:Include Alias="UI" Namespace="com.sap.vocabularies.UI.v1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Validation.V1.xml">
+    <edmx:Include Alias="Validation" Namespace="Org.OData.Validation.V1"/>
+  </edmx:Reference>
+  <edmx:DataServices>
+    <Schema Namespace="com.rex.cryptotrading.intelligence.service.IntelligenceService" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <Annotation Term="Core.Links">
+        <Collection>
+          <Record>
+            <PropertyValue Property="rel" String="author"/>
+            <PropertyValue Property="href" String="https://cap.cloud.sap"/>
+          </Record>
+        </Collection>
+      </Annotation>
+      <EntityContainer Name="EntityContainer">
+        <EntitySet Name="AIInsights" EntityType="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights">
+          <NavigationPropertyBinding Path="decisions" Target="TradingDecisions"/>
+          <NavigationPropertyBinding Path="SiblingEntity" Target="AIInsights"/>
+        </EntitySet>
+        <EntitySet Name="TradingDecisions" EntityType="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions">
+          <NavigationPropertyBinding Path="parentInsight" Target="AIInsights"/>
+          <NavigationPropertyBinding Path="outcomes" Target="DecisionOutcomes"/>
+          <NavigationPropertyBinding Path="SiblingEntity" Target="TradingDecisions"/>
+        </EntitySet>
+        <EntitySet Name="MLPredictions" EntityType="com.rex.cryptotrading.intelligence.service.IntelligenceService.MLPredictions"/>
+        <EntitySet Name="AgentMemory" EntityType="com.rex.cryptotrading.intelligence.service.IntelligenceService.AgentMemory"/>
+        <EntitySet Name="KnowledgeGraph" EntityType="com.rex.cryptotrading.intelligence.service.IntelligenceService.KnowledgeGraph"/>
+        <EntitySet Name="DecisionOutcomes" EntityType="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes">
+          <NavigationPropertyBinding Path="decision" Target="TradingDecisions"/>
+          <NavigationPropertyBinding Path="SiblingEntity" Target="DecisionOutcomes"/>
+        </EntitySet>
+        <EntitySet Name="InsightPerformance" EntityType="com.rex.cryptotrading.intelligence.service.IntelligenceService.InsightPerformance"/>
+        <EntitySet Name="ModelAccuracy" EntityType="com.rex.cryptotrading.intelligence.service.IntelligenceService.ModelAccuracy"/>
+        <EntitySet Name="DecisionSuccessRate" EntityType="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionSuccessRate"/>
+        <ActionImport Name="generateInsight" Action="com.rex.cryptotrading.intelligence.service.IntelligenceService.generateInsight"/>
+        <ActionImport Name="executeDecision" Action="com.rex.cryptotrading.intelligence.service.IntelligenceService.executeDecision"/>
+        <ActionImport Name="trainModel" Action="com.rex.cryptotrading.intelligence.service.IntelligenceService.trainModel"/>
+        <ActionImport Name="updateAgentMemory" Action="com.rex.cryptotrading.intelligence.service.IntelligenceService.updateAgentMemory"/>
+        <FunctionImport Name="getInsightHistory" Function="com.rex.cryptotrading.intelligence.service.IntelligenceService.getInsightHistory"/>
+        <FunctionImport Name="getPredictionAccuracy" Function="com.rex.cryptotrading.intelligence.service.IntelligenceService.getPredictionAccuracy"/>
+        <FunctionImport Name="getDecisionAnalytics" Function="com.rex.cryptotrading.intelligence.service.IntelligenceService.getDecisionAnalytics"/>
+        <FunctionImport Name="queryKnowledgeGraph" Function="com.rex.cryptotrading.intelligence.service.IntelligenceService.queryKnowledgeGraph"/>
+        <FunctionImport Name="getAgentPerformance" Function="com.rex.cryptotrading.intelligence.service.IntelligenceService.getAgentPerformance"/>
+        <FunctionImport Name="backtest" Function="com.rex.cryptotrading.intelligence.service.IntelligenceService.backtest"/>
+        <FunctionImport Name="getRealtimeSignals" Function="com.rex.cryptotrading.intelligence.service.IntelligenceService.getRealtimeSignals"/>
+        <FunctionImport Name="getMarketSentiment" Function="com.rex.cryptotrading.intelligence.service.IntelligenceService.getMarketSentiment"/>
+      </EntityContainer>
+      <EntityType Name="AIInsights">
+        <Key>
+          <PropertyRef Name="ID"/>
+          <PropertyRef Name="IsActiveEntity"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="insightType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="symbol" Type="Edm.String" MaxLength="20"/>
+        <Property Name="recommendation" Type="Edm.String" MaxLength="20"/>
+        <Property Name="confidence" Type="Edm.Decimal" Precision="5" Scale="4"/>
+        <Property Name="score" Type="Edm.Decimal" Precision="10" Scale="4"/>
+        <Property Name="riskLevel" Type="Edm.String" MaxLength="20"/>
+        <Property Name="reasoning" Type="Edm.String"/>
+        <Property Name="source" Type="Edm.String" MaxLength="50" DefaultValue="grok4"/>
+        <Property Name="rawResponse" Type="Edm.String"/>
+        <Property Name="sessionId" Type="Edm.String" MaxLength="50"/>
+        <NavigationProperty Name="decisions" Type="Collection(com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions)" Partner="parentInsight">
+          <OnDelete Action="Cascade"/>
+        </NavigationProperty>
+        <Property Name="IsActiveEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="true"/>
+        <Property Name="HasActiveEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="false"/>
+        <Property Name="HasDraftEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="false"/>
+        <NavigationProperty Name="DraftAdministrativeData" Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.DraftAdministrativeData" ContainsTarget="true"/>
+        <NavigationProperty Name="SiblingEntity" Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights"/>
+      </EntityType>
+      <EntityType Name="TradingDecisions">
+        <Key>
+          <PropertyRef Name="ID"/>
+          <PropertyRef Name="IsActiveEntity"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="decisionType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="action" Type="Edm.String" MaxLength="20"/>
+        <Property Name="symbol" Type="Edm.String" MaxLength="20"/>
+        <Property Name="amount" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="price" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="confidence" Type="Edm.Decimal" Precision="5" Scale="4"/>
+        <Property Name="expectedValue" Type="Edm.Decimal" Precision="20" Scale="4"/>
+        <Property Name="riskScore" Type="Edm.Decimal" Precision="5" Scale="4"/>
+        <Property Name="reasoning" Type="Edm.String"/>
+        <Property Name="algorithm" Type="Edm.String" MaxLength="50"/>
+        <Property Name="status" Type="Edm.String" MaxLength="20" DefaultValue="PROPOSED"/>
+        <Property Name="executedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="sessionId" Type="Edm.String" MaxLength="50"/>
+        <NavigationProperty Name="parentInsight" Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights" Partner="decisions">
+          <ReferentialConstraint Property="parentInsight_ID" ReferencedProperty="ID"/>
+        </NavigationProperty>
+        <Property Name="parentInsight_ID" Type="Edm.Guid"/>
+        <NavigationProperty Name="outcomes" Type="Collection(com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes)" Partner="decision">
+          <OnDelete Action="Cascade"/>
+        </NavigationProperty>
+        <Property Name="IsActiveEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="true"/>
+        <Property Name="HasActiveEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="false"/>
+        <Property Name="HasDraftEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="false"/>
+        <NavigationProperty Name="DraftAdministrativeData" Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.DraftAdministrativeData" ContainsTarget="true"/>
+        <NavigationProperty Name="SiblingEntity" Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions"/>
+      </EntityType>
+      <EntityType Name="MLPredictions">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modelType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="symbol" Type="Edm.String" MaxLength="20"/>
+        <Property Name="predictionType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="predictedValue" Type="Edm.Decimal" Precision="20" Scale="8"/>
+        <Property Name="confidence" Type="Edm.Decimal" Precision="5" Scale="4"/>
+        <Property Name="timeHorizon" Type="Edm.String" MaxLength="20"/>
+        <Property Name="featuresUsed" Type="Edm.String"/>
+        <Property Name="modelVersion" Type="Edm.String" MaxLength="20"/>
+        <Property Name="accuracyScore" Type="Edm.Decimal" Precision="5" Scale="4"/>
+        <Property Name="targetDate" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="actualValue" Type="Edm.Decimal" Precision="20" Scale="8"/>
+        <Property Name="error" Type="Edm.Decimal" Precision="10" Scale="4"/>
+        <Property Name="sessionId" Type="Edm.String" MaxLength="50"/>
+      </EntityType>
+      <EntityType Name="AgentMemory">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="agentId" Type="Edm.String" MaxLength="50"/>
+        <Property Name="memoryKey" Type="Edm.String" MaxLength="100"/>
+        <Property Name="memoryValue" Type="Edm.String"/>
+        <Property Name="memoryType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="importance" Type="Edm.Decimal" Precision="3" Scale="2" DefaultValue="0.5"/>
+        <Property Name="context" Type="Edm.String"/>
+        <Property Name="metadata" Type="Edm.String"/>
+        <Property Name="accessedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="accessCount" Type="Edm.Int32" DefaultValue="1"/>
+        <Property Name="expiresAt" Type="Edm.DateTimeOffset" Precision="7"/>
+      </EntityType>
+      <EntityType Name="KnowledgeGraph">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="entityType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="entityId" Type="Edm.String" MaxLength="100"/>
+        <Property Name="relationType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="relatedEntityType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="relatedEntityId" Type="Edm.String" MaxLength="100"/>
+        <Property Name="strength" Type="Edm.Decimal" Precision="3" Scale="2" DefaultValue="1.0"/>
+        <Property Name="confidence" Type="Edm.Decimal" Precision="3" Scale="2" DefaultValue="1.0"/>
+        <Property Name="evidence" Type="Edm.String"/>
+      </EntityType>
+      <EntityType Name="DecisionOutcomes">
+        <Key>
+          <PropertyRef Name="ID"/>
+          <PropertyRef Name="IsActiveEntity"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <NavigationProperty Name="decision" Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions" Partner="outcomes">
+          <ReferentialConstraint Property="decision_ID" ReferencedProperty="ID"/>
+        </NavigationProperty>
+        <Property Name="decision_ID" Type="Edm.Guid"/>
+        <Property Name="outcomeType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="expectedOutcome" Type="Edm.Decimal" Precision="20" Scale="4"/>
+        <Property Name="actualOutcome" Type="Edm.Decimal" Precision="20" Scale="4"/>
+        <Property Name="profitLoss" Type="Edm.Decimal" Precision="20" Scale="4"/>
+        <Property Name="executionPrice" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="executionTime" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="marketConditions" Type="Edm.String"/>
+        <Property Name="success" Type="Edm.Boolean"/>
+        <Property Name="lessonsLearned" Type="Edm.String"/>
+        <Property Name="IsActiveEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="true"/>
+        <Property Name="HasActiveEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="false"/>
+        <Property Name="HasDraftEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="false"/>
+        <NavigationProperty Name="DraftAdministrativeData" Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.DraftAdministrativeData" ContainsTarget="true"/>
+        <NavigationProperty Name="SiblingEntity" Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes"/>
+      </EntityType>
+      <EntityType Name="InsightPerformance">
+        <Key>
+          <PropertyRef Name="insightType"/>
+          <PropertyRef Name="source"/>
+        </Key>
+        <Property Name="insightType" Type="Edm.String" Nullable="false"/>
+        <Property Name="source" Type="Edm.String" Nullable="false"/>
+        <Property Name="totalInsights" Type="Edm.Int32"/>
+        <Property Name="avgConfidence" Type="Edm.Decimal" Precision="5" Scale="4"/>
+        <Property Name="successfulDecisions" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="ModelAccuracy">
+        <Key>
+          <PropertyRef Name="modelType"/>
+          <PropertyRef Name="modelVersion"/>
+        </Key>
+        <Property Name="modelType" Type="Edm.String" Nullable="false"/>
+        <Property Name="modelVersion" Type="Edm.String" Nullable="false"/>
+        <Property Name="totalPredictions" Type="Edm.Int32"/>
+        <Property Name="avgConfidence" Type="Edm.Decimal" Precision="5" Scale="4"/>
+        <Property Name="avgAccuracy" Type="Edm.Decimal" Precision="5" Scale="4"/>
+        <Property Name="avgError" Type="Edm.Decimal" Precision="10" Scale="4"/>
+      </EntityType>
+      <EntityType Name="DecisionSuccessRate">
+        <Key>
+          <PropertyRef Name="algorithm"/>
+          <PropertyRef Name="action"/>
+        </Key>
+        <Property Name="algorithm" Type="Edm.String" Nullable="false"/>
+        <Property Name="action" Type="Edm.String" Nullable="false"/>
+        <Property Name="totalDecisions" Type="Edm.Int32"/>
+        <Property Name="successfulCount" Type="Edm.Int32"/>
+        <Property Name="successRate" Type="Edm.Decimal" Precision="5" Scale="2"/>
+      </EntityType>
+      <EntityType Name="DraftAdministrativeData">
+        <Key>
+          <PropertyRef Name="DraftUUID"/>
+        </Key>
+        <Property Name="DraftUUID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="CreationDateTime" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="CreatedByUser" Type="Edm.String" MaxLength="256"/>
+        <Property Name="DraftIsCreatedByMe" Type="Edm.Boolean"/>
+        <Property Name="LastChangeDateTime" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="LastChangedByUser" Type="Edm.String" MaxLength="256"/>
+        <Property Name="InProcessByUser" Type="Edm.String" MaxLength="256"/>
+        <Property Name="DraftIsProcessedByMe" Type="Edm.Boolean"/>
+      </EntityType>
+      <ComplexType Name="return_com_rex_cryptotrading_intelligence_service_IntelligenceService_generateInsight">
+        <Property Name="insightId" Type="Edm.String"/>
+        <Property Name="recommendation" Type="Edm.String"/>
+        <Property Name="confidence" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="reasoning" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_intelligence_service_IntelligenceService_executeDecision">
+        <Property Name="success" Type="Edm.Boolean"/>
+        <Property Name="executionId" Type="Edm.String"/>
+        <Property Name="message" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_intelligence_service_IntelligenceService_trainModel">
+        <Property Name="modelId" Type="Edm.String"/>
+        <Property Name="trainingStatus" Type="Edm.String"/>
+        <Property Name="estimatedTime" Type="Edm.Int32"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_intelligence_service_IntelligenceService_updateAgentMemory">
+        <Property Name="updatedCount" Type="Edm.Int32"/>
+        <Property Name="message" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="ap_com_rex_cryptotrading_intelligence_service_IntelligenceService_updateAgentMemory_memories">
+        <Property Name="memoryKey" Type="Edm.String"/>
+        <Property Name="memoryValue" Type="Edm.String"/>
+        <Property Name="importance" Type="Edm.Decimal" Scale="variable"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_intelligence_service_IntelligenceService_getInsightHistory">
+        <Property Name="timestamp" Type="Edm.DateTimeOffset"/>
+        <Property Name="insightType" Type="Edm.String"/>
+        <Property Name="recommendation" Type="Edm.String"/>
+        <Property Name="confidence" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="outcome" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_intelligence_service_IntelligenceService_getPredictionAccuracy">
+        <Property Name="accuracy" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="precision" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="recall" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="f1Score" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="totalPredictions" Type="Edm.Int32"/>
+        <Property Name="correctPredictions" Type="Edm.Int32"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_intelligence_service_IntelligenceService_getDecisionAnalytics">
+        <Property Name="totalDecisions" Type="Edm.Int32"/>
+        <Property Name="successRate" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="avgProfitLoss" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="bestDecision" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="worstDecision" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="sharpeRatio" Type="Edm.Decimal" Scale="variable"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_intelligence_service_IntelligenceService_queryKnowledgeGraph">
+        <Property Name="relationType" Type="Edm.String"/>
+        <Property Name="relatedEntity" Type="Edm.String"/>
+        <Property Name="strength" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="path" Type="Collection(Edm.String)" Nullable="true"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_intelligence_service_IntelligenceService_getAgentPerformance">
+        <Property Name="totalMemories" Type="Edm.Int32"/>
+        <Property Name="avgImportance" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="recentActivity" Type="Collection(com.rex.cryptotrading.intelligence.service.IntelligenceService.return_com_rex_cryptotrading_intelligence_service_IntelligenceService_getAgentPerformance_recentActivity)" Nullable="true"/>
+        <Property Name="successMetrics" Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.return_com_rex_cryptotrading_intelligence_service_IntelligenceService_getAgentPerformance_successMetrics"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_intelligence_service_IntelligenceService_getAgentPerformance_recentActivity">
+        <Property Name="timestamp" Type="Edm.DateTimeOffset"/>
+        <Property Name="action" Type="Edm.String"/>
+        <Property Name="result" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_intelligence_service_IntelligenceService_getAgentPerformance_successMetrics">
+        <Property Name="decisions" Type="Edm.Int32"/>
+        <Property Name="successRate" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="profitability" Type="Edm.Decimal" Scale="variable"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_intelligence_service_IntelligenceService_backtest">
+        <Property Name="finalCapital" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="totalReturn" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="annualizedReturn" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="maxDrawdown" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="winRate" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="profitFactor" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="trades" Type="Collection(com.rex.cryptotrading.intelligence.service.IntelligenceService.return_com_rex_cryptotrading_intelligence_service_IntelligenceService_backtest_trades)" Nullable="true"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_intelligence_service_IntelligenceService_backtest_trades">
+        <Property Name="timestamp" Type="Edm.DateTimeOffset"/>
+        <Property Name="action" Type="Edm.String"/>
+        <Property Name="symbol" Type="Edm.String"/>
+        <Property Name="quantity" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="price" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="pnl" Type="Edm.Decimal" Scale="variable"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_intelligence_service_IntelligenceService_getRealtimeSignals">
+        <Property Name="symbol" Type="Edm.String"/>
+        <Property Name="signal" Type="Edm.String"/>
+        <Property Name="strength" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="timeframe" Type="Edm.String"/>
+        <Property Name="indicators" Type="Collection(com.rex.cryptotrading.intelligence.service.IntelligenceService.return_com_rex_cryptotrading_intelligence_service_IntelligenceService_getRealtimeSignals_indicators)" Nullable="true"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_intelligence_service_IntelligenceService_getRealtimeSignals_indicators">
+        <Property Name="name" Type="Edm.String"/>
+        <Property Name="value" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="signal" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_intelligence_service_IntelligenceService_getMarketSentiment">
+        <Property Name="overall" Type="Edm.String"/>
+        <Property Name="score" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="sources" Type="Collection(com.rex.cryptotrading.intelligence.service.IntelligenceService.return_com_rex_cryptotrading_intelligence_service_IntelligenceService_getMarketSentiment_sources)" Nullable="true"/>
+        <Property Name="newsImpact" Type="Edm.String"/>
+        <Property Name="socialMediaTrend" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_intelligence_service_IntelligenceService_getMarketSentiment_sources">
+        <Property Name="source" Type="Edm.String"/>
+        <Property Name="sentiment" Type="Edm.String"/>
+        <Property Name="confidence" Type="Edm.Decimal" Scale="variable"/>
+      </ComplexType>
+      <Action Name="draftPrepare" IsBound="true" EntitySetPath="in">
+        <Parameter Name="in" Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights"/>
+        <Parameter Name="SideEffectsQualifier" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights"/>
+      </Action>
+      <Action Name="draftPrepare" IsBound="true" EntitySetPath="in">
+        <Parameter Name="in" Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions"/>
+        <Parameter Name="SideEffectsQualifier" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions"/>
+      </Action>
+      <Action Name="draftPrepare" IsBound="true" EntitySetPath="in">
+        <Parameter Name="in" Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes"/>
+        <Parameter Name="SideEffectsQualifier" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes"/>
+      </Action>
+      <Action Name="draftActivate" IsBound="true" EntitySetPath="in">
+        <Parameter Name="in" Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights"/>
+        <ReturnType Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights"/>
+      </Action>
+      <Action Name="draftEdit" IsBound="true" EntitySetPath="in">
+        <Parameter Name="in" Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights"/>
+        <Parameter Name="PreserveChanges" Type="Edm.Boolean"/>
+        <ReturnType Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights"/>
+      </Action>
+      <Action Name="generateInsight" IsBound="false">
+        <Parameter Name="symbol" Type="Edm.String"/>
+        <Parameter Name="analysisType" Type="Edm.String"/>
+        <Parameter Name="timeframe" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.return_com_rex_cryptotrading_intelligence_service_IntelligenceService_generateInsight"/>
+      </Action>
+      <Action Name="executeDecision" IsBound="false">
+        <Parameter Name="decisionId" Type="Edm.String"/>
+        <Parameter Name="confirmExecution" Type="Edm.Boolean"/>
+        <ReturnType Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.return_com_rex_cryptotrading_intelligence_service_IntelligenceService_executeDecision"/>
+      </Action>
+      <Action Name="trainModel" IsBound="false">
+        <Parameter Name="modelType" Type="Edm.String"/>
+        <Parameter Name="trainingData" Type="Edm.String"/>
+        <Parameter Name="hyperparameters" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.return_com_rex_cryptotrading_intelligence_service_IntelligenceService_trainModel"/>
+      </Action>
+      <Action Name="updateAgentMemory" IsBound="false">
+        <Parameter Name="agentId" Type="Edm.String"/>
+        <Parameter Name="memories" Type="Collection(com.rex.cryptotrading.intelligence.service.IntelligenceService.ap_com_rex_cryptotrading_intelligence_service_IntelligenceService_updateAgentMemory_memories)" Nullable="true"/>
+        <ReturnType Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.return_com_rex_cryptotrading_intelligence_service_IntelligenceService_updateAgentMemory"/>
+      </Action>
+      <Function Name="getInsightHistory" IsBound="false" IsComposable="false">
+        <Parameter Name="symbol" Type="Edm.String"/>
+        <Parameter Name="startDate" Type="Edm.DateTimeOffset"/>
+        <Parameter Name="endDate" Type="Edm.DateTimeOffset"/>
+        <ReturnType Type="Collection(com.rex.cryptotrading.intelligence.service.IntelligenceService.return_com_rex_cryptotrading_intelligence_service_IntelligenceService_getInsightHistory)" Nullable="true"/>
+      </Function>
+      <Function Name="getPredictionAccuracy" IsBound="false" IsComposable="false">
+        <Parameter Name="modelType" Type="Edm.String"/>
+        <Parameter Name="period" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.return_com_rex_cryptotrading_intelligence_service_IntelligenceService_getPredictionAccuracy"/>
+      </Function>
+      <Function Name="getDecisionAnalytics" IsBound="false" IsComposable="false">
+        <Parameter Name="algorithm" Type="Edm.String"/>
+        <Parameter Name="period" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.return_com_rex_cryptotrading_intelligence_service_IntelligenceService_getDecisionAnalytics"/>
+      </Function>
+      <Function Name="queryKnowledgeGraph" IsBound="false" IsComposable="false">
+        <Parameter Name="entityType" Type="Edm.String"/>
+        <Parameter Name="entityId" Type="Edm.String"/>
+        <Parameter Name="depth" Type="Edm.Int32"/>
+        <ReturnType Type="Collection(com.rex.cryptotrading.intelligence.service.IntelligenceService.return_com_rex_cryptotrading_intelligence_service_IntelligenceService_queryKnowledgeGraph)" Nullable="true"/>
+      </Function>
+      <Function Name="getAgentPerformance" IsBound="false" IsComposable="false">
+        <Parameter Name="agentId" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.return_com_rex_cryptotrading_intelligence_service_IntelligenceService_getAgentPerformance"/>
+      </Function>
+      <Function Name="backtest" IsBound="false" IsComposable="false">
+        <Parameter Name="strategy" Type="Edm.String"/>
+        <Parameter Name="startDate" Type="Edm.DateTimeOffset"/>
+        <Parameter Name="endDate" Type="Edm.DateTimeOffset"/>
+        <Parameter Name="initialCapital" Type="Edm.Decimal" Scale="variable"/>
+        <ReturnType Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.return_com_rex_cryptotrading_intelligence_service_IntelligenceService_backtest"/>
+      </Function>
+      <Function Name="getRealtimeSignals" IsBound="false" IsComposable="false">
+        <ReturnType Type="Collection(com.rex.cryptotrading.intelligence.service.IntelligenceService.return_com_rex_cryptotrading_intelligence_service_IntelligenceService_getRealtimeSignals)" Nullable="true"/>
+      </Function>
+      <Function Name="getMarketSentiment" IsBound="false" IsComposable="false">
+        <Parameter Name="symbol" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.intelligence.service.IntelligenceService.return_com_rex_cryptotrading_intelligence_service_IntelligenceService_getMarketSentiment"/>
+      </Function>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.EntityContainer/AIInsights">
+        <Annotation Term="Common.DraftRoot">
+          <Record Type="Common.DraftRootType">
+            <PropertyValue Property="ActivationAction" String="com.rex.cryptotrading.intelligence.service.IntelligenceService.draftActivate"/>
+            <PropertyValue Property="EditAction" String="com.rex.cryptotrading.intelligence.service.IntelligenceService.draftEdit"/>
+            <PropertyValue Property="PreparationAction" String="com.rex.cryptotrading.intelligence.service.IntelligenceService.draftPrepare"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights/insightType">
+        <Annotation Term="Common.Label" String="Insight Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights/symbol">
+        <Annotation Term="Common.Label" String="Symbol"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights/recommendation">
+        <Annotation Term="Common.Label" String="Recommendation"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="STRONG_BUY"/>
+              <PropertyValue Property="Value" String="STRONG_BUY"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="BUY"/>
+              <PropertyValue Property="Value" String="BUY"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="HOLD"/>
+              <PropertyValue Property="Value" String="HOLD"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="SELL"/>
+              <PropertyValue Property="Value" String="SELL"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="STRONG_SELL"/>
+              <PropertyValue Property="Value" String="STRONG_SELL"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights/confidence">
+        <Annotation Term="Common.Label" String="Confidence Score"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights/score">
+        <Annotation Term="Common.Label" String="Analysis Score"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights/riskLevel">
+        <Annotation Term="Common.Label" String="Risk Level"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="VERY_LOW"/>
+              <PropertyValue Property="Value" String="VERY_LOW"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="LOW"/>
+              <PropertyValue Property="Value" String="LOW"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="MEDIUM"/>
+              <PropertyValue Property="Value" String="MEDIUM"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="HIGH"/>
+              <PropertyValue Property="Value" String="HIGH"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="VERY_HIGH"/>
+              <PropertyValue Property="Value" String="VERY_HIGH"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights/reasoning">
+        <Annotation Term="Common.Label" String="Reasoning"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights/source">
+        <Annotation Term="Common.Label" String="AI Source"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights/rawResponse">
+        <Annotation Term="Common.Label" String="Raw AI Response"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights/sessionId">
+        <Annotation Term="Common.Label" String="Session ID"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights/IsActiveEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights/HasActiveEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights/HasDraftEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AIInsights/DraftAdministrativeData">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.EntityContainer/TradingDecisions">
+        <Annotation Term="Common.DraftNode">
+          <Record Type="Common.DraftNodeType">
+            <PropertyValue Property="PreparationAction" String="com.rex.cryptotrading.intelligence.service.IntelligenceService.draftPrepare"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions/decisionType">
+        <Annotation Term="Common.Label" String="Decision Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions/action">
+        <Annotation Term="Common.Label" String="Action"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="BUY"/>
+              <PropertyValue Property="Value" String="BUY"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="SELL"/>
+              <PropertyValue Property="Value" String="SELL"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="HOLD"/>
+              <PropertyValue Property="Value" String="HOLD"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="REBALANCE"/>
+              <PropertyValue Property="Value" String="REBALANCE"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="STOP_LOSS"/>
+              <PropertyValue Property="Value" String="STOP_LOSS"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="TAKE_PROFIT"/>
+              <PropertyValue Property="Value" String="TAKE_PROFIT"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions/symbol">
+        <Annotation Term="Common.Label" String="Symbol"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions/amount">
+        <Annotation Term="Common.Label" String="Amount"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions/price">
+        <Annotation Term="Common.Label" String="Price"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions/confidence">
+        <Annotation Term="Common.Label" String="Confidence"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions/expectedValue">
+        <Annotation Term="Common.Label" String="Expected Value"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions/riskScore">
+        <Annotation Term="Common.Label" String="Risk Score"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions/reasoning">
+        <Annotation Term="Common.Label" String="Reasoning"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions/algorithm">
+        <Annotation Term="Common.Label" String="Algorithm Used"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions/status">
+        <Annotation Term="Common.Label" String="Status"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="PROPOSED"/>
+              <PropertyValue Property="Value" String="PROPOSED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="EXECUTED"/>
+              <PropertyValue Property="Value" String="EXECUTED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="SUCCESSFUL"/>
+              <PropertyValue Property="Value" String="SUCCESSFUL"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="FAILED"/>
+              <PropertyValue Property="Value" String="FAILED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="CANCELLED"/>
+              <PropertyValue Property="Value" String="CANCELLED"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions/executedAt">
+        <Annotation Term="Common.Label" String="Execution Time"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions/sessionId">
+        <Annotation Term="Common.Label" String="Session ID"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions/parentInsight">
+        <Annotation Term="Common.Label" String="Parent Insight"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions/parentInsight_ID">
+        <Annotation Term="Common.Label" String="Parent Insight"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions/IsActiveEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions/HasActiveEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions/HasDraftEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.TradingDecisions/DraftAdministrativeData">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.MLPredictions/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.MLPredictions/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.MLPredictions/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.MLPredictions/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.MLPredictions/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.MLPredictions/modelType">
+        <Annotation Term="Common.Label" String="Model Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.MLPredictions/symbol">
+        <Annotation Term="Common.Label" String="Symbol"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.MLPredictions/predictionType">
+        <Annotation Term="Common.Label" String="Prediction Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.MLPredictions/predictedValue">
+        <Annotation Term="Common.Label" String="Predicted Value"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.MLPredictions/confidence">
+        <Annotation Term="Common.Label" String="Confidence"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.MLPredictions/timeHorizon">
+        <Annotation Term="Common.Label" String="Time Horizon"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.MLPredictions/featuresUsed">
+        <Annotation Term="Common.Label" String="Features Used (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.MLPredictions/modelVersion">
+        <Annotation Term="Common.Label" String="Model Version"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.MLPredictions/accuracyScore">
+        <Annotation Term="Common.Label" String="Accuracy Score"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.MLPredictions/targetDate">
+        <Annotation Term="Common.Label" String="Target Date"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.MLPredictions/actualValue">
+        <Annotation Term="Common.Label" String="Actual Value"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.MLPredictions/error">
+        <Annotation Term="Common.Label" String="Prediction Error"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.MLPredictions/sessionId">
+        <Annotation Term="Common.Label" String="Session ID"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AgentMemory/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AgentMemory/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AgentMemory/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AgentMemory/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AgentMemory/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AgentMemory/agentId">
+        <Annotation Term="Common.Label" String="Agent ID"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AgentMemory/memoryKey">
+        <Annotation Term="Common.Label" String="Memory Key"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AgentMemory/memoryValue">
+        <Annotation Term="Common.Label" String="Memory Value"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AgentMemory/memoryType">
+        <Annotation Term="Common.Label" String="Memory Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AgentMemory/importance">
+        <Annotation Term="Common.Label" String="Importance"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AgentMemory/context">
+        <Annotation Term="Common.Label" String="Context"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AgentMemory/metadata">
+        <Annotation Term="Common.Label" String="Metadata (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AgentMemory/accessedAt">
+        <Annotation Term="Common.Label" String="Last Accessed"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AgentMemory/accessCount">
+        <Annotation Term="Common.Label" String="Access Count"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.AgentMemory/expiresAt">
+        <Annotation Term="Common.Label" String="Expiration Date"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.KnowledgeGraph/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.KnowledgeGraph/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.KnowledgeGraph/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.KnowledgeGraph/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.KnowledgeGraph/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.KnowledgeGraph/entityType">
+        <Annotation Term="Common.Label" String="Entity Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.KnowledgeGraph/entityId">
+        <Annotation Term="Common.Label" String="Entity ID"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.KnowledgeGraph/relationType">
+        <Annotation Term="Common.Label" String="Relation Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.KnowledgeGraph/relatedEntityType">
+        <Annotation Term="Common.Label" String="Related Entity Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.KnowledgeGraph/relatedEntityId">
+        <Annotation Term="Common.Label" String="Related Entity ID"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.KnowledgeGraph/strength">
+        <Annotation Term="Common.Label" String="Relation Strength"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.KnowledgeGraph/confidence">
+        <Annotation Term="Common.Label" String="Confidence"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.KnowledgeGraph/evidence">
+        <Annotation Term="Common.Label" String="Evidence"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.EntityContainer/DecisionOutcomes">
+        <Annotation Term="Common.DraftNode">
+          <Record Type="Common.DraftNodeType">
+            <PropertyValue Property="PreparationAction" String="com.rex.cryptotrading.intelligence.service.IntelligenceService.draftPrepare"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes/decision">
+        <Annotation Term="Common.Label" String="Decision"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes/decision_ID">
+        <Annotation Term="Common.Label" String="Decision"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes/outcomeType">
+        <Annotation Term="Common.Label" String="Outcome Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes/expectedOutcome">
+        <Annotation Term="Common.Label" String="Expected Outcome"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes/actualOutcome">
+        <Annotation Term="Common.Label" String="Actual Outcome"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes/profitLoss">
+        <Annotation Term="Common.Label" String="Profit/Loss"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes/executionPrice">
+        <Annotation Term="Common.Label" String="Execution Price"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes/executionTime">
+        <Annotation Term="Common.Label" String="Execution Time"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes/marketConditions">
+        <Annotation Term="Common.Label" String="Market Conditions (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes/success">
+        <Annotation Term="Common.Label" String="Success"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes/lessonsLearned">
+        <Annotation Term="Common.Label" String="Lessons Learned"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes/IsActiveEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes/HasActiveEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes/HasDraftEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionOutcomes/DraftAdministrativeData">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.EntityContainer/InsightPerformance">
+        <Annotation Term="Capabilities.DeleteRestrictions">
+          <Record Type="Capabilities.DeleteRestrictionsType">
+            <PropertyValue Property="Deletable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.InsertRestrictions">
+          <Record Type="Capabilities.InsertRestrictionsType">
+            <PropertyValue Property="Insertable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.UpdateRestrictions">
+          <Record Type="Capabilities.UpdateRestrictionsType">
+            <PropertyValue Property="Updatable" Bool="false"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.InsightPerformance/insightType">
+        <Annotation Term="Common.Label" String="Insight Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.InsightPerformance/source">
+        <Annotation Term="Common.Label" String="Source"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.InsightPerformance/totalInsights">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.InsightPerformance/avgConfidence">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.InsightPerformance/successfulDecisions">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.EntityContainer/ModelAccuracy">
+        <Annotation Term="Capabilities.DeleteRestrictions">
+          <Record Type="Capabilities.DeleteRestrictionsType">
+            <PropertyValue Property="Deletable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.InsertRestrictions">
+          <Record Type="Capabilities.InsertRestrictionsType">
+            <PropertyValue Property="Insertable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.UpdateRestrictions">
+          <Record Type="Capabilities.UpdateRestrictionsType">
+            <PropertyValue Property="Updatable" Bool="false"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.ModelAccuracy/modelType">
+        <Annotation Term="Common.Label" String="Model Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.ModelAccuracy/modelVersion">
+        <Annotation Term="Common.Label" String="Model Version"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.ModelAccuracy/totalPredictions">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.ModelAccuracy/avgConfidence">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.ModelAccuracy/avgAccuracy">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.ModelAccuracy/avgError">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.EntityContainer/DecisionSuccessRate">
+        <Annotation Term="Capabilities.DeleteRestrictions">
+          <Record Type="Capabilities.DeleteRestrictionsType">
+            <PropertyValue Property="Deletable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.InsertRestrictions">
+          <Record Type="Capabilities.InsertRestrictionsType">
+            <PropertyValue Property="Insertable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.UpdateRestrictions">
+          <Record Type="Capabilities.UpdateRestrictionsType">
+            <PropertyValue Property="Updatable" Bool="false"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionSuccessRate/algorithm">
+        <Annotation Term="Common.Label" String="Algorithm"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionSuccessRate/action">
+        <Annotation Term="Common.Label" String="Action"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionSuccessRate/totalDecisions">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionSuccessRate/successfulCount">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DecisionSuccessRate/successRate">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.getInsightHistory(Edm.String,Edm.DateTimeOffset,Edm.DateTimeOffset)/symbol">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.getInsightHistory(Edm.String,Edm.DateTimeOffset,Edm.DateTimeOffset)/startDate">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.getInsightHistory(Edm.String,Edm.DateTimeOffset,Edm.DateTimeOffset)/endDate">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.getPredictionAccuracy(Edm.String,Edm.String)/modelType">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.getPredictionAccuracy(Edm.String,Edm.String)/period">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.getDecisionAnalytics(Edm.String,Edm.String)/algorithm">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.getDecisionAnalytics(Edm.String,Edm.String)/period">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.queryKnowledgeGraph(Edm.String,Edm.String,Edm.Int32)/entityType">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.queryKnowledgeGraph(Edm.String,Edm.String,Edm.Int32)/entityId">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.queryKnowledgeGraph(Edm.String,Edm.String,Edm.Int32)/depth">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.getAgentPerformance(Edm.String)/agentId">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.backtest(Edm.String,Edm.DateTimeOffset,Edm.DateTimeOffset,Edm.Decimal)/strategy">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.backtest(Edm.String,Edm.DateTimeOffset,Edm.DateTimeOffset,Edm.Decimal)/startDate">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.backtest(Edm.String,Edm.DateTimeOffset,Edm.DateTimeOffset,Edm.Decimal)/endDate">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.backtest(Edm.String,Edm.DateTimeOffset,Edm.DateTimeOffset,Edm.Decimal)/initialCapital">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.getMarketSentiment(Edm.String)/symbol">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DraftAdministrativeData">
+        <Annotation Term="Common.Label" String="{i18n>Draft_DraftAdministrativeData}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DraftAdministrativeData/DraftUUID">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>Draft_DraftUUID}"/>
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DraftAdministrativeData/CreationDateTime">
+        <Annotation Term="Common.Label" String="{i18n>Draft_CreationDateTime}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DraftAdministrativeData/CreatedByUser">
+        <Annotation Term="Common.Label" String="{i18n>Draft_CreatedByUser}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DraftAdministrativeData/DraftIsCreatedByMe">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>Draft_DraftIsCreatedByMe}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DraftAdministrativeData/LastChangeDateTime">
+        <Annotation Term="Common.Label" String="{i18n>Draft_LastChangeDateTime}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DraftAdministrativeData/LastChangedByUser">
+        <Annotation Term="Common.Label" String="{i18n>Draft_LastChangedByUser}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DraftAdministrativeData/InProcessByUser">
+        <Annotation Term="Common.Label" String="{i18n>Draft_InProcessByUser}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.intelligence.service.IntelligenceService.DraftAdministrativeData/DraftIsProcessedByMe">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>Draft_DraftIsProcessedByMe}"/>
+      </Annotations>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

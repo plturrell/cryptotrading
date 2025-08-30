@@ -1,0 +1,628 @@
+{
+  "timestamp": "2025-08-30T09:41:06.895530",
+  "databases": {
+    "cryptotrading.db": {
+      "exists": true,
+      "description": "Main application database",
+      "size_mb": 1.83,
+      "table_count": 45,
+      "total_rows": 3210,
+      "usage": {
+        "total_pages": 468,
+        "free_pages": 0,
+        "page_size": 4096,
+        "total_size_bytes": 1916928,
+        "used_size_bytes": 1916928,
+        "usage_percent": 100.0
+      },
+      "tables": [
+        {
+          "name": "a2a_agents",
+          "row_count": 0,
+          "column_count": 12,
+          "index_count": 1
+        },
+        {
+          "name": "a2a_connections",
+          "row_count": 0,
+          "column_count": 8,
+          "index_count": 1
+        },
+        {
+          "name": "a2a_messages",
+          "row_count": 0,
+          "column_count": 13,
+          "index_count": 1
+        },
+        {
+          "name": "a2a_workflow_executions",
+          "row_count": 0,
+          "column_count": 10,
+          "index_count": 1
+        },
+        {
+          "name": "a2a_workflows",
+          "row_count": 0,
+          "column_count": 10,
+          "index_count": 1
+        },
+        {
+          "name": "agent_contexts",
+          "row_count": 0,
+          "column_count": 11,
+          "index_count": 0
+        },
+        {
+          "name": "agent_memory",
+          "row_count": 3,
+          "column_count": 12,
+          "index_count": 4
+        },
+        {
+          "name": "aggregated_market_data",
+          "row_count": 0,
+          "column_count": 12,
+          "index_count": 0
+        },
+        {
+          "name": "ai_analyses",
+          "row_count": 0,
+          "column_count": 9,
+          "index_count": 0
+        },
+        {
+          "name": "ai_insights",
+          "row_count": 0,
+          "column_count": 12,
+          "index_count": 3
+        },
+        {
+          "name": "api_credentials",
+          "row_count": 0,
+          "column_count": 10,
+          "index_count": 4
+        },
+        {
+          "name": "cache_entries",
+          "row_count": 0,
+          "column_count": 9,
+          "index_count": 4
+        },
+        {
+          "name": "code_files",
+          "row_count": 0,
+          "column_count": 9,
+          "index_count": 4
+        },
+        {
+          "name": "code_metrics",
+          "row_count": 0,
+          "column_count": 8,
+          "index_count": 3
+        },
+        {
+          "name": "conversation_history",
+          "row_count": 0,
+          "column_count": 8,
+          "index_count": 3
+        },
+        {
+          "name": "conversation_messages",
+          "row_count": 0,
+          "column_count": 9,
+          "index_count": 0
+        },
+        {
+          "name": "conversation_sessions",
+          "row_count": 0,
+          "column_count": 9,
+          "index_count": 1
+        },
+        {
+          "name": "data_ingestion_jobs",
+          "row_count": 0,
+          "column_count": 27,
+          "index_count": 5
+        },
+        {
+          "name": "data_quality_metrics",
+          "row_count": 0,
+          "column_count": 20,
+          "index_count": 6
+        },
+        {
+          "name": "decision_outcomes",
+          "row_count": 0,
+          "column_count": 12,
+          "index_count": 2
+        },
+        {
+          "name": "encryption_key_metadata",
+          "row_count": 0,
+          "column_count": 7,
+          "index_count": 1
+        },
+        {
+          "name": "error_logs",
+          "row_count": 0,
+          "column_count": 9,
+          "index_count": 3
+        },
+        {
+          "name": "factor_data",
+          "row_count": 1648,
+          "column_count": 18,
+          "index_count": 6
+        },
+        {
+          "name": "factor_definitions",
+          "row_count": 12,
+          "column_count": 13,
+          "index_count": 1
+        },
+        {
+          "name": "feature_cache",
+          "row_count": 0,
+          "column_count": 8,
+          "index_count": 4
+        },
+        {
+          "name": "historical_data_cache",
+          "row_count": 0,
+          "column_count": 8,
+          "index_count": 2
+        },
+        {
+          "name": "issues",
+          "row_count": 0,
+          "column_count": 15,
+          "index_count": 5
+        },
+        {
+          "name": "knowledge_graph",
+          "row_count": 0,
+          "column_count": 11,
+          "index_count": 3
+        },
+        {
+          "name": "macro_data",
+          "row_count": 0,
+          "column_count": 17,
+          "index_count": 3
+        },
+        {
+          "name": "market_data",
+          "row_count": 1,
+          "column_count": 10,
+          "index_count": 3
+        },
+        {
+          "name": "market_data_sources",
+          "row_count": 0,
+          "column_count": 12,
+          "index_count": 0
+        },
+        {
+          "name": "memory_fragments",
+          "row_count": 0,
+          "column_count": 10,
+          "index_count": 0
+        },
+        {
+          "name": "ml_model_registry",
+          "row_count": 0,
+          "column_count": 13,
+          "index_count": 4
+        },
+        {
+          "name": "ml_predictions",
+          "row_count": 0,
+          "column_count": 15,
+          "index_count": 3
+        },
+        {
+          "name": "monitoring_events",
+          "row_count": 0,
+          "column_count": 7,
+          "index_count": 3
+        },
+        {
+          "name": "onchain_data",
+          "row_count": 0,
+          "column_count": 22,
+          "index_count": 4
+        },
+        {
+          "name": "portfolio_positions",
+          "row_count": 0,
+          "column_count": 9,
+          "index_count": 2
+        },
+        {
+          "name": "semantic_memory",
+          "row_count": 0,
+          "column_count": 11,
+          "index_count": 0
+        },
+        {
+          "name": "sentiment_data",
+          "row_count": 0,
+          "column_count": 16,
+          "index_count": 3
+        },
+        {
+          "name": "system_health",
+          "row_count": 0,
+          "column_count": 9,
+          "index_count": 3
+        },
+        {
+          "name": "system_metrics",
+          "row_count": 0,
+          "column_count": 8,
+          "index_count": 3
+        },
+        {
+          "name": "time_series",
+          "row_count": 1546,
+          "column_count": 23,
+          "index_count": 8
+        },
+        {
+          "name": "trading_decisions",
+          "row_count": 0,
+          "column_count": 16,
+          "index_count": 3
+        },
+        {
+          "name": "trading_orders",
+          "row_count": 0,
+          "column_count": 15,
+          "index_count": 3
+        },
+        {
+          "name": "users",
+          "row_count": 0,
+          "column_count": 7,
+          "index_count": 3
+        }
+      ]
+    },
+    "real_market_data.db": {
+      "exists": true,
+      "description": "High-frequency market data",
+      "size_mb": 0.02,
+      "table_count": 1,
+      "total_rows": 6,
+      "usage": {
+        "total_pages": 4,
+        "free_pages": 0,
+        "page_size": 4096,
+        "total_size_bytes": 16384,
+        "used_size_bytes": 16384,
+        "usage_percent": 100.0
+      },
+      "tables": [
+        {
+          "name": "market_data",
+          "row_count": 6,
+          "column_count": 11,
+          "index_count": 1
+        }
+      ]
+    },
+    "rex.db": {
+      "exists": true,
+      "description": "Parallel/backup database",
+      "size_mb": 1.53,
+      "table_count": 29,
+      "total_rows": 263,
+      "usage": {
+        "total_pages": 391,
+        "free_pages": 196,
+        "page_size": 4096,
+        "total_size_bytes": 1601536,
+        "used_size_bytes": 798720,
+        "usage_percent": 49.87
+      },
+      "tables": [
+        {
+          "name": "a2a_agents",
+          "row_count": 7,
+          "column_count": 12,
+          "index_count": 1
+        },
+        {
+          "name": "a2a_connections",
+          "row_count": 0,
+          "column_count": 8,
+          "index_count": 1
+        },
+        {
+          "name": "a2a_messages",
+          "row_count": 0,
+          "column_count": 13,
+          "index_count": 1
+        },
+        {
+          "name": "a2a_workflow_executions",
+          "row_count": 0,
+          "column_count": 10,
+          "index_count": 1
+        },
+        {
+          "name": "a2a_workflows",
+          "row_count": 0,
+          "column_count": 10,
+          "index_count": 1
+        },
+        {
+          "name": "agent_contexts",
+          "row_count": 83,
+          "column_count": 11,
+          "index_count": 0
+        },
+        {
+          "name": "aggregated_market_data",
+          "row_count": 0,
+          "column_count": 12,
+          "index_count": 0
+        },
+        {
+          "name": "ai_analyses",
+          "row_count": 0,
+          "column_count": 9,
+          "index_count": 0
+        },
+        {
+          "name": "conversation_messages",
+          "row_count": 24,
+          "column_count": 9,
+          "index_count": 0
+        },
+        {
+          "name": "conversation_sessions",
+          "row_count": 83,
+          "column_count": 9,
+          "index_count": 1
+        },
+        {
+          "name": "data_ingestion_jobs",
+          "row_count": 0,
+          "column_count": 27,
+          "index_count": 5
+        },
+        {
+          "name": "data_product_schemas",
+          "row_count": 0,
+          "column_count": 16,
+          "index_count": 1
+        },
+        {
+          "name": "data_quality_metrics",
+          "row_count": 0,
+          "column_count": 20,
+          "index_count": 6
+        },
+        {
+          "name": "dex_trades",
+          "row_count": 0,
+          "column_count": 11,
+          "index_count": 0
+        },
+        {
+          "name": "encryption_key_metadata",
+          "row_count": 0,
+          "column_count": 7,
+          "index_count": 1
+        },
+        {
+          "name": "factor_data",
+          "row_count": 0,
+          "column_count": 18,
+          "index_count": 6
+        },
+        {
+          "name": "macro_data",
+          "row_count": 0,
+          "column_count": 17,
+          "index_count": 3
+        },
+        {
+          "name": "market_data",
+          "row_count": 0,
+          "column_count": 10,
+          "index_count": 0
+        },
+        {
+          "name": "market_data_sources",
+          "row_count": 4,
+          "column_count": 12,
+          "index_count": 0
+        },
+        {
+          "name": "memory_fragments",
+          "row_count": 0,
+          "column_count": 10,
+          "index_count": 0
+        },
+        {
+          "name": "onchain_data",
+          "row_count": 0,
+          "column_count": 22,
+          "index_count": 4
+        },
+        {
+          "name": "portfolios",
+          "row_count": 0,
+          "column_count": 9,
+          "index_count": 0
+        },
+        {
+          "name": "semantic_memory",
+          "row_count": 31,
+          "column_count": 11,
+          "index_count": 0
+        },
+        {
+          "name": "sentiment_data",
+          "row_count": 0,
+          "column_count": 16,
+          "index_count": 3
+        },
+        {
+          "name": "time_series",
+          "row_count": 0,
+          "column_count": 23,
+          "index_count": 8
+        },
+        {
+          "name": "trades",
+          "row_count": 0,
+          "column_count": 12,
+          "index_count": 0
+        },
+        {
+          "name": "trading_signals",
+          "row_count": 0,
+          "column_count": 11,
+          "index_count": 0
+        },
+        {
+          "name": "users",
+          "row_count": 0,
+          "column_count": 7,
+          "index_count": 3
+        },
+        {
+          "name": "workflow_state",
+          "row_count": 31,
+          "column_count": 5,
+          "index_count": 1
+        }
+      ]
+    }
+  },
+  "recommendations": [
+    "DUPLICATION: Found 23 tables that exist in multiple databases. Consider consolidating to avoid data inconsistency.",
+    "  - Table 'a2a_agents' exists in: cryptotrading.db, rex.db",
+    "  - Table 'a2a_connections' exists in: cryptotrading.db, rex.db",
+    "  - Table 'a2a_messages' exists in: cryptotrading.db, rex.db",
+    "  - Table 'a2a_workflow_executions' exists in: cryptotrading.db, rex.db",
+    "  - Table 'a2a_workflows' exists in: cryptotrading.db, rex.db",
+    "  - Table 'agent_contexts' exists in: cryptotrading.db, rex.db",
+    "  - Table 'aggregated_market_data' exists in: cryptotrading.db, rex.db",
+    "  - Table 'ai_analyses' exists in: cryptotrading.db, rex.db",
+    "  - Table 'conversation_messages' exists in: cryptotrading.db, rex.db",
+    "  - Table 'conversation_sessions' exists in: cryptotrading.db, rex.db",
+    "  - Table 'data_ingestion_jobs' exists in: cryptotrading.db, rex.db",
+    "  - Table 'data_quality_metrics' exists in: cryptotrading.db, rex.db",
+    "  - Table 'encryption_key_metadata' exists in: cryptotrading.db, rex.db",
+    "  - Table 'factor_data' exists in: cryptotrading.db, rex.db",
+    "  - Table 'macro_data' exists in: cryptotrading.db, rex.db",
+    "  - Table 'market_data' exists in: cryptotrading.db, real_market_data.db, rex.db",
+    "  - Table 'market_data_sources' exists in: cryptotrading.db, rex.db",
+    "  - Table 'memory_fragments' exists in: cryptotrading.db, rex.db",
+    "  - Table 'onchain_data' exists in: cryptotrading.db, rex.db",
+    "  - Table 'semantic_memory' exists in: cryptotrading.db, rex.db",
+    "  - Table 'sentiment_data' exists in: cryptotrading.db, rex.db",
+    "  - Table 'time_series' exists in: cryptotrading.db, rex.db",
+    "  - Table 'users' exists in: cryptotrading.db, rex.db",
+    "OPTIMIZATION: Total database size is small (<100MB). Current 3-database structure is fine for separation of concerns."
+  ],
+  "table_overlaps": {
+    "a2a_agents": [
+      "cryptotrading.db",
+      "rex.db"
+    ],
+    "a2a_connections": [
+      "cryptotrading.db",
+      "rex.db"
+    ],
+    "a2a_messages": [
+      "cryptotrading.db",
+      "rex.db"
+    ],
+    "a2a_workflow_executions": [
+      "cryptotrading.db",
+      "rex.db"
+    ],
+    "a2a_workflows": [
+      "cryptotrading.db",
+      "rex.db"
+    ],
+    "agent_contexts": [
+      "cryptotrading.db",
+      "rex.db"
+    ],
+    "aggregated_market_data": [
+      "cryptotrading.db",
+      "rex.db"
+    ],
+    "ai_analyses": [
+      "cryptotrading.db",
+      "rex.db"
+    ],
+    "conversation_messages": [
+      "cryptotrading.db",
+      "rex.db"
+    ],
+    "conversation_sessions": [
+      "cryptotrading.db",
+      "rex.db"
+    ],
+    "data_ingestion_jobs": [
+      "cryptotrading.db",
+      "rex.db"
+    ],
+    "data_quality_metrics": [
+      "cryptotrading.db",
+      "rex.db"
+    ],
+    "encryption_key_metadata": [
+      "cryptotrading.db",
+      "rex.db"
+    ],
+    "factor_data": [
+      "cryptotrading.db",
+      "rex.db"
+    ],
+    "macro_data": [
+      "cryptotrading.db",
+      "rex.db"
+    ],
+    "market_data": [
+      "cryptotrading.db",
+      "real_market_data.db",
+      "rex.db"
+    ],
+    "market_data_sources": [
+      "cryptotrading.db",
+      "rex.db"
+    ],
+    "memory_fragments": [
+      "cryptotrading.db",
+      "rex.db"
+    ],
+    "onchain_data": [
+      "cryptotrading.db",
+      "rex.db"
+    ],
+    "semantic_memory": [
+      "cryptotrading.db",
+      "rex.db"
+    ],
+    "sentiment_data": [
+      "cryptotrading.db",
+      "rex.db"
+    ],
+    "time_series": [
+      "cryptotrading.db",
+      "rex.db"
+    ],
+    "users": [
+      "cryptotrading.db",
+      "rex.db"
+    ]
+  }
+}

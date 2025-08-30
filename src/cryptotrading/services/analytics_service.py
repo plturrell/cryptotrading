@@ -375,6 +375,9 @@ class AnalyticsService:
                 })
         
         # Sort by value descending
-        performers.sort(key=lambda x: x['value'], reverse=True)
+        def get_value(item):
+            return item['value']
+        
+        performers.sort(key=get_value, reverse=True)
         
         return performers[:count]

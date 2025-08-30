@@ -1,0 +1,147 @@
+<mvc:View
+    controllerName="com.rex.cryptotrading.controller.Launchpad"
+    displayBlock="true"
+    xmlns="sap.m"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:core="sap.ui.core"
+    xmlns:f="sap.f"
+    xmlns:tnt="sap.tnt">
+    
+    <Shell id="shell" appWidthLimited="false">
+        <App id="app">
+            <pages>
+                <Page id="launchpadPage" 
+                      showHeader="false"
+                      enableScrolling="true"
+                      backgroundDesign="Solid">
+                    
+                    <!-- Professional SAP Header Bar -->
+                    <customHeader>
+                        <tnt:ToolHeader>
+                            <Button icon="sap-icon://menu2" type="Transparent" press="onMenuPress">
+                                <layoutData>
+                                    <OverflowToolbarLayoutData priority="NeverOverflow"/>
+                                </layoutData>
+                            </Button>
+                            <Image src="/webapp/img/logo.png" width="40px" height="40px"/>
+                            <Title text="rex.com Trading Platform" level="H2"/>
+                            <ToolbarSpacer/>
+                            <Button icon="sap-icon://search" type="Transparent"/>
+                            <Button icon="sap-icon://bell" type="Transparent" press="onNotificationPress">
+                                <customData>
+                                    <core:CustomData key="badge" value="3" writeToDom="true"/>
+                                </customData>
+                            </Button>
+                            <Button icon="sap-icon://sys-help" type="Transparent"/>
+                            <Avatar 
+                                src="sap-icon://person-placeholder"
+                                displaySize="XS"
+                                press="onAvatarPress"/>
+                        </tnt:ToolHeader>
+                    </customHeader>
+                    
+                    <content>
+                        <!-- KPI Bar -->
+                        <VBox class="sapUiSmallMargin">
+                            <HBox justifyContent="SpaceBetween" class="sapUiSmallMarginBottom">
+                                <VBox>
+                                    <Title text="Good Morning, {app>/user/name}" level="H3"/>
+                                    <Text text="Your portfolio is up 12.5% today"/>
+                                </VBox>
+                                <HBox>
+                                    <Button text="Connect Wallet" 
+                                            type="Emphasized" 
+                                            icon="sap-icon://wallet"
+                                            press="onConnectWallet"
+                                            visible="{= !${app>/wallet/connected}}"/>
+                                    <Text text="Wallet: {app>/wallet/address}" 
+                                          visible="{app>/wallet/connected}"
+                                          class="sapUiSmallMarginTop"/>
+                                </HBox>
+                            </HBox>
+                            
+                            <!-- KPI Tiles -->
+                            <!-- SAP Standard KPI Bar - Official Design -->
+                            <HBox class="sapUiSmallMarginBottom" justifyContent="SpaceBetween">
+                                <GenericTile 
+                                    header="Total Portfolio Value"
+                                    subheader="All assets combined"
+                                    frameType="OneByHalf"
+                                    press="onPortfolioPress"
+                                    class="sapUiTinyMarginEnd">
+                                    <tileContent>
+                                        <TileContent>
+                                            <content>
+                                                <NumericContent
+                                                    value="125,650"
+                                                    scale="USD"
+                                                    indicator="Up"
+                                                    valueColor="Good"/>
+                                            </content>
+                                        </TileContent>
+                                    </tileContent>
+                                </GenericTile>
+                                
+                                <GenericTile 
+                                    header="24h Performance"
+                                    subheader="Portfolio change"
+                                    frameType="OneByHalf"
+                                    class="sapUiTinyMarginEnd">
+                                    <tileContent>
+                                        <TileContent>
+                                            <content>
+                                                <NumericContent
+                                                    value="+12.5"
+                                                    scale="%"
+                                                    indicator="Up"
+                                                    valueColor="Good"/>
+                                            </content>
+                                        </TileContent>
+                                    </tileContent>
+                                </GenericTile>
+                                
+                                <GenericTile 
+                                    header="Active Positions"
+                                    subheader="Open trades"
+                                    frameType="OneByHalf">
+                                    <tileContent>
+                                        <TileContent>
+                                            <content>
+                                                <NumericContent
+                                                    value="8"
+                                                    scale="Trades"
+                                                    valueColor="Neutral"/>
+                                            </content>
+                                        </TileContent>
+                                    </tileContent>
+                                </GenericTile>
+                            </HBox>
+                        </VBox>
+                        
+                        <!-- SAP Standard Tile Container - Official 12rem × 14rem Grid -->
+                        <f:GridContainer
+                            id="tileContainer"
+                            snapToRow="true"
+                            allowDenseFill="true"
+                            inlineBlockLayout="true"
+                            class="sapUiSmallMargin">
+                            
+                            <!-- Official SAP Grid Layout - 12rem tiles with 1rem spacing -->
+                            <f:layout>
+                                <f:GridContainerSettings
+                                    rowSize="1rem"
+                                    columnSize="1rem"
+                                    gap="1rem"/>
+                            </f:layout>
+                            
+                            <f:items>
+                                <!-- SAP Standard Tiles - Bound to Component Model -->
+                                <core:Fragment fragmentName="com.rex.cryptotrading.fragment.TileGrid" type="XML"/>
+                            </f:items>
+                        </f:GridContainer>
+                    </content>
+                </Page>
+            </pages>
+        </App>
+    </Shell>
+</mvc:View>

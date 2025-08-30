@@ -7,9 +7,9 @@
     <GenericTile 
         header="Market Overview"
         subheader="Real-time cryptocurrency prices"
-        press="onTilePress"
+        press="onMarketOverviewPress"
         state="Loaded"
-        size="Medium">
+        size="M">
         <layoutData>
             <f:GridContainerItemLayoutData columns="12" rows="14"/>
         </layoutData>
@@ -31,9 +31,9 @@
     <GenericTile 
         header="ML Predictions" 
         subheader="Real-time price forecasting"
-        press="onTilePress"
+        press="onMLPredictionsPress"
         state="{= ${app>/mlPredictions/loading} ? 'Loading' : 'Loaded' }"
-        size="Medium">
+        size="M">
         <layoutData>
             <f:GridContainerItemLayoutData columns="12" rows="14"/>
         </layoutData>
@@ -55,9 +55,9 @@
     <GenericTile 
         header="Model Training"
         subheader="Train and deploy ML models"
-        press="onTilePress"
+        press="onModelTrainingPress"
         state="{= ${app>/mlPredictions/loading} ? 'Loading' : 'Loaded' }"
-        size="Medium">
+        size="M">
         <layoutData>
             <f:GridContainerItemLayoutData columns="12" rows="14"/>
         </layoutData>
@@ -78,7 +78,7 @@
     <GenericTile 
         header="AI Market Intelligence"
         subheader="ML-powered price predictions"
-        press="onTilePress"
+        press="onAIMarketIntelligencePress"
         state="{= ${app>/mlPredictions/loading} ? 'Loading' : 'Loaded' }"
         frameType="TwoByOne">
         <layoutData>
@@ -99,9 +99,9 @@
     <GenericTile 
         header="Feature Store"
         subheader="ML feature engineering"
-        press="onTilePress"
+        press="onFeatureStorePress"
         state="{= ${app>/featureStore/loading} ? 'Loading' : 'Loaded' }"
-        size="Medium">
+        size="M">
         <layoutData>
             <f:GridContainerItemLayoutData columns="12" rows="14"/>
         </layoutData>
@@ -122,9 +122,9 @@
     <GenericTile 
         header="Risk Management"
         subheader="Portfolio risk metrics"
-        press="onTilePress"
+        press="onRiskManagementPress"
         state="Loaded"
-        size="Medium">
+        size="M">
         <layoutData>
             <f:GridContainerItemLayoutData columns="12" rows="14"/>
         </layoutData>
@@ -146,9 +146,9 @@
     <GenericTile 
         header="Historical Data"
         subheader="Download market datasets"
-        press="onTilePress"
+        press="onHistoricalDataPress"
         state="Loaded"
-        size="Medium">
+        size="M">
         <layoutData>
             <f:GridContainerItemLayoutData columns="12" rows="14"/>
         </layoutData>
@@ -171,7 +171,7 @@
         subheader="Advanced crypto TA dashboard"
         press="onTechnicalAnalysisPress"
         state="Loaded"
-        size="Medium">
+        size="M">
         <layoutData>
             <f:GridContainerItemLayoutData columns="12" rows="14"/>
         </layoutData>
@@ -195,7 +195,7 @@
         subheader="Multi-language indexer dashboard"
         press="onCodeAnalysisPress"
         state="Loaded"
-        size="Medium">
+        size="M">
         <layoutData>
             <f:GridContainerItemLayoutData columns="12" rows="14"/>
         </layoutData>
@@ -217,9 +217,9 @@
     <GenericTile 
         header="System Settings"
         subheader="Configure platform parameters"
-        press="onTilePress"
+        press="onSystemSettingsPress"
         state="Loaded"
-        size="Medium">
+        size="M">
         <layoutData>
             <f:GridContainerItemLayoutData columns="12" rows="14"/>
         </layoutData>

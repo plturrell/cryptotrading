@@ -19,6 +19,17 @@ from .logger import get_logger
 
 logger = get_logger(__name__)
 
+# Import AI-powered monitoring systems
+try:
+    from .ai_root_cause_analyzer import ai_analyzer
+    from .ai_anomaly_detector import anomaly_detector  
+    from .real_alert_system import alert_system, Alert
+    from .performance_baseline_detector import performance_detector
+    AI_MONITORING_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"AI monitoring systems not available: {e}")
+    AI_MONITORING_AVAILABLE = False
+
 class ErrorSeverity(Enum):
     """Error severity levels"""
     LOW = "low"
@@ -144,6 +155,10 @@ class ErrorTracker:
             if self.error_counts[fingerprint] == self.alert_threshold:
                 self._trigger_alert(tracked_error, self.error_counts[fingerprint])
         
+        # AI-POWERED ENHANCEMENTS
+        if AI_MONITORING_AVAILABLE:
+            asyncio.create_task(self._ai_enhanced_error_processing(error, tracked_error, context, fingerprint))
+        
         # Log the error
         logger.error(f"Tracked error: {tracked_error.error_type}", error=error, extra={
             'error_id': tracked_error.error_id,
@@ -153,6 +168,65 @@ class ErrorTracker:
         })
         
         return tracked_error.error_id
+    
+    async def _ai_enhanced_error_processing(self, error: Exception, tracked_error, context, fingerprint):
+        """Process error with AI systems"""
+        try:
+            # 1. AI Root Cause Analysis
+            ai_context = {
+                'error_id': tracked_error.error_id,
+                'service': context.service_name if context else None,
+                'trace_id': context.trace_id if context else None,
+                'occurrence_count': self.error_counts[fingerprint]
+            }
+            
+            root_cause_analysis = await ai_analyzer.analyze_error_with_ai(error, ai_context)
+            
+            # 2. Performance tracking
+            performance_detector.add_performance_metric(
+                f"error_rate_{tracked_error.category.value}",
+                1.0,  # Increment
+                context={'error_type': tracked_error.error_type}
+            )
+            
+            # 3. Anomaly detection
+            anomaly = anomaly_detector.add_metric(
+                f"error_frequency_{fingerprint}",
+                self.error_counts[fingerprint],
+                context={'error_type': tracked_error.error_type}
+            )
+            
+            # 4. Smart alerting
+            should_alert = (
+                tracked_error.severity in [ErrorSeverity.HIGH, ErrorSeverity.CRITICAL] or
+                root_cause_analysis.get('confidence', 0) > 0.8 or
+                anomaly is not None
+            )
+            
+            if should_alert:
+                from .real_alert_system import Alert
+                
+                alert = Alert(
+                    id=f"ai_error_{tracked_error.error_id}",
+                    timestamp=datetime.now(),
+                    title=f"{'Anomalous ' if anomaly else ''}Error: {tracked_error.error_type}",
+                    message=f"""AI Analysis Results:
+- Root Cause: {root_cause_analysis.get('root_cause', 'Analyzing...')}  
+- Confidence: {root_cause_analysis.get('confidence', 0):.2f}
+- Action: {root_cause_analysis.get('immediate_action', 'Investigate')}
+- Occurrences: {self.error_counts[fingerprint]}
+{f'- Anomaly: {anomaly.description}' if anomaly else ''}""",
+                    severity=tracked_error.severity.value.upper(),
+                    category="ai_error_analysis", 
+                    source="enhanced_error_tracker",
+                    context=ai_context
+                )
+                
+                await alert_system.send_alert(alert)
+                
+        except Exception as ai_error:
+            logger.warning(f"AI error processing failed: {ai_error}")
+            # Don't let AI failures affect main tracking
     
     def _categorize_error(self, error: Exception) -> ErrorCategory:
         """Auto-categorize error based on type and message"""

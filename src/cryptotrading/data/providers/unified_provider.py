@@ -272,19 +272,15 @@ class RealDataProvider(DataProvider):
             }
 
 class UnifiedDataProvider:
-    """Unified data provider that switches between real and mock based on environment"""
+    """Unified data provider - production-ready with real APIs only"""
     
     def __init__(self):
         self.config = get_data_source_config()
         self.flags = get_feature_flags()
         
-        # Choose provider based on configuration
-        if self.flags.use_real_apis:
-            self.provider = RealDataProvider()
-            logger.info("UnifiedDataProvider using real APIs")
-        else:
-            self.provider = MockDataProvider()
-            logger.info("UnifiedDataProvider using mock data")
+        # Always use real data provider - no mock fallback
+        self.provider = RealDataProvider()
+        logger.info("UnifiedDataProvider using real APIs only - no mock data")
     
     async def get_real_time_price(self, symbol: str) -> Dict[str, Any]:
         """Get real-time price data"""

@@ -1,0 +1,58 @@
+{
+  "summary": {
+    "total_components": 35,
+    "working": 31,
+    "broken": 0,
+    "incomplete": 4,
+    "mock": 0,
+    "missing": 0,
+    "health_percentage": 88.57
+  },
+  "details": {
+    "working": [
+      "Frontend calls /api/news/ui/latest - GET latest news",
+      "Frontend calls /api/news/ui/russian - GET Russian news",
+      "Frontend calls /api/news/fetch/fresh - POST fetch fresh news",
+      "Frontend calls /api/news/translate - POST translate article",
+      "Main news API uses async patterns",
+      "News service adapter uses async patterns",
+      "News service adapter has database integration",
+      "User search service uses async patterns",
+      "User search service has database integration",
+      "Unified database adapter exists",
+      "SQLite database exists",
+      "Database table news_articles exists",
+      "Database table user_searches exists",
+      "Database table search_results exists",
+      "Database table user_interactions exists",
+      "Database table news_categories exists",
+      "Database table market_data exists",
+      "Database table system_config exists",
+      "Database schema creation exists",
+      "News data model has entities",
+      "News data model has actions",
+      "News data model supports images",
+      "News service definition has entities",
+      "News service definition has actions",
+      "News service definition supports images",
+      "News service has classes",
+      "News service uses async",
+      "News service has API integration",
+      "Image services has classes",
+      "Image services uses async",
+      "Image services has API integration"
+    ],
+    "broken": [],
+    "incomplete": [
+      "Main news API missing Flask routes",
+      "Main news API missing database integration",
+      "News service adapter missing Flask routes",
+      "User search service missing Flask routes"
+    ],
+    "mock": [],
+    "missing": []
+  },
+  "recommendations": [
+    "\u26a0\ufe0f Complete incomplete components for full functionality"
+  ]
+}

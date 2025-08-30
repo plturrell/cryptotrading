@@ -8,8 +8,11 @@ namespace com.rex.cryptotrading.codeanalysis.service;
 service CodeAnalysisService {
     
     // Main entities
+    @cds.redirection.target
     entity Projects as projection on ca.Projects;
+    @cds.redirection.target
     entity IndexingSessions as projection on ca.IndexingSessions;
+    @cds.redirection.target
     entity CodeFiles as projection on ca.CodeFiles;
     entity AnalysisResults as projection on ca.AnalysisResults;
     entity IndexerStats as projection on ca.IndexerStats;

@@ -200,7 +200,7 @@ result = context_var + 10
             "__dangerous__": "value",  # Should be filtered
             "_private": "value",       # Should be filtered
             "safe_var": "value",       # Should be kept
-            "func": lambda x: x,       # Should be filtered
+            "func": "lambda_function",  # Should be filtered
         }
         
         code = """

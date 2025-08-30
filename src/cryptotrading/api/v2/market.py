@@ -26,32 +26,59 @@ market_data_v2_model = market_v2_ns.model('MarketDataV2', {
     'cached': fields.Boolean(description='Whether data was cached')
 })
 
-# Simple in-memory cache for demo
-cache = {}
+# Production Redis cache
+try:
+    import redis
+    redis_client = redis.Redis(
+        host=os.getenv('REDIS_HOST', 'localhost'),
+        port=int(os.getenv('REDIS_PORT', 6379)),
+        db=int(os.getenv('REDIS_DB', 0)),
+        decode_responses=True
+    )
+    CACHE_AVAILABLE = True
+except ImportError:
+    redis_client = None
+    CACHE_AVAILABLE = False
+
 CACHE_TTL = 60  # 60 seconds
 
 def cached_response(ttl=CACHE_TTL):
-    """Decorator for caching responses"""
+    """Decorator for caching responses using Redis"""
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
+            if not CACHE_AVAILABLE:
+                # No cache available - execute directly
+                result = f(*args, **kwargs)
+                if isinstance(result, dict):
+                    result['cached'] = False
+                return result
+            
             # Create cache key
             cache_key = f"{f.__name__}:{str(args)}:{str(sorted(kwargs.items()))}"
             
-            # Check cache
-            if cache_key in cache:
-                cached_data, cached_time = cache[cache_key]
-                if time.time() - cached_time < ttl:
-                    cached_data['cached'] = True
-                    return cached_data
+            try:
+                # Check Redis cache
+                cached_data = redis_client.get(cache_key)
+                if cached_data:
+                    import json
+                    result = json.loads(cached_data)
+                    result['cached'] = True
+                    return result
+            except Exception as e:
+                logger.warning(f"Cache read error: {e}")
             
             # Execute function
             result = f(*args, **kwargs)
             
-            # Cache result
+            # Cache result in Redis
             if isinstance(result, dict):
                 result['cached'] = False
-                cache[cache_key] = (result, time.time())
+                try:
+                    import json
+                    redis_client.setex(cache_key, ttl, json.dumps(result))
+                except Exception as e:
+                    logger.warning(f"Cache write error: {e}")
             
             return result
         return decorated_function
@@ -148,8 +175,8 @@ class MarketOverviewV2(Resource):
                     'limit': limit
                 },
                 'performance_metrics': {
-                    'response_time_ms': 150,  # Mock value
-                    'cache_hit_rate': 0.75
+                    'response_time_ms': int((time.time() - start_time) * 1000) if 'start_time' in locals() else None,
+                    'cache_hit_rate': self._get_cache_hit_rate()
                 }
             }
             
@@ -232,18 +259,28 @@ class CacheStats(Resource):
     @market_v2_ns.doc('get_cache_stats')
     def get(self):
         """Get caching statistics"""
-        cache_stats = {
-            'total_entries': len(cache),
-            'cache_size_mb': len(str(cache)) / (1024 * 1024),
-            'hit_rate': 0.75,  # Mock value
-            'entries': [
-                {
-                    'key': key[:50] + '...' if len(key) > 50 else key,
-                    'age_seconds': int(time.time() - cached_time)
+        if CACHE_AVAILABLE and redis_client:
+            try:
+                # Get Redis cache stats
+                info = redis_client.info('memory')
+                cache_stats = {
+                    'cache_type': 'redis',
+                    'memory_used_mb': info.get('used_memory', 0) / (1024 * 1024),
+                    'hit_rate': self._get_cache_hit_rate(),
+                    'connected': True
                 }
-                for key, (_, cached_time) in list(cache.items())[:10]
-            ]
-        }
+            except Exception as e:
+                cache_stats = {
+                    'cache_type': 'redis',
+                    'error': str(e),
+                    'connected': False
+                }
+        else:
+            cache_stats = {
+                'cache_type': 'none',
+                'message': 'Redis cache not available',
+                'connected': False
+            }
         
         return cache_stats
 
@@ -253,9 +290,23 @@ class CacheClear(Resource):
     @market_v2_ns.doc('clear_cache')
     def post(self):
         """Clear the cache"""
-        cache.clear()
-        return {
-            'status': 'success',
-            'message': 'Cache cleared successfully',
-            'timestamp': datetime.utcnow().isoformat()
-        }
+        if CACHE_AVAILABLE and redis_client:
+            try:
+                redis_client.flushdb()
+                return {
+                    'status': 'success',
+                    'message': 'Redis cache cleared successfully',
+                    'timestamp': datetime.utcnow().isoformat()
+                }
+            except Exception as e:
+                return {
+                    'status': 'error',
+                    'message': f'Failed to clear Redis cache: {str(e)}',
+                    'timestamp': datetime.utcnow().isoformat()
+                }
+        else:
+            return {
+                'status': 'error',
+                'message': 'Redis cache not available',
+                'timestamp': datetime.utcnow().isoformat()
+            }

@@ -1,0 +1,814 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Capabilities.V1.xml">
+    <edmx:Include Alias="Capabilities" Namespace="Org.OData.Capabilities.V1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/Common.xml">
+    <edmx:Include Alias="Common" Namespace="com.sap.vocabularies.Common.v1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Core.V1.xml">
+    <edmx:Include Alias="Core" Namespace="Org.OData.Core.V1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/UI.xml">
+    <edmx:Include Alias="UI" Namespace="com.sap.vocabularies.UI.v1"/>
+  </edmx:Reference>
+  <edmx:DataServices>
+    <Schema Namespace="MarketAnalysisService" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <Annotation Term="Core.Links">
+        <Collection>
+          <Record>
+            <PropertyValue Property="rel" String="author"/>
+            <PropertyValue Property="href" String="https://cap.cloud.sap"/>
+          </Record>
+        </Collection>
+      </Annotation>
+      <EntityContainer Name="EntityContainer">
+        <EntitySet Name="MarketPairs" EntityType="MarketAnalysisService.MarketPairs">
+          <NavigationPropertyBinding Path="priceHistory" Target="PriceHistory"/>
+        </EntitySet>
+        <EntitySet Name="PriceHistory" EntityType="MarketAnalysisService.PriceHistory">
+          <NavigationPropertyBinding Path="marketPair" Target="MarketPairs"/>
+        </EntitySet>
+        <EntitySet Name="MarketData" EntityType="MarketAnalysisService.MarketData"/>
+        <EntitySet Name="MarketIndicators" EntityType="MarketAnalysisService.MarketIndicators"/>
+        <EntitySet Name="MarketSentiment" EntityType="MarketAnalysisService.MarketSentiment"/>
+        <EntitySet Name="TopCryptocurrencies" EntityType="MarketAnalysisService.TopCryptocurrencies">
+          <NavigationPropertyBinding Path="priceHistory" Target="PriceHistory"/>
+        </EntitySet>
+        <FunctionImport Name="getMarketSummary" Function="MarketAnalysisService.getMarketSummary"/>
+        <FunctionImport Name="getPriceHistory" Function="MarketAnalysisService.getPriceHistory"/>
+        <FunctionImport Name="getMarketTrends" Function="MarketAnalysisService.getMarketTrends"/>
+        <FunctionImport Name="getMarketIndicators" Function="MarketAnalysisService.getMarketIndicators"/>
+        <FunctionImport Name="getCorrelationMatrix" Function="MarketAnalysisService.getCorrelationMatrix"/>
+        <FunctionImport Name="getVolatilityAnalysis" Function="MarketAnalysisService.getVolatilityAnalysis"/>
+        <FunctionImport Name="getDataStreamInfo" Function="MarketAnalysisService.getDataStreamInfo"/>
+      </EntityContainer>
+      <EntityType Name="MarketPairs">
+        <Key>
+          <PropertyRef Name="symbol"/>
+        </Key>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="symbol" Type="Edm.String" MaxLength="20" Nullable="false"/>
+        <Property Name="baseCurrency" Type="Edm.String" MaxLength="10"/>
+        <Property Name="quoteCurrency" Type="Edm.String" MaxLength="10"/>
+        <Property Name="displayName" Type="Edm.String" MaxLength="100"/>
+        <Property Name="lastPrice" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="priceChange24h" Type="Edm.Decimal" Precision="10" Scale="2"/>
+        <Property Name="volume24h" Type="Edm.Decimal" Precision="20" Scale="8"/>
+        <Property Name="marketCap" Type="Edm.Decimal" Precision="20" Scale="2"/>
+        <Property Name="circulatingSupply" Type="Edm.Decimal" Precision="20" Scale="8"/>
+        <Property Name="totalSupply" Type="Edm.Decimal" Precision="20" Scale="8"/>
+        <NavigationProperty Name="priceHistory" Type="Collection(MarketAnalysisService.PriceHistory)" Partner="marketPair">
+          <OnDelete Action="Cascade"/>
+        </NavigationProperty>
+      </EntityType>
+      <EntityType Name="PriceHistory">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <NavigationProperty Name="marketPair" Type="MarketAnalysisService.MarketPairs">
+          <ReferentialConstraint Property="marketPair_symbol" ReferencedProperty="symbol"/>
+        </NavigationProperty>
+        <Property Name="marketPair_symbol" Type="Edm.String" MaxLength="20"/>
+        <Property Name="timestamp" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="open" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="high" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="low" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="close" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="volume" Type="Edm.Decimal" Precision="20" Scale="8"/>
+        <Property Name="numberOfTrades" Type="Edm.Int32"/>
+        <Property Name="timeframe" Type="Edm.String" MaxLength="10"/>
+      </EntityType>
+      <EntityType Name="MarketData">
+        <Key>
+          <PropertyRef Name="id"/>
+        </Key>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="id" Type="Edm.Int32" Nullable="false"/>
+        <Property Name="symbol" Type="Edm.String" MaxLength="20"/>
+        <Property Name="source" Type="Edm.String" MaxLength="50"/>
+        <Property Name="open" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="high" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="low" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="close" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="volume" Type="Edm.Decimal" Precision="20" Scale="8"/>
+        <Property Name="timestamp" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="fetchedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+      </EntityType>
+      <EntityType Name="MarketIndicators">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="symbol" Type="Edm.String" MaxLength="20"/>
+        <Property Name="timestamp" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="rsi" Type="Edm.Decimal" Precision="5" Scale="2"/>
+        <Property Name="macd" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="macdSignal" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="macdHistogram" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="sma20" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="sma50" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="sma200" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="ema12" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="ema26" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="bbUpper" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="bbMiddle" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="bbLower" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="atr" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="volatility" Type="Edm.Decimal" Precision="10" Scale="4"/>
+      </EntityType>
+      <EntityType Name="MarketSentiment">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="symbol" Type="Edm.String" MaxLength="20"/>
+        <Property Name="timestamp" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="sentimentScore" Type="Edm.Decimal" Precision="5" Scale="2"/>
+        <Property Name="fearGreedIndex" Type="Edm.Int32"/>
+        <Property Name="socialVolume" Type="Edm.Int32"/>
+        <Property Name="newsVolume" Type="Edm.Int32"/>
+        <Property Name="redditMentions" Type="Edm.Int32"/>
+        <Property Name="twitterMentions" Type="Edm.Int32"/>
+        <Property Name="googleTrends" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="TopCryptocurrencies">
+        <Key>
+          <PropertyRef Name="symbol"/>
+        </Key>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="symbol" Type="Edm.String" MaxLength="20" Nullable="false"/>
+        <Property Name="baseCurrency" Type="Edm.String" MaxLength="10"/>
+        <Property Name="quoteCurrency" Type="Edm.String" MaxLength="10"/>
+        <Property Name="displayName" Type="Edm.String" MaxLength="100"/>
+        <Property Name="lastPrice" Type="Edm.Decimal" Precision="15" Scale="8"/>
+        <Property Name="priceChange24h" Type="Edm.Decimal" Precision="10" Scale="2"/>
+        <Property Name="volume24h" Type="Edm.Decimal" Precision="20" Scale="8"/>
+        <Property Name="marketCap" Type="Edm.Decimal" Precision="20" Scale="2"/>
+        <Property Name="circulatingSupply" Type="Edm.Decimal" Precision="20" Scale="8"/>
+        <Property Name="totalSupply" Type="Edm.Decimal" Precision="20" Scale="8"/>
+        <NavigationProperty Name="priceHistory" Type="Collection(MarketAnalysisService.PriceHistory)">
+          <OnDelete Action="Cascade"/>
+        </NavigationProperty>
+      </EntityType>
+      <ComplexType Name="return_MarketAnalysisService_getMarketSummary">
+        <Property Name="totalMarketCap" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="totalVolume24h" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="btcDominance" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="fearGreedIndex" Type="Edm.Int32"/>
+        <Property Name="activeMarkets" Type="Edm.Int32"/>
+      </ComplexType>
+      <ComplexType Name="return_MarketAnalysisService_getPriceHistory">
+        <Property Name="timestamp" Type="Edm.DateTimeOffset"/>
+        <Property Name="open" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="high" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="low" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="close" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="volume" Type="Edm.Decimal" Scale="variable"/>
+      </ComplexType>
+      <ComplexType Name="return_MarketAnalysisService_getMarketTrends">
+        <Property Name="topGainers" Type="Collection(MarketAnalysisService.return_MarketAnalysisService_getMarketTrends_topGainers)" Nullable="true"/>
+        <Property Name="topLosers" Type="Collection(MarketAnalysisService.return_MarketAnalysisService_getMarketTrends_topLosers)" Nullable="true"/>
+        <Property Name="trendingCoins" Type="Collection(MarketAnalysisService.return_MarketAnalysisService_getMarketTrends_trendingCoins)" Nullable="true"/>
+      </ComplexType>
+      <ComplexType Name="return_MarketAnalysisService_getMarketTrends_topGainers">
+        <Property Name="symbol" Type="Edm.String"/>
+        <Property Name="priceChange" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="volumeChange" Type="Edm.Decimal" Scale="variable"/>
+      </ComplexType>
+      <ComplexType Name="return_MarketAnalysisService_getMarketTrends_topLosers">
+        <Property Name="symbol" Type="Edm.String"/>
+        <Property Name="priceChange" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="volumeChange" Type="Edm.Decimal" Scale="variable"/>
+      </ComplexType>
+      <ComplexType Name="return_MarketAnalysisService_getMarketTrends_trendingCoins">
+        <Property Name="symbol" Type="Edm.String"/>
+        <Property Name="mentions" Type="Edm.Int32"/>
+        <Property Name="sentiment" Type="Edm.Decimal" Scale="variable"/>
+      </ComplexType>
+      <ComplexType Name="return_MarketAnalysisService_getMarketIndicators">
+        <Property Name="rsi" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="macd" Type="MarketAnalysisService.return_MarketAnalysisService_getMarketIndicators_macd"/>
+        <Property Name="movingAverages" Type="MarketAnalysisService.return_MarketAnalysisService_getMarketIndicators_movingAverages"/>
+        <Property Name="bollingerBands" Type="MarketAnalysisService.return_MarketAnalysisService_getMarketIndicators_bollingerBands"/>
+        <Property Name="volume" Type="MarketAnalysisService.return_MarketAnalysisService_getMarketIndicators_volume"/>
+      </ComplexType>
+      <ComplexType Name="return_MarketAnalysisService_getMarketIndicators_macd">
+        <Property Name="value" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="signal" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="histogram" Type="Edm.Decimal" Scale="variable"/>
+      </ComplexType>
+      <ComplexType Name="return_MarketAnalysisService_getMarketIndicators_movingAverages">
+        <Property Name="ma20" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="ma50" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="ma200" Type="Edm.Decimal" Scale="variable"/>
+      </ComplexType>
+      <ComplexType Name="return_MarketAnalysisService_getMarketIndicators_bollingerBands">
+        <Property Name="upper" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="middle" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="lower" Type="Edm.Decimal" Scale="variable"/>
+      </ComplexType>
+      <ComplexType Name="return_MarketAnalysisService_getMarketIndicators_volume">
+        <Property Name="current" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="average" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="trend" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_MarketAnalysisService_getCorrelationMatrix">
+        <Property Name="symbol1" Type="Edm.String"/>
+        <Property Name="symbol2" Type="Edm.String"/>
+        <Property Name="correlation" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="period" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_MarketAnalysisService_getVolatilityAnalysis">
+        <Property Name="historicalVolatility" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="impliedVolatility" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="volatilityRank" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="volatilityPercentile" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="atr" Type="Edm.Decimal" Scale="variable"/>
+      </ComplexType>
+      <ComplexType Name="return_MarketAnalysisService_getDataStreamInfo">
+        <Property Name="websocketUrl" Type="Edm.String"/>
+        <Property Name="supportedSymbols" Type="Collection(Edm.String)" Nullable="true"/>
+        <Property Name="updateFrequency" Type="Edm.Int32"/>
+        <Property Name="dataFormat" Type="Edm.String"/>
+      </ComplexType>
+      <Function Name="getMarketSummary" IsBound="false" IsComposable="false">
+        <ReturnType Type="MarketAnalysisService.return_MarketAnalysisService_getMarketSummary"/>
+      </Function>
+      <Function Name="getPriceHistory" IsBound="false" IsComposable="false">
+        <Parameter Name="symbol" Type="Edm.String"/>
+        <Parameter Name="timeframe" Type="Edm.String"/>
+        <Parameter Name="startDate" Type="Edm.DateTimeOffset"/>
+        <Parameter Name="endDate" Type="Edm.DateTimeOffset"/>
+        <ReturnType Type="Collection(MarketAnalysisService.return_MarketAnalysisService_getPriceHistory)" Nullable="true"/>
+      </Function>
+      <Function Name="getMarketTrends" IsBound="false" IsComposable="false">
+        <Parameter Name="period" Type="Edm.String"/>
+        <ReturnType Type="MarketAnalysisService.return_MarketAnalysisService_getMarketTrends"/>
+      </Function>
+      <Function Name="getMarketIndicators" IsBound="false" IsComposable="false">
+        <Parameter Name="symbol" Type="Edm.String"/>
+        <ReturnType Type="MarketAnalysisService.return_MarketAnalysisService_getMarketIndicators"/>
+      </Function>
+      <Function Name="getCorrelationMatrix" IsBound="false" IsComposable="false">
+        <Parameter Name="symbols" Type="Collection(Edm.String)" Nullable="true"/>
+        <ReturnType Type="Collection(MarketAnalysisService.return_MarketAnalysisService_getCorrelationMatrix)" Nullable="true"/>
+      </Function>
+      <Function Name="getVolatilityAnalysis" IsBound="false" IsComposable="false">
+        <Parameter Name="symbol" Type="Edm.String"/>
+        <Parameter Name="period" Type="Edm.String"/>
+        <ReturnType Type="MarketAnalysisService.return_MarketAnalysisService_getVolatilityAnalysis"/>
+      </Function>
+      <Function Name="getDataStreamInfo" IsBound="false" IsComposable="false">
+        <Parameter Name="dataType" Type="Edm.String"/>
+        <ReturnType Type="MarketAnalysisService.return_MarketAnalysisService_getDataStreamInfo"/>
+      </Function>
+      <Annotations Target="MarketAnalysisService.EntityContainer/MarketPairs">
+        <Annotation Term="Capabilities.DeleteRestrictions">
+          <Record Type="Capabilities.DeleteRestrictionsType">
+            <PropertyValue Property="Deletable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.InsertRestrictions">
+          <Record Type="Capabilities.InsertRestrictionsType">
+            <PropertyValue Property="Insertable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.UpdateRestrictions">
+          <Record Type="Capabilities.UpdateRestrictionsType">
+            <PropertyValue Property="Updatable" Bool="false"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketPairs/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketPairs/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketPairs/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketPairs/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketPairs/symbol">
+        <Annotation Term="Common.Label" String="Symbol"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketPairs/baseCurrency">
+        <Annotation Term="Common.Label" String="Base Currency"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketPairs/quoteCurrency">
+        <Annotation Term="Common.Label" String="Quote Currency"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketPairs/displayName">
+        <Annotation Term="Common.Label" String="Display Name"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketPairs/lastPrice">
+        <Annotation Term="Common.Label" String="Last Price"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketPairs/priceChange24h">
+        <Annotation Term="Common.Label" String="24h Price Change %"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketPairs/volume24h">
+        <Annotation Term="Common.Label" String="24h Volume"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketPairs/marketCap">
+        <Annotation Term="Common.Label" String="Market Cap"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketPairs/circulatingSupply">
+        <Annotation Term="Common.Label" String="Circulating Supply"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketPairs/totalSupply">
+        <Annotation Term="Common.Label" String="Total Supply"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.EntityContainer/PriceHistory">
+        <Annotation Term="Capabilities.DeleteRestrictions">
+          <Record Type="Capabilities.DeleteRestrictionsType">
+            <PropertyValue Property="Deletable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.InsertRestrictions">
+          <Record Type="Capabilities.InsertRestrictionsType">
+            <PropertyValue Property="Insertable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.UpdateRestrictions">
+          <Record Type="Capabilities.UpdateRestrictionsType">
+            <PropertyValue Property="Updatable" Bool="false"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.PriceHistory/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.PriceHistory/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.PriceHistory/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.PriceHistory/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.PriceHistory/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.PriceHistory/marketPair">
+        <Annotation Term="Common.Label" String="Market Pair"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.PriceHistory/marketPair_symbol">
+        <Annotation Term="Common.Label" String="Market Pair"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.PriceHistory/timestamp">
+        <Annotation Term="Common.Label" String="Timestamp"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.PriceHistory/open">
+        <Annotation Term="Common.Label" String="Open Price"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.PriceHistory/high">
+        <Annotation Term="Common.Label" String="High Price"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.PriceHistory/low">
+        <Annotation Term="Common.Label" String="Low Price"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.PriceHistory/close">
+        <Annotation Term="Common.Label" String="Close Price"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.PriceHistory/volume">
+        <Annotation Term="Common.Label" String="Volume"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.PriceHistory/numberOfTrades">
+        <Annotation Term="Common.Label" String="Number of Trades"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.PriceHistory/timeframe">
+        <Annotation Term="Common.Label" String="Timeframe"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.EntityContainer/MarketData">
+        <Annotation Term="Capabilities.DeleteRestrictions">
+          <Record Type="Capabilities.DeleteRestrictionsType">
+            <PropertyValue Property="Deletable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.InsertRestrictions">
+          <Record Type="Capabilities.InsertRestrictionsType">
+            <PropertyValue Property="Insertable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.UpdateRestrictions">
+          <Record Type="Capabilities.UpdateRestrictionsType">
+            <PropertyValue Property="Updatable" Bool="false"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketData/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketData/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketData/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketData/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketData/id">
+        <Annotation Term="Common.Label" String="ID"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketData/symbol">
+        <Annotation Term="Common.Label" String="Symbol"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketData/source">
+        <Annotation Term="Common.Label" String="Data Source"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketData/open">
+        <Annotation Term="Common.Label" String="Open"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketData/high">
+        <Annotation Term="Common.Label" String="High"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketData/low">
+        <Annotation Term="Common.Label" String="Low"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketData/close">
+        <Annotation Term="Common.Label" String="Close"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketData/volume">
+        <Annotation Term="Common.Label" String="Volume"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketData/timestamp">
+        <Annotation Term="Common.Label" String="Timestamp"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketData/fetchedAt">
+        <Annotation Term="Common.Label" String="Fetched At"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.EntityContainer/MarketIndicators">
+        <Annotation Term="Capabilities.DeleteRestrictions">
+          <Record Type="Capabilities.DeleteRestrictionsType">
+            <PropertyValue Property="Deletable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.InsertRestrictions">
+          <Record Type="Capabilities.InsertRestrictionsType">
+            <PropertyValue Property="Insertable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.UpdateRestrictions">
+          <Record Type="Capabilities.UpdateRestrictionsType">
+            <PropertyValue Property="Updatable" Bool="false"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketIndicators/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketIndicators/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketIndicators/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketIndicators/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketIndicators/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketIndicators/symbol">
+        <Annotation Term="Common.Label" String="Symbol"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketIndicators/timestamp">
+        <Annotation Term="Common.Label" String="Timestamp"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketIndicators/rsi">
+        <Annotation Term="Common.Label" String="RSI"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketIndicators/macd">
+        <Annotation Term="Common.Label" String="MACD"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketIndicators/macdSignal">
+        <Annotation Term="Common.Label" String="MACD Signal"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketIndicators/macdHistogram">
+        <Annotation Term="Common.Label" String="MACD Histogram"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketIndicators/sma20">
+        <Annotation Term="Common.Label" String="SMA 20"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketIndicators/sma50">
+        <Annotation Term="Common.Label" String="SMA 50"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketIndicators/sma200">
+        <Annotation Term="Common.Label" String="SMA 200"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketIndicators/ema12">
+        <Annotation Term="Common.Label" String="EMA 12"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketIndicators/ema26">
+        <Annotation Term="Common.Label" String="EMA 26"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketIndicators/bbUpper">
+        <Annotation Term="Common.Label" String="Bollinger Band Upper"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketIndicators/bbMiddle">
+        <Annotation Term="Common.Label" String="Bollinger Band Middle"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketIndicators/bbLower">
+        <Annotation Term="Common.Label" String="Bollinger Band Lower"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketIndicators/atr">
+        <Annotation Term="Common.Label" String="Average True Range"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketIndicators/volatility">
+        <Annotation Term="Common.Label" String="Volatility"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.EntityContainer/MarketSentiment">
+        <Annotation Term="Capabilities.DeleteRestrictions">
+          <Record Type="Capabilities.DeleteRestrictionsType">
+            <PropertyValue Property="Deletable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.InsertRestrictions">
+          <Record Type="Capabilities.InsertRestrictionsType">
+            <PropertyValue Property="Insertable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.UpdateRestrictions">
+          <Record Type="Capabilities.UpdateRestrictionsType">
+            <PropertyValue Property="Updatable" Bool="false"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketSentiment/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketSentiment/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketSentiment/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketSentiment/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketSentiment/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketSentiment/symbol">
+        <Annotation Term="Common.Label" String="Symbol"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketSentiment/timestamp">
+        <Annotation Term="Common.Label" String="Timestamp"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketSentiment/sentimentScore">
+        <Annotation Term="Common.Label" String="Sentiment Score"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketSentiment/fearGreedIndex">
+        <Annotation Term="Common.Label" String="Fear &amp; Greed Index"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketSentiment/socialVolume">
+        <Annotation Term="Common.Label" String="Social Media Volume"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketSentiment/newsVolume">
+        <Annotation Term="Common.Label" String="News Volume"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketSentiment/redditMentions">
+        <Annotation Term="Common.Label" String="Reddit Mentions"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketSentiment/twitterMentions">
+        <Annotation Term="Common.Label" String="Twitter Mentions"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.MarketSentiment/googleTrends">
+        <Annotation Term="Common.Label" String="Google Trends Score"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.EntityContainer/TopCryptocurrencies">
+        <Annotation Term="Capabilities.DeleteRestrictions">
+          <Record Type="Capabilities.DeleteRestrictionsType">
+            <PropertyValue Property="Deletable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.InsertRestrictions">
+          <Record Type="Capabilities.InsertRestrictionsType">
+            <PropertyValue Property="Insertable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.UpdateRestrictions">
+          <Record Type="Capabilities.UpdateRestrictionsType">
+            <PropertyValue Property="Updatable" Bool="false"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.TopCryptocurrencies/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.TopCryptocurrencies/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.TopCryptocurrencies/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.TopCryptocurrencies/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.TopCryptocurrencies/symbol">
+        <Annotation Term="Common.Label" String="Symbol"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.TopCryptocurrencies/baseCurrency">
+        <Annotation Term="Common.Label" String="Base Currency"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.TopCryptocurrencies/quoteCurrency">
+        <Annotation Term="Common.Label" String="Quote Currency"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.TopCryptocurrencies/displayName">
+        <Annotation Term="Common.Label" String="Display Name"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.TopCryptocurrencies/lastPrice">
+        <Annotation Term="Common.Label" String="Last Price"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.TopCryptocurrencies/priceChange24h">
+        <Annotation Term="Common.Label" String="24h Price Change %"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.TopCryptocurrencies/volume24h">
+        <Annotation Term="Common.Label" String="24h Volume"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.TopCryptocurrencies/marketCap">
+        <Annotation Term="Common.Label" String="Market Cap"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.TopCryptocurrencies/circulatingSupply">
+        <Annotation Term="Common.Label" String="Circulating Supply"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.TopCryptocurrencies/totalSupply">
+        <Annotation Term="Common.Label" String="Total Supply"/>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.getPriceHistory(Edm.String,Edm.String,Edm.DateTimeOffset,Edm.DateTimeOffset)/symbol">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.getPriceHistory(Edm.String,Edm.String,Edm.DateTimeOffset,Edm.DateTimeOffset)/timeframe">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.getPriceHistory(Edm.String,Edm.String,Edm.DateTimeOffset,Edm.DateTimeOffset)/startDate">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.getPriceHistory(Edm.String,Edm.String,Edm.DateTimeOffset,Edm.DateTimeOffset)/endDate">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.getMarketTrends(Edm.String)/period">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.getMarketIndicators(Edm.String)/symbol">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.getCorrelationMatrix(Collection(Edm.String))/symbols">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.getVolatilityAnalysis(Edm.String,Edm.String)/symbol">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.getVolatilityAnalysis(Edm.String,Edm.String)/period">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="MarketAnalysisService.getDataStreamInfo(Edm.String)/dataType">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

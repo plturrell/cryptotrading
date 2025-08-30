@@ -1,17 +1,38 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
+  "version": 2,
+  "name": "rex-crypto-trading",
+  "builds": [
+    {
+      "src": "app_vercel.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "webapp/**/*",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/app_vercel.py"
+    },
+    {
+      "src": "/webapp/(.*)",
+      "dest": "/webapp/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/webapp/index.html"
+    }
+  ],
   "env": {
-    "MCP_ENVIRONMENT": "production",
-    "MCP_TRANSPORT": "http",
-    "MCP_REQUIRE_AUTH": "true",
-    "MCP_RATE_LIMIT_GLOBAL": "1000",
-    "MCP_STRICT_VALIDATION": "true",
-    "MCP_AUDIT_LOGGING": "true"
+    "PERPLEXITY_API_KEY": "@perplexity_api_key",
+    "ENABLE_RUSSIAN_TRANSLATION": "true",
+    "ENABLE_IMAGE_ENHANCEMENT": "true"
   },
-  "build": {
-    "env": {
-      "PYTHON_VERSION": "3.9"
+  "functions": {
+    "app_vercel.py": {
+      "maxDuration": 30
     }
   }
 }

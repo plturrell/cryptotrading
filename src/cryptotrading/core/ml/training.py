@@ -38,7 +38,7 @@ class ModelTrainingPipeline:
     
     def __init__(self):
         # Use database for training data instead of direct market client
-        from ...data.database.unified_database import UnifiedDatabase
+        from ...infrastructure.database.unified_database import UnifiedDatabase
         self.database = UnifiedDatabase()
         self.training_config = {
             'symbols': ['BTC', 'ETH', 'BNB', 'SOL', 'ADA', 'AVAX', 'DOT', 'MATIC', 'LINK', 'UNI'],
@@ -274,7 +274,7 @@ class ModelEvaluator:
     
     def __init__(self):
         # Use database for evaluation data instead of direct market client
-        from ...data.database.unified_database import UnifiedDatabase
+        from ...infrastructure.database.unified_database import UnifiedDatabase
         self.database = UnifiedDatabase()
         
     async def backtest_model(self, model_name: str, test_days: int = 30) -> Dict[str, Any]:

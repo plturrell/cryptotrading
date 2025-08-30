@@ -1,0 +1,19 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core">
+    
+    <ResponsivePopover
+        title="User Menu"
+        placement="Bottom">
+        <content>
+            <VBox class="sapUiMediumMargin">
+                <Text text="Welcome, {app>/user/name}" class="sapUiSmallMarginBottom"/>
+                <Button text="Profile Settings" icon="sap-icon://person-placeholder"/>
+                <Button text="Account Settings" icon="sap-icon://action-settings"/>
+                <Button text="Help" icon="sap-icon://sys-help"/>
+                <Button text="Sign Out" icon="sap-icon://log" type="Emphasized"/>
+            </VBox>
+        </content>
+    </ResponsivePopover>
+    
+</core:FragmentDefinition>

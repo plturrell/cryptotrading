@@ -1,0 +1,160 @@
+<mvc:View
+    controllerName="com.rex.trading.controller.Login"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:core="sap.ui.core"
+    xmlns:l="sap.ui.layout"
+    xmlns:f="sap.ui.layout.form"
+    xmlns="sap.m"
+    displayBlock="true">
+    
+    <Page
+        showHeader="false"
+        enableScrolling="false"
+        class="sapUiResponsivePadding--header">
+        
+        <content>
+            <FlexBox
+                height="100%"
+                width="100%"
+                alignItems="Center"
+                justifyContent="Center"
+                backgroundDesign="Solid">
+                
+                <Panel
+                    width="400px"
+                    class="sapUiResponsiveMargin">
+                    
+                    <headerToolbar>
+                        <OverflowToolbar>
+                            <Image
+                                src="images/logo.png"
+                                height="40px"
+                                width="40px"/>
+                            <Title
+                                text="{i18n>appTitle}"
+                                level="H2"/>
+                            <ToolbarSpacer/>
+                            <Select
+                                id="languageSelect"
+                                change="onLanguageChange"
+                                selectedKey="{settings>/language}">
+                                <items>
+                                    <core:Item key="en" text="English 🇬🇧"/>
+                                    <core:Item key="ru" text="Русский 🇷🇺"/>
+                                </items>
+                            </Select>
+                        </OverflowToolbar>
+                    </headerToolbar>
+                    
+                    <content>
+                        <VBox class="sapUiMediumMargin">
+                            
+                            <!-- User Selection for Demo -->
+                            <RadioButtonGroup
+                                id="userSelection"
+                                columns="2"
+                                selectedIndex="0"
+                                select="onUserSelect"
+                                visible="{settings>/demoMode}">
+                                <RadioButton text="Craig (Admin)" />
+                                <RadioButton text="Irina (Trader)" />
+                                <RadioButton text="Dasha (Analyst)" />
+                                <RadioButton text="Dany (Trader)" />
+                            </RadioButtonGroup>
+                            
+                            <f:SimpleForm
+                                editable="true"
+                                layout="ResponsiveGridLayout">
+                                
+                                <f:content>
+                                    <Label text="{i18n>username}" required="true"/>
+                                    <Input
+                                        id="usernameInput"
+                                        value="{login>/username}"
+                                        placeholder="{i18n>enterUsername}"
+                                        liveChange="onInputChange"/>
+                                    
+                                    <Label text="{i18n>password}" required="true"/>
+                                    <Input
+                                        id="passwordInput"
+                                        type="Password"
+                                        value="{login>/password}"
+                                        placeholder="{i18n>enterPassword}"
+                                        submit="onLogin"
+                                        liveChange="onInputChange"/>
+                                    
+                                    <Label text=""/>
+                                    <CheckBox
+                                        text="{i18n>rememberMe}"
+                                        selected="{login>/rememberMe}"/>
+                                </f:content>
+                            </f:SimpleForm>
+                            
+                            <MessageStrip
+                                id="messageStrip"
+                                visible="{login>/showMessage}"
+                                text="{login>/message}"
+                                type="{login>/messageType}"
+                                showIcon="true"/>
+                            
+                            <HBox justifyContent="SpaceBetween">
+                                <Link
+                                    text="{i18n>forgotPassword}"
+                                    press="onForgotPassword"/>
+                                <Link
+                                    text="{i18n>createAccount}"
+                                    press="onCreateAccount"
+                                    visible="false"/>
+                            </HBox>
+                            
+                            <Button
+                                id="loginButton"
+                                text="{i18n>login}"
+                                type="Emphasized"
+                                width="100%"
+                                press="onLogin"
+                                enabled="{login>/loginEnabled}"/>
+                            
+                            <HBox
+                                justifyContent="Center"
+                                class="sapUiSmallMarginTop">
+                                <Text text="{i18n>orLoginWith}" />
+                            </HBox>
+                            
+                            <HBox justifyContent="Center">
+                                <Button
+                                    icon="sap-icon://fontawesome/google"
+                                    tooltip="Login with Google"
+                                    press="onGoogleLogin"
+                                    class="sapUiTinyMarginEnd"/>
+                                <Button
+                                    icon="sap-icon://fontawesome/github"
+                                    tooltip="Login with GitHub"
+                                    press="onGithubLogin"
+                                    class="sapUiTinyMarginEnd"/>
+                                <Button
+                                    icon="sap-icon://fontawesome/microsoft"
+                                    tooltip="Login with Microsoft"
+                                    press="onMicrosoftLogin"/>
+                            </HBox>
+                            
+                        </VBox>
+                    </content>
+                    
+                    <footer>
+                        <OverflowToolbar>
+                            <Text text="© 2024 рекс.com" />
+                            <ToolbarSpacer/>
+                            <Link text="{i18n>privacy}" press="onPrivacy"/>
+                            <Link text="{i18n>terms}" press="onTerms"/>
+                        </OverflowToolbar>
+                    </footer>
+                    
+                </Panel>
+                
+            </FlexBox>
+        </content>
+        
+    </Page>
+    
+</mvc:View>

@@ -233,7 +233,10 @@ class FREDClient:
         
         if files:
             # Sort by modification time and get most recent
-            latest_file = max(files, key=lambda f: f.stat().st_mtime)
+            def get_file_mtime(file_path):
+                return file_path.stat().st_mtime
+            
+            latest_file = max(files, key=get_file_mtime)
             
             try:
                 df = pd.read_csv(latest_file, index_col=0, parse_dates=True)

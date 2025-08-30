@@ -162,7 +162,10 @@ class YahooFinanceClient:
         
         if files:
             # Sort by modification time and get most recent
-            latest_file = max(files, key=lambda f: f.stat().st_mtime)
+            def get_file_mtime(file_path):
+                return file_path.stat().st_mtime
+            
+            latest_file = max(files, key=get_file_mtime)
             
             try:
                 df = pd.read_csv(latest_file, index_col=0, parse_dates=True)
@@ -200,9 +203,10 @@ class YahooFinanceClient:
         
         # Price features
         training_df['returns'] = training_df['close'].pct_change()
-        training_df['log_returns'] = (training_df['close'] / training_df['close'].shift(1)).apply(
-            lambda x: np.log(x) if x > 0 else 0
-        )
+        def calculate_log_return(x):
+            return np.log(x) if x > 0 else 0
+        
+        training_df['log_returns'] = (training_df['close'] / training_df['close'].shift(1)).apply(calculate_log_return)
         
         # Remove NaN rows
         training_df = training_df.dropna()

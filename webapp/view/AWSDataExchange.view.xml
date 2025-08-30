@@ -1,0 +1,154 @@
+<mvc:View
+    controllerName="cryptotrading.controller.AWSDataExchange"
+    xmlns:mvc="sap.ui.core.mvc"
+    displayBlock="true"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core">
+    <Page title="AWS Data Exchange" showNavButton="true" navButtonPress="onNavBack">
+        <content>
+            <VBox class="sapUiMediumMargin">
+                
+                <!-- Service Status Panel -->
+                <Panel headerText="AWS Data Exchange Service Status" expandable="true" expanded="true" class="sapUiResponsiveMargin">
+                    <content>
+                        <VBox>
+                            <HBox alignItems="Center" class="sapUiSmallMarginBottom">
+                                <core:Icon src="sap-icon://status-{aws>/serviceStatus/available ? 'positive' : 'negative'}" 
+                                          color="{aws>/serviceStatus/available ? 'green' : 'red'}" class="sapUiTinyMarginEnd"/>
+                                <Text text="Service Status: {aws>/serviceStatus/available ? 'Available' : 'Not Available'}" />
+                            </HBox>
+                            <HBox alignItems="Center" class="sapUiSmallMarginBottom">
+                                <core:Icon src="sap-icon://status-{aws>/serviceStatus/awsCredentials ? 'positive' : 'negative'}" 
+                                          color="{aws>/serviceStatus/awsCredentials ? 'green' : 'red'}" class="sapUiTinyMarginEnd"/>
+                                <Text text="AWS Credentials: {aws>/serviceStatus/awsCredentials ? 'Valid' : 'Invalid'}" />
+                            </HBox>
+                            <Text text="AWS Account: {aws>/serviceStatus/awsAccount}" visible="{aws>/serviceStatus/awsCredentials}" class="sapUiSmallMarginBottom"/>
+                            <Button text="Setup Instructions" type="Emphasized" press="onShowSetupInstructions" 
+                                   visible="{= !${aws>/serviceStatus/available} }" class="sapUiSmallMarginTop"/>
+                            <BusyIndicator visible="{aws>/serviceStatus/loading}" class="sapUiSmallMarginTop"/>
+                        </VBox>
+                    </content>
+                </Panel>
+
+                <!-- Dataset Discovery Panel -->
+                <Panel headerText="Dataset Discovery" expandable="true" expanded="true" class="sapUiResponsiveMargin"
+                       visible="{aws>/serviceStatus/available}">
+                    <content>
+                        <VBox>
+                            <HBox class="sapUiSmallMarginBottom">
+                                <Button text="Discover Crypto Datasets" type="Emphasized" press="onDiscoverCryptoData" 
+                                       class="sapUiTinyMarginEnd"/>
+                                <Button text="Discover Economic Datasets" type="Emphasized" press="onDiscoverEconomicData" 
+                                       class="sapUiTinyMarginEnd"/>
+                                <Button text="Refresh All" press="onRefreshDatasets" icon="sap-icon://refresh"/>
+                            </HBox>
+                            <BusyIndicator visible="{aws>/loading/datasets}" class="sapUiSmallMarginTop"/>
+                        </VBox>
+                    </content>
+                </Panel>
+
+                <!-- Available Datasets Panel -->
+                <Panel headerText="Available Datasets ({aws>/datasets/all/length})" expandable="true" expanded="true" 
+                       class="sapUiResponsiveMargin" visible="{aws>/serviceStatus/available}">
+                    <content>
+                        <List items="{aws>/datasets/all}" mode="SingleSelect" selectionChange="onDatasetSelect"
+                              noDataText="No datasets found. Use discovery buttons to find available data.">
+                            <StandardListItem 
+                                title="{aws>name}" 
+                                description="{path: 'aws>description', formatter: '.formatDatasetDescription'}"
+                                info="{path: 'aws>provider', formatter: '.formatDatasetProvider'}"
+                                type="Active">
+                                <customData>
+                                    <core:CustomData key="dataset_id" value="{aws>dataset_id}" />
+                                </customData>
+                            </StandardListItem>
+                        </List>
+                    </content>
+                </Panel>
+
+                <!-- Dataset Assets Panel -->
+                <Panel headerText="Dataset Assets ({aws>/assets/length})" expandable="true" expanded="true" 
+                       class="sapUiResponsiveMargin" visible="{= ${aws>/selectedDataset} !== null}">
+                    <content>
+                        <VBox>
+                            <Text text="Selected Dataset: {aws>/selectedDataset/name}" class="sapUiSmallMarginBottom"/>
+                            <Text text="Provider: {aws>/selectedDataset/provider}" class="sapUiSmallMarginBottom"/>
+                            
+                            <List items="{aws>/assets}" mode="SingleSelect" selectionChange="onAssetSelect"
+                                  noDataText="Loading assets..." class="sapUiSmallMarginTop">
+                                <StandardListItem 
+                                    title="{aws>name}" 
+                                    description="Format: {aws>file_format} | Size: {path: 'aws>size_mb', formatter: '.formatFileSize'}"
+                                    info="{path: 'aws>created_at', formatter: '.formatDateTime'}"
+                                    type="Active">
+                                    <customData>
+                                        <core:CustomData key="asset_id" value="{aws>asset_id}" />
+                                    </customData>
+                                </StandardListItem>
+                            </List>
+                            
+                            <BusyIndicator visible="{aws>/loading/assets}" class="sapUiSmallMarginTop"/>
+                        </VBox>
+                    </content>
+                </Panel>
+
+                <!-- Data Loading Panel -->
+                <Panel headerText="Load Data to Database" expandable="true" expanded="true" 
+                       class="sapUiResponsiveMargin" visible="{= ${aws>/selectedAsset} !== null}">
+                    <content>
+                        <VBox>
+                            <Text text="Selected Asset: {aws>/selectedAsset/name}" class="sapUiSmallMarginBottom"/>
+                            <Text text="File Size: {path: 'aws>/selectedAsset/size_mb', formatter: '.formatFileSize'}" 
+                                  class="sapUiSmallMarginBottom"/>
+                            <Text text="Format: {aws>/selectedAsset/file_format}" class="sapUiSmallMarginBottom"/>
+                            
+                            <MessageStrip 
+                                text="This will download the dataset from AWS Data Exchange and load it into the database. Large files may take several minutes to process."
+                                type="Information" 
+                                class="sapUiMediumMarginVertical"/>
+                            
+                            <Button text="Load to Database" 
+                                   type="Emphasized" 
+                                   press="onLoadDatasetToDatabase"
+                                   enabled="{= !${aws>/loading/dataLoad} }"
+                                   class="sapUiSmallMarginTop"/>
+                            
+                            <BusyIndicator visible="{aws>/loading/dataLoad}" 
+                                          text="Loading data from AWS Data Exchange..."
+                                          class="sapUiSmallMarginTop"/>
+                        </VBox>
+                    </content>
+                </Panel>
+
+                <!-- Crypto Datasets Panel -->
+                <Panel headerText="Crypto Datasets ({aws>/datasets/crypto/length})" expandable="true" expanded="false" 
+                       class="sapUiResponsiveMargin" visible="{= ${aws>/datasets/crypto/length} > 0}">
+                    <content>
+                        <List items="{aws>/datasets/crypto}" mode="SingleSelect" selectionChange="onDatasetSelect">
+                            <StandardListItem 
+                                title="{aws>name}" 
+                                description="{path: 'aws>description', formatter: '.formatDatasetDescription'}"
+                                info="{path: 'aws>provider', formatter: '.formatDatasetProvider'}"
+                                type="Active"/>
+                        </List>
+                    </content>
+                </Panel>
+
+                <!-- Economic Datasets Panel -->
+                <Panel headerText="Economic Datasets ({aws>/datasets/economic/length})" expandable="true" expanded="false" 
+                       class="sapUiResponsiveMargin" visible="{= ${aws>/datasets/economic/length} > 0}">
+                    <content>
+                        <List items="{aws>/datasets/economic}" mode="SingleSelect" selectionChange="onDatasetSelect">
+                            <StandardListItem 
+                                title="{aws>name}" 
+                                description="{path: 'aws>description', formatter: '.formatDatasetDescription'}"
+                                info="{path: 'aws>provider', formatter: '.formatDatasetProvider'}"
+                                type="Active"/>
+                        </List>
+                    </content>
+                </Panel>
+
+            </VBox>
+        </content>
+    </Page>
+</mvc:View>

@@ -1,0 +1,250 @@
+<mvc:View
+    controllerName="com.rex.cryptotrading.controller.DataLoading"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:l="sap.ui.layout"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:core="sap.ui.core">
+    
+    <Page
+        title="Market Data Loading"
+        showNavButton="true"
+        navButtonPress="onNavBack">
+        
+        <content>
+            <VBox class="sapUiMediumMargin">
+                
+                <!-- Data Source Status Panel -->
+                <Panel headerText="Data Source Status" expandable="true" expanded="true">
+                    <content>
+                        <Table items="{dataLoading>/dataSources}">
+                            <columns>
+                                <Column width="20%">
+                                    <Text text="Source"/>
+                                </Column>
+                                <Column width="15%">
+                                    <Text text="Status"/>
+                                </Column>
+                                <Column width="25%">
+                                    <Text text="Last Sync"/>
+                                </Column>
+                                <Column width="20%">
+                                    <Text text="Records"/>
+                                </Column>
+                                <Column width="20%">
+                                    <Text text="Rate Limit"/>
+                                </Column>
+                            </columns>
+                            <items>
+                                <ColumnListItem>
+                                    <cells>
+                                        <ObjectIdentifier title="{dataLoading>source}" text="{dataLoading>apiStatus}"/>
+                                        <ObjectStatus 
+                                            text="{dataLoading>isAvailable}" 
+                                            state="{= ${dataLoading>isAvailable} ? 'Success' : 'Error'}"/>
+                                        <Text text="{dataLoading>lastSync}"/>
+                                        <Text text="{dataLoading>recordCount}"/>
+                                        <Text text="{dataLoading>rateLimit}"/>
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                    </content>
+                </Panel>
+                
+                <!-- Data Loading Controls -->
+                <Panel headerText="Load Market Data" expandable="true" expanded="true">
+                    <content>
+                        <f:SimpleForm
+                            editable="true"
+                            layout="ResponsiveGridLayout"
+                            labelSpanXL="3"
+                            labelSpanL="3"
+                            labelSpanM="3"
+                            labelSpanS="12"
+                            adjustLabelSpan="false"
+                            emptySpanXL="4"
+                            emptySpanL="4"
+                            emptySpanM="4"
+                            emptySpanS="0"
+                            columnsXL="1"
+                            columnsL="1"
+                            columnsM="1">
+                            
+                            <!-- Yahoo Finance Section -->
+                            <f:content>
+                                <core:Title text="Yahoo Finance Data"/>
+                                
+                                <Label text="Symbols:"/>
+                                <MultiComboBox
+                                    id="yahooSymbols"
+                                    items="{dataLoading>/availableSymbols}"
+                                    selectedKeys="BTC,ETH,SOL">
+                                    <core:Item key="{dataLoading>key}" text="{dataLoading>text}"/>
+                                </MultiComboBox>
+                                
+                                <Label text="Date Range:"/>
+                                <DateRangeSelection
+                                    id="yahooDateRange"
+                                    dateValue="{dataLoading>/yahooStartDate}"
+                                    secondDateValue="{dataLoading>/yahooEndDate}"/>
+                                
+                                <Label text="Interval:"/>
+                                <Select id="yahooInterval" selectedKey="1d">
+                                    <core:Item key="1m" text="1 Minute"/>
+                                    <core:Item key="5m" text="5 Minutes"/>
+                                    <core:Item key="15m" text="15 Minutes"/>
+                                    <core:Item key="1h" text="1 Hour"/>
+                                    <core:Item key="1d" text="1 Day"/>
+                                    <core:Item key="1wk" text="1 Week"/>
+                                </Select>
+                                
+                                <Label text=""/>
+                                <Button 
+                                    text="Load Yahoo Data" 
+                                    type="Emphasized" 
+                                    icon="sap-icon://download"
+                                    press="onLoadYahooData"/>
+                                
+                                <!-- FRED Section -->
+                                <core:Title text="FRED Economic Data"/>
+                                
+                                <Label text="Series:"/>
+                                <MultiComboBox
+                                    id="fredSeries"
+                                    items="{dataLoading>/fredSeries}"
+                                    selectedKeys="DGS10,WALCL,M2SL">
+                                    <core:Item key="{dataLoading>key}" text="{dataLoading>text}"/>
+                                </MultiComboBox>
+                                
+                                <Label text="Date Range:"/>
+                                <DateRangeSelection
+                                    id="fredDateRange"
+                                    dateValue="{dataLoading>/fredStartDate}"
+                                    secondDateValue="{dataLoading>/fredEndDate}"/>
+                                
+                                <Label text=""/>
+                                <Button 
+                                    text="Load FRED Data" 
+                                    type="Emphasized" 
+                                    icon="sap-icon://download"
+                                    press="onLoadFREDData"/>
+                                
+                                <!-- GeckoTerminal Section -->
+                                <core:Title text="GeckoTerminal DEX Data"/>
+                                
+                                <Label text="Networks:"/>
+                                <MultiComboBox
+                                    id="geckoNetworks"
+                                    items="{dataLoading>/dexNetworks}"
+                                    selectedKeys="ethereum,bsc,polygon">
+                                    <core:Item key="{dataLoading>key}" text="{dataLoading>text}"/>
+                                </MultiComboBox>
+                                
+                                <Label text="Pool Count:"/>
+                                <StepInput
+                                    id="poolCount"
+                                    value="20"
+                                    min="1"
+                                    max="100"
+                                    step="10"/>
+                                
+                                <Label text="Include:"/>
+                                <HBox>
+                                    <CheckBox id="includeVolume" text="Volume" selected="true"/>
+                                    <CheckBox id="includeLiquidity" text="Liquidity" selected="true" class="sapUiSmallMarginBegin"/>
+                                </HBox>
+                                
+                                <Label text=""/>
+                                <Button 
+                                    text="Load DEX Data" 
+                                    type="Emphasized" 
+                                    icon="sap-icon://download"
+                                    press="onLoadGeckoData"/>
+                                
+                                <!-- Load All Section -->
+                                <core:Title text="Bulk Load All Sources"/>
+                                
+                                <Label text=""/>
+                                <HBox>
+                                    <Button 
+                                        text="Load All Market Data" 
+                                        type="Accept" 
+                                        icon="sap-icon://download-from-cloud"
+                                        press="onLoadAllData"/>
+                                    <Button 
+                                        text="Cancel All Jobs" 
+                                        type="Reject" 
+                                        icon="sap-icon://stop"
+                                        press="onCancelAllJobs"
+                                        class="sapUiSmallMarginBegin"/>
+                                </HBox>
+                            </f:content>
+                        </f:SimpleForm>
+                    </content>
+                </Panel>
+                
+                <!-- Active Jobs Panel -->
+                <Panel headerText="Active Loading Jobs" expandable="true" expanded="true">
+                    <content>
+                        <Table 
+                            id="activeJobsTable"
+                            items="{dataLoading>/activeJobs}"
+                            noDataText="No active jobs">
+                            <columns>
+                                <Column width="15%">
+                                    <Text text="Job ID"/>
+                                </Column>
+                                <Column width="15%">
+                                    <Text text="Source"/>
+                                </Column>
+                                <Column width="15%">
+                                    <Text text="Status"/>
+                                </Column>
+                                <Column width="25%">
+                                    <Text text="Progress"/>
+                                </Column>
+                                <Column width="20%">
+                                    <Text text="Start Time"/>
+                                </Column>
+                                <Column width="10%">
+                                    <Text text="Actions"/>
+                                </Column>
+                            </columns>
+                            <items>
+                                <ColumnListItem>
+                                    <cells>
+                                        <Text text="{dataLoading>jobId}"/>
+                                        <Text text="{dataLoading>source}"/>
+                                        <ObjectStatus 
+                                            text="{dataLoading>status}" 
+                                            state="{= ${dataLoading>status} === 'completed' ? 'Success' : ${dataLoading>status} === 'failed' ? 'Error' : 'Warning'}"/>
+                                        <ProgressIndicator
+                                            percentValue="{dataLoading>progress}"
+                                            displayValue="{dataLoading>progress}%"
+                                            showValue="true"
+                                            state="{= ${dataLoading>status} === 'failed' ? 'Error' : 'Information'}"/>
+                                        <Text text="{dataLoading>startTime}"/>
+                                        <Button 
+                                            icon="sap-icon://decline" 
+                                            type="Reject"
+                                            press="onCancelJob"/>
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                    </content>
+                </Panel>
+                
+            </VBox>
+        </content>
+        
+        <footer>
+            <OverflowToolbar>
+                <ToolbarSpacer/>
+                <Button text="Refresh Status" icon="sap-icon://refresh" press="onRefreshStatus"/>
+                <Button text="View Logs" icon="sap-icon://activity-items" press="onViewLogs"/>
+            </OverflowToolbar>
+        </footer>
+    </Page>
+</mvc:View>

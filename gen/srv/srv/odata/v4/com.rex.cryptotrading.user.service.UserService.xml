@@ -1,0 +1,1350 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Capabilities.V1.xml">
+    <edmx:Include Alias="Capabilities" Namespace="Org.OData.Capabilities.V1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/Common.xml">
+    <edmx:Include Alias="Common" Namespace="com.sap.vocabularies.Common.v1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Core.V1.xml">
+    <edmx:Include Alias="Core" Namespace="Org.OData.Core.V1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/UI.xml">
+    <edmx:Include Alias="UI" Namespace="com.sap.vocabularies.UI.v1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Validation.V1.xml">
+    <edmx:Include Alias="Validation" Namespace="Org.OData.Validation.V1"/>
+  </edmx:Reference>
+  <edmx:DataServices>
+    <Schema Namespace="com.rex.cryptotrading.user.service.UserService" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <Annotation Term="Core.Links">
+        <Collection>
+          <Record>
+            <PropertyValue Property="rel" String="author"/>
+            <PropertyValue Property="href" String="https://cap.cloud.sap"/>
+          </Record>
+        </Collection>
+      </Annotation>
+      <EntityContainer Name="EntityContainer">
+        <EntitySet Name="Users" EntityType="com.rex.cryptotrading.user.service.UserService.Users">
+          <NavigationPropertyBinding Path="sessions" Target="ConversationSessions"/>
+          <NavigationPropertyBinding Path="apiCredentials" Target="APICredentials"/>
+          <NavigationPropertyBinding Path="SiblingEntity" Target="Users"/>
+        </EntitySet>
+        <EntitySet Name="ConversationSessions" EntityType="com.rex.cryptotrading.user.service.UserService.ConversationSessions">
+          <NavigationPropertyBinding Path="user" Target="Users"/>
+          <NavigationPropertyBinding Path="messages" Target="ConversationMessages"/>
+          <NavigationPropertyBinding Path="history" Target="ConversationHistory"/>
+          <NavigationPropertyBinding Path="SiblingEntity" Target="ConversationSessions"/>
+        </EntitySet>
+        <EntitySet Name="ConversationMessages" EntityType="com.rex.cryptotrading.user.service.UserService.ConversationMessages">
+          <NavigationPropertyBinding Path="session" Target="ConversationSessions"/>
+          <NavigationPropertyBinding Path="SiblingEntity" Target="ConversationMessages"/>
+        </EntitySet>
+        <EntitySet Name="ConversationHistory" EntityType="com.rex.cryptotrading.user.service.UserService.ConversationHistory">
+          <NavigationPropertyBinding Path="session" Target="ConversationSessions"/>
+          <NavigationPropertyBinding Path="SiblingEntity" Target="ConversationHistory"/>
+        </EntitySet>
+        <EntitySet Name="APICredentials" EntityType="com.rex.cryptotrading.user.service.UserService.APICredentials">
+          <NavigationPropertyBinding Path="user" Target="Users"/>
+          <NavigationPropertyBinding Path="SiblingEntity" Target="APICredentials"/>
+        </EntitySet>
+        <EntitySet Name="ActiveUsers" EntityType="com.rex.cryptotrading.user.service.UserService.ActiveUsers">
+          <NavigationPropertyBinding Path="sessions" Target="ConversationSessions"/>
+          <NavigationPropertyBinding Path="apiCredentials" Target="APICredentials"/>
+        </EntitySet>
+        <EntitySet Name="RecentSessions" EntityType="com.rex.cryptotrading.user.service.UserService.RecentSessions">
+          <NavigationPropertyBinding Path="user" Target="Users"/>
+          <NavigationPropertyBinding Path="messages" Target="ConversationMessages"/>
+          <NavigationPropertyBinding Path="history" Target="ConversationHistory"/>
+        </EntitySet>
+        <EntitySet Name="UserActivity" EntityType="com.rex.cryptotrading.user.service.UserService.UserActivity"/>
+        <ActionImport Name="createUser" Action="com.rex.cryptotrading.user.service.UserService.createUser"/>
+        <ActionImport Name="activateUser" Action="com.rex.cryptotrading.user.service.UserService.activateUser"/>
+        <ActionImport Name="suspendUser" Action="com.rex.cryptotrading.user.service.UserService.suspendUser"/>
+        <ActionImport Name="resetPassword" Action="com.rex.cryptotrading.user.service.UserService.resetPassword"/>
+        <ActionImport Name="enable2FA" Action="com.rex.cryptotrading.user.service.UserService.enable2FA"/>
+        <ActionImport Name="generateAPIKey" Action="com.rex.cryptotrading.user.service.UserService.generateAPIKey"/>
+        <ActionImport Name="revokeAPIKey" Action="com.rex.cryptotrading.user.service.UserService.revokeAPIKey"/>
+        <ActionImport Name="startConversation" Action="com.rex.cryptotrading.user.service.UserService.startConversation"/>
+        <ActionImport Name="endConversation" Action="com.rex.cryptotrading.user.service.UserService.endConversation"/>
+        <FunctionImport Name="getUserProfile" Function="com.rex.cryptotrading.user.service.UserService.getUserProfile"/>
+        <FunctionImport Name="getUserActivity" Function="com.rex.cryptotrading.user.service.UserService.getUserActivity"/>
+        <FunctionImport Name="getConversationSummary" Function="com.rex.cryptotrading.user.service.UserService.getConversationSummary"/>
+        <FunctionImport Name="validateAPIKey" Function="com.rex.cryptotrading.user.service.UserService.validateAPIKey"/>
+        <FunctionImport Name="getUserPermissions" Function="com.rex.cryptotrading.user.service.UserService.getUserPermissions"/>
+      </EntityContainer>
+      <EntityType Name="Users">
+        <Key>
+          <PropertyRef Name="ID"/>
+          <PropertyRef Name="IsActiveEntity"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="username" Type="Edm.String" MaxLength="50"/>
+        <Property Name="email" Type="Edm.String" MaxLength="100"/>
+        <Property Name="firstName" Type="Edm.String" MaxLength="50"/>
+        <Property Name="lastName" Type="Edm.String" MaxLength="50"/>
+        <Property Name="displayName" Type="Edm.String" MaxLength="100"/>
+        <Property Name="status" Type="Edm.String" MaxLength="20" DefaultValue="PENDING"/>
+        <Property Name="role" Type="Edm.String" MaxLength="30" DefaultValue="VIEWER"/>
+        <Property Name="lastLogin" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="loginCount" Type="Edm.Int32" DefaultValue="0"/>
+        <Property Name="preferences" Type="Edm.String"/>
+        <Property Name="twoFactorEnabled" Type="Edm.Boolean" DefaultValue="false"/>
+        <Property Name="apiKeysEnabled" Type="Edm.Boolean" DefaultValue="false"/>
+        <NavigationProperty Name="sessions" Type="Collection(com.rex.cryptotrading.user.service.UserService.ConversationSessions)" Partner="user">
+          <OnDelete Action="Cascade"/>
+        </NavigationProperty>
+        <NavigationProperty Name="apiCredentials" Type="Collection(com.rex.cryptotrading.user.service.UserService.APICredentials)" Partner="user">
+          <OnDelete Action="Cascade"/>
+        </NavigationProperty>
+        <Property Name="IsActiveEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="true"/>
+        <Property Name="HasActiveEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="false"/>
+        <Property Name="HasDraftEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="false"/>
+        <NavigationProperty Name="DraftAdministrativeData" Type="com.rex.cryptotrading.user.service.UserService.DraftAdministrativeData" ContainsTarget="true"/>
+        <NavigationProperty Name="SiblingEntity" Type="com.rex.cryptotrading.user.service.UserService.Users"/>
+      </EntityType>
+      <EntityType Name="ConversationSessions">
+        <Key>
+          <PropertyRef Name="ID"/>
+          <PropertyRef Name="IsActiveEntity"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <NavigationProperty Name="user" Type="com.rex.cryptotrading.user.service.UserService.Users">
+          <ReferentialConstraint Property="user_ID" ReferencedProperty="ID"/>
+        </NavigationProperty>
+        <Property Name="user_ID" Type="Edm.Guid"/>
+        <Property Name="sessionName" Type="Edm.String" MaxLength="100"/>
+        <Property Name="sessionType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="status" Type="Edm.String" MaxLength="20" DefaultValue="ACTIVE"/>
+        <Property Name="startedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="endedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="metadata" Type="Edm.String"/>
+        <NavigationProperty Name="messages" Type="Collection(com.rex.cryptotrading.user.service.UserService.ConversationMessages)" Partner="session">
+          <OnDelete Action="Cascade"/>
+        </NavigationProperty>
+        <NavigationProperty Name="history" Type="Collection(com.rex.cryptotrading.user.service.UserService.ConversationHistory)" Partner="session">
+          <OnDelete Action="Cascade"/>
+        </NavigationProperty>
+        <Property Name="IsActiveEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="true"/>
+        <Property Name="HasActiveEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="false"/>
+        <Property Name="HasDraftEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="false"/>
+        <NavigationProperty Name="DraftAdministrativeData" Type="com.rex.cryptotrading.user.service.UserService.DraftAdministrativeData" ContainsTarget="true"/>
+        <NavigationProperty Name="SiblingEntity" Type="com.rex.cryptotrading.user.service.UserService.ConversationSessions"/>
+      </EntityType>
+      <EntityType Name="ConversationMessages">
+        <Key>
+          <PropertyRef Name="ID"/>
+          <PropertyRef Name="IsActiveEntity"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <NavigationProperty Name="session" Type="com.rex.cryptotrading.user.service.UserService.ConversationSessions">
+          <ReferentialConstraint Property="session_ID" ReferencedProperty="ID"/>
+        </NavigationProperty>
+        <Property Name="session_ID" Type="Edm.Guid"/>
+        <Property Name="messageType" Type="Edm.String" MaxLength="20"/>
+        <Property Name="content" Type="Edm.String"/>
+        <Property Name="role" Type="Edm.String" MaxLength="20"/>
+        <Property Name="metadata" Type="Edm.String"/>
+        <Property Name="timestamp" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="tokens" Type="Edm.Int32"/>
+        <Property Name="IsActiveEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="true"/>
+        <Property Name="HasActiveEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="false"/>
+        <Property Name="HasDraftEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="false"/>
+        <NavigationProperty Name="DraftAdministrativeData" Type="com.rex.cryptotrading.user.service.UserService.DraftAdministrativeData" ContainsTarget="true"/>
+        <NavigationProperty Name="SiblingEntity" Type="com.rex.cryptotrading.user.service.UserService.ConversationMessages"/>
+      </EntityType>
+      <EntityType Name="ConversationHistory">
+        <Key>
+          <PropertyRef Name="ID"/>
+          <PropertyRef Name="IsActiveEntity"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <NavigationProperty Name="session" Type="com.rex.cryptotrading.user.service.UserService.ConversationSessions">
+          <ReferentialConstraint Property="session_ID" ReferencedProperty="ID"/>
+        </NavigationProperty>
+        <Property Name="session_ID" Type="Edm.Guid"/>
+        <Property Name="summary" Type="Edm.String"/>
+        <Property Name="keyPoints" Type="Edm.String"/>
+        <Property Name="decisions" Type="Edm.String"/>
+        <Property Name="followUps" Type="Edm.String"/>
+        <Property Name="sentiment" Type="Edm.String" MaxLength="20"/>
+        <Property Name="quality" Type="Edm.Decimal" Precision="3" Scale="2"/>
+        <Property Name="IsActiveEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="true"/>
+        <Property Name="HasActiveEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="false"/>
+        <Property Name="HasDraftEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="false"/>
+        <NavigationProperty Name="DraftAdministrativeData" Type="com.rex.cryptotrading.user.service.UserService.DraftAdministrativeData" ContainsTarget="true"/>
+        <NavigationProperty Name="SiblingEntity" Type="com.rex.cryptotrading.user.service.UserService.ConversationHistory"/>
+      </EntityType>
+      <EntityType Name="APICredentials">
+        <Key>
+          <PropertyRef Name="ID"/>
+          <PropertyRef Name="IsActiveEntity"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <NavigationProperty Name="user" Type="com.rex.cryptotrading.user.service.UserService.Users">
+          <ReferentialConstraint Property="user_ID" ReferencedProperty="ID"/>
+        </NavigationProperty>
+        <Property Name="user_ID" Type="Edm.Guid"/>
+        <Property Name="apiKey" Type="Edm.String" MaxLength="100"/>
+        <Property Name="apiSecret" Type="Edm.String" MaxLength="200"/>
+        <Property Name="name" Type="Edm.String" MaxLength="50"/>
+        <Property Name="description" Type="Edm.String" MaxLength="200"/>
+        <Property Name="permissions" Type="Edm.String"/>
+        <Property Name="status" Type="Edm.String" MaxLength="20" DefaultValue="ACTIVE"/>
+        <Property Name="expiresAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="lastUsed" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="usageCount" Type="Edm.Int32" DefaultValue="0"/>
+        <Property Name="rateLimit" Type="Edm.Int32" DefaultValue="1000"/>
+        <Property Name="IsActiveEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="true"/>
+        <Property Name="HasActiveEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="false"/>
+        <Property Name="HasDraftEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="false"/>
+        <NavigationProperty Name="DraftAdministrativeData" Type="com.rex.cryptotrading.user.service.UserService.DraftAdministrativeData" ContainsTarget="true"/>
+        <NavigationProperty Name="SiblingEntity" Type="com.rex.cryptotrading.user.service.UserService.APICredentials"/>
+      </EntityType>
+      <EntityType Name="ActiveUsers">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="username" Type="Edm.String" MaxLength="50"/>
+        <Property Name="email" Type="Edm.String" MaxLength="100"/>
+        <Property Name="firstName" Type="Edm.String" MaxLength="50"/>
+        <Property Name="lastName" Type="Edm.String" MaxLength="50"/>
+        <Property Name="displayName" Type="Edm.String" MaxLength="100"/>
+        <Property Name="status" Type="Edm.String" MaxLength="20" DefaultValue="PENDING"/>
+        <Property Name="role" Type="Edm.String" MaxLength="30" DefaultValue="VIEWER"/>
+        <Property Name="lastLogin" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="loginCount" Type="Edm.Int32" DefaultValue="0"/>
+        <Property Name="preferences" Type="Edm.String"/>
+        <Property Name="twoFactorEnabled" Type="Edm.Boolean" DefaultValue="false"/>
+        <Property Name="apiKeysEnabled" Type="Edm.Boolean" DefaultValue="false"/>
+        <NavigationProperty Name="sessions" Type="Collection(com.rex.cryptotrading.user.service.UserService.ConversationSessions)">
+          <OnDelete Action="Cascade"/>
+        </NavigationProperty>
+        <NavigationProperty Name="apiCredentials" Type="Collection(com.rex.cryptotrading.user.service.UserService.APICredentials)">
+          <OnDelete Action="Cascade"/>
+        </NavigationProperty>
+      </EntityType>
+      <EntityType Name="RecentSessions">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <NavigationProperty Name="user" Type="com.rex.cryptotrading.user.service.UserService.Users">
+          <ReferentialConstraint Property="user_ID" ReferencedProperty="ID"/>
+        </NavigationProperty>
+        <Property Name="user_ID" Type="Edm.Guid"/>
+        <Property Name="sessionName" Type="Edm.String" MaxLength="100"/>
+        <Property Name="sessionType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="status" Type="Edm.String" MaxLength="20" DefaultValue="ACTIVE"/>
+        <Property Name="startedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="endedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="metadata" Type="Edm.String"/>
+        <NavigationProperty Name="messages" Type="Collection(com.rex.cryptotrading.user.service.UserService.ConversationMessages)">
+          <OnDelete Action="Cascade"/>
+        </NavigationProperty>
+        <NavigationProperty Name="history" Type="Collection(com.rex.cryptotrading.user.service.UserService.ConversationHistory)">
+          <OnDelete Action="Cascade"/>
+        </NavigationProperty>
+      </EntityType>
+      <EntityType Name="UserActivity">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="username" Type="Edm.String" MaxLength="50"/>
+        <Property Name="email" Type="Edm.String" MaxLength="100"/>
+        <Property Name="role" Type="Edm.String" MaxLength="30" DefaultValue="VIEWER"/>
+        <Property Name="lastLogin" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="loginCount" Type="Edm.Int32" DefaultValue="0"/>
+        <Property Name="totalSessions" Type="Edm.Int32"/>
+        <Property Name="totalApiKeys" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="DraftAdministrativeData">
+        <Key>
+          <PropertyRef Name="DraftUUID"/>
+        </Key>
+        <Property Name="DraftUUID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="CreationDateTime" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="CreatedByUser" Type="Edm.String" MaxLength="256"/>
+        <Property Name="DraftIsCreatedByMe" Type="Edm.Boolean"/>
+        <Property Name="LastChangeDateTime" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="LastChangedByUser" Type="Edm.String" MaxLength="256"/>
+        <Property Name="InProcessByUser" Type="Edm.String" MaxLength="256"/>
+        <Property Name="DraftIsProcessedByMe" Type="Edm.Boolean"/>
+      </EntityType>
+      <ComplexType Name="return_com_rex_cryptotrading_user_service_UserService_createUser">
+        <Property Name="userId" Type="Edm.String"/>
+        <Property Name="status" Type="Edm.String"/>
+        <Property Name="message" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_user_service_UserService_activateUser">
+        <Property Name="success" Type="Edm.Boolean"/>
+        <Property Name="message" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_user_service_UserService_suspendUser">
+        <Property Name="success" Type="Edm.Boolean"/>
+        <Property Name="message" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_user_service_UserService_resetPassword">
+        <Property Name="success" Type="Edm.Boolean"/>
+        <Property Name="expiresAt" Type="Edm.DateTimeOffset"/>
+        <Property Name="message" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_user_service_UserService_enable2FA">
+        <Property Name="success" Type="Edm.Boolean"/>
+        <Property Name="qrCode" Type="Edm.String"/>
+        <Property Name="backupCodes" Type="Collection(Edm.String)" Nullable="true"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_user_service_UserService_generateAPIKey">
+        <Property Name="apiKey" Type="Edm.String"/>
+        <Property Name="apiSecret" Type="Edm.String"/>
+        <Property Name="expiresAt" Type="Edm.DateTimeOffset"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_user_service_UserService_revokeAPIKey">
+        <Property Name="success" Type="Edm.Boolean"/>
+        <Property Name="message" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_user_service_UserService_startConversation">
+        <Property Name="sessionId" Type="Edm.String"/>
+        <Property Name="status" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_user_service_UserService_endConversation">
+        <Property Name="success" Type="Edm.Boolean"/>
+        <Property Name="summary" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_user_service_UserService_getUserProfile">
+        <Property Name="username" Type="Edm.String"/>
+        <Property Name="email" Type="Edm.String"/>
+        <Property Name="displayName" Type="Edm.String"/>
+        <Property Name="role" Type="Edm.String"/>
+        <Property Name="status" Type="Edm.String"/>
+        <Property Name="lastLogin" Type="Edm.DateTimeOffset"/>
+        <Property Name="statistics" Type="com.rex.cryptotrading.user.service.UserService.return_com_rex_cryptotrading_user_service_UserService_getUserProfile_statistics"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_user_service_UserService_getUserProfile_statistics">
+        <Property Name="totalSessions" Type="Edm.Int32"/>
+        <Property Name="totalMessages" Type="Edm.Int32"/>
+        <Property Name="avgSessionDuration" Type="Edm.Int32"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_user_service_UserService_getUserActivity">
+        <Property Name="loginCount" Type="Edm.Int32"/>
+        <Property Name="sessionCount" Type="Edm.Int32"/>
+        <Property Name="messageCount" Type="Edm.Int32"/>
+        <Property Name="apiCallCount" Type="Edm.Int32"/>
+        <Property Name="activityTimeline" Type="Collection(com.rex.cryptotrading.user.service.UserService.return_com_rex_cryptotrading_user_service_UserService_getUserActivity_activityTimeline)" Nullable="true"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_user_service_UserService_getUserActivity_activityTimeline">
+        <Property Name="timestamp" Type="Edm.DateTimeOffset"/>
+        <Property Name="action" Type="Edm.String"/>
+        <Property Name="details" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_user_service_UserService_getConversationSummary">
+        <Property Name="sessionName" Type="Edm.String"/>
+        <Property Name="duration" Type="Edm.Int32"/>
+        <Property Name="messageCount" Type="Edm.Int32"/>
+        <Property Name="summary" Type="Edm.String"/>
+        <Property Name="keyPoints" Type="Collection(Edm.String)" Nullable="true"/>
+        <Property Name="decisions" Type="Collection(Edm.String)" Nullable="true"/>
+        <Property Name="sentiment" Type="Edm.String"/>
+        <Property Name="qualityScore" Type="Edm.Decimal" Scale="variable"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_user_service_UserService_validateAPIKey">
+        <Property Name="isValid" Type="Edm.Boolean"/>
+        <Property Name="userId" Type="Edm.String"/>
+        <Property Name="permissions" Type="Collection(Edm.String)" Nullable="true"/>
+        <Property Name="rateLimit" Type="Edm.Int32"/>
+        <Property Name="remainingCalls" Type="Edm.Int32"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_user_service_UserService_getUserPermissions">
+        <Property Name="role" Type="Edm.String"/>
+        <Property Name="permissions" Type="Collection(com.rex.cryptotrading.user.service.UserService.return_com_rex_cryptotrading_user_service_UserService_getUserPermissions_permissions)" Nullable="true"/>
+        <Property Name="restrictions" Type="Collection(Edm.String)" Nullable="true"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_user_service_UserService_getUserPermissions_permissions">
+        <Property Name="resource" Type="Edm.String"/>
+        <Property Name="actions" Type="Collection(Edm.String)" Nullable="true"/>
+      </ComplexType>
+      <Action Name="draftPrepare" IsBound="true" EntitySetPath="in">
+        <Parameter Name="in" Type="com.rex.cryptotrading.user.service.UserService.Users"/>
+        <Parameter Name="SideEffectsQualifier" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.user.service.UserService.Users"/>
+      </Action>
+      <Action Name="draftPrepare" IsBound="true" EntitySetPath="in">
+        <Parameter Name="in" Type="com.rex.cryptotrading.user.service.UserService.ConversationSessions"/>
+        <Parameter Name="SideEffectsQualifier" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.user.service.UserService.ConversationSessions"/>
+      </Action>
+      <Action Name="draftPrepare" IsBound="true" EntitySetPath="in">
+        <Parameter Name="in" Type="com.rex.cryptotrading.user.service.UserService.ConversationMessages"/>
+        <Parameter Name="SideEffectsQualifier" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.user.service.UserService.ConversationMessages"/>
+      </Action>
+      <Action Name="draftPrepare" IsBound="true" EntitySetPath="in">
+        <Parameter Name="in" Type="com.rex.cryptotrading.user.service.UserService.ConversationHistory"/>
+        <Parameter Name="SideEffectsQualifier" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.user.service.UserService.ConversationHistory"/>
+      </Action>
+      <Action Name="draftPrepare" IsBound="true" EntitySetPath="in">
+        <Parameter Name="in" Type="com.rex.cryptotrading.user.service.UserService.APICredentials"/>
+        <Parameter Name="SideEffectsQualifier" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.user.service.UserService.APICredentials"/>
+      </Action>
+      <Action Name="draftActivate" IsBound="true" EntitySetPath="in">
+        <Parameter Name="in" Type="com.rex.cryptotrading.user.service.UserService.Users"/>
+        <ReturnType Type="com.rex.cryptotrading.user.service.UserService.Users"/>
+      </Action>
+      <Action Name="draftEdit" IsBound="true" EntitySetPath="in">
+        <Parameter Name="in" Type="com.rex.cryptotrading.user.service.UserService.Users"/>
+        <Parameter Name="PreserveChanges" Type="Edm.Boolean"/>
+        <ReturnType Type="com.rex.cryptotrading.user.service.UserService.Users"/>
+      </Action>
+      <Action Name="createUser" IsBound="false">
+        <Parameter Name="username" Type="Edm.String"/>
+        <Parameter Name="email" Type="Edm.String"/>
+        <Parameter Name="firstName" Type="Edm.String"/>
+        <Parameter Name="lastName" Type="Edm.String"/>
+        <Parameter Name="role" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.user.service.UserService.return_com_rex_cryptotrading_user_service_UserService_createUser"/>
+      </Action>
+      <Action Name="activateUser" IsBound="false">
+        <Parameter Name="userId" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.user.service.UserService.return_com_rex_cryptotrading_user_service_UserService_activateUser"/>
+      </Action>
+      <Action Name="suspendUser" IsBound="false">
+        <Parameter Name="userId" Type="Edm.String"/>
+        <Parameter Name="reason" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.user.service.UserService.return_com_rex_cryptotrading_user_service_UserService_suspendUser"/>
+      </Action>
+      <Action Name="resetPassword" IsBound="false">
+        <Parameter Name="userId" Type="Edm.String"/>
+        <Parameter Name="temporaryPassword" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.user.service.UserService.return_com_rex_cryptotrading_user_service_UserService_resetPassword"/>
+      </Action>
+      <Action Name="enable2FA" IsBound="false">
+        <Parameter Name="userId" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.user.service.UserService.return_com_rex_cryptotrading_user_service_UserService_enable2FA"/>
+      </Action>
+      <Action Name="generateAPIKey" IsBound="false">
+        <Parameter Name="userId" Type="Edm.String"/>
+        <Parameter Name="keyName" Type="Edm.String"/>
+        <Parameter Name="permissions" Type="Edm.String"/>
+        <Parameter Name="expiresInDays" Type="Edm.Int32"/>
+        <ReturnType Type="com.rex.cryptotrading.user.service.UserService.return_com_rex_cryptotrading_user_service_UserService_generateAPIKey"/>
+      </Action>
+      <Action Name="revokeAPIKey" IsBound="false">
+        <Parameter Name="apiKeyId" Type="Edm.String"/>
+        <Parameter Name="reason" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.user.service.UserService.return_com_rex_cryptotrading_user_service_UserService_revokeAPIKey"/>
+      </Action>
+      <Action Name="startConversation" IsBound="false">
+        <Parameter Name="userId" Type="Edm.String"/>
+        <Parameter Name="sessionName" Type="Edm.String"/>
+        <Parameter Name="sessionType" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.user.service.UserService.return_com_rex_cryptotrading_user_service_UserService_startConversation"/>
+      </Action>
+      <Action Name="endConversation" IsBound="false">
+        <Parameter Name="sessionId" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.user.service.UserService.return_com_rex_cryptotrading_user_service_UserService_endConversation"/>
+      </Action>
+      <Function Name="getUserProfile" IsBound="false" IsComposable="false">
+        <Parameter Name="userId" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.user.service.UserService.return_com_rex_cryptotrading_user_service_UserService_getUserProfile"/>
+      </Function>
+      <Function Name="getUserActivity" IsBound="false" IsComposable="false">
+        <Parameter Name="userId" Type="Edm.String"/>
+        <Parameter Name="period" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.user.service.UserService.return_com_rex_cryptotrading_user_service_UserService_getUserActivity"/>
+      </Function>
+      <Function Name="getConversationSummary" IsBound="false" IsComposable="false">
+        <Parameter Name="sessionId" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.user.service.UserService.return_com_rex_cryptotrading_user_service_UserService_getConversationSummary"/>
+      </Function>
+      <Function Name="validateAPIKey" IsBound="false" IsComposable="false">
+        <Parameter Name="apiKey" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.user.service.UserService.return_com_rex_cryptotrading_user_service_UserService_validateAPIKey"/>
+      </Function>
+      <Function Name="getUserPermissions" IsBound="false" IsComposable="false">
+        <Parameter Name="userId" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.user.service.UserService.return_com_rex_cryptotrading_user_service_UserService_getUserPermissions"/>
+      </Function>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.EntityContainer/Users">
+        <Annotation Term="Common.DraftRoot">
+          <Record Type="Common.DraftRootType">
+            <PropertyValue Property="ActivationAction" String="com.rex.cryptotrading.user.service.UserService.draftActivate"/>
+            <PropertyValue Property="EditAction" String="com.rex.cryptotrading.user.service.UserService.draftEdit"/>
+            <PropertyValue Property="PreparationAction" String="com.rex.cryptotrading.user.service.UserService.draftPrepare"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.Users/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.Users/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.Users/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.Users/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.Users/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.Users/username">
+        <Annotation Term="Common.Label" String="Username"/>
+        <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/Mandatory"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.Users/email">
+        <Annotation Term="Common.Label" String="Email"/>
+        <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/Mandatory"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.Users/firstName">
+        <Annotation Term="Common.Label" String="First Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.Users/lastName">
+        <Annotation Term="Common.Label" String="Last Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.Users/displayName">
+        <Annotation Term="Common.Label" String="Display Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.Users/status">
+        <Annotation Term="Common.Label" String="Status"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="ACTIVE"/>
+              <PropertyValue Property="Value" String="ACTIVE"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="INACTIVE"/>
+              <PropertyValue Property="Value" String="INACTIVE"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="SUSPENDED"/>
+              <PropertyValue Property="Value" String="SUSPENDED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="PENDING"/>
+              <PropertyValue Property="Value" String="PENDING"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.Users/role">
+        <Annotation Term="Common.Label" String="Role"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="ADMIN"/>
+              <PropertyValue Property="Value" String="ADMIN"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="TRADER"/>
+              <PropertyValue Property="Value" String="TRADER"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="ANALYST"/>
+              <PropertyValue Property="Value" String="ANALYST"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="VIEWER"/>
+              <PropertyValue Property="Value" String="VIEWER"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="API_USER"/>
+              <PropertyValue Property="Value" String="API_USER"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.Users/lastLogin">
+        <Annotation Term="Common.Label" String="Last Login"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.Users/loginCount">
+        <Annotation Term="Common.Label" String="Login Count"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.Users/preferences">
+        <Annotation Term="Common.Label" String="User Preferences (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.Users/twoFactorEnabled">
+        <Annotation Term="Common.Label" String="2FA Enabled"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.Users/apiKeysEnabled">
+        <Annotation Term="Common.Label" String="API Keys Enabled"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.Users/IsActiveEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.Users/HasActiveEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.Users/HasDraftEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.Users/DraftAdministrativeData">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.EntityContainer/ConversationSessions">
+        <Annotation Term="Common.DraftNode">
+          <Record Type="Common.DraftNodeType">
+            <PropertyValue Property="PreparationAction" String="com.rex.cryptotrading.user.service.UserService.draftPrepare"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationSessions/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationSessions/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationSessions/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationSessions/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationSessions/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationSessions/user">
+        <Annotation Term="Common.Label" String="User"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationSessions/user_ID">
+        <Annotation Term="Common.Label" String="User"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationSessions/sessionName">
+        <Annotation Term="Common.Label" String="Session Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationSessions/sessionType">
+        <Annotation Term="Common.Label" String="Session Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationSessions/status">
+        <Annotation Term="Common.Label" String="Status"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="ACTIVE"/>
+              <PropertyValue Property="Value" String="ACTIVE"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="PAUSED"/>
+              <PropertyValue Property="Value" String="PAUSED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="COMPLETED"/>
+              <PropertyValue Property="Value" String="COMPLETED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="EXPIRED"/>
+              <PropertyValue Property="Value" String="EXPIRED"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationSessions/startedAt">
+        <Annotation Term="Common.Label" String="Started At"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationSessions/endedAt">
+        <Annotation Term="Common.Label" String="Ended At"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationSessions/metadata">
+        <Annotation Term="Common.Label" String="Session Metadata (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationSessions/IsActiveEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationSessions/HasActiveEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationSessions/HasDraftEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationSessions/DraftAdministrativeData">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.EntityContainer/ConversationMessages">
+        <Annotation Term="Common.DraftNode">
+          <Record Type="Common.DraftNodeType">
+            <PropertyValue Property="PreparationAction" String="com.rex.cryptotrading.user.service.UserService.draftPrepare"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationMessages/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationMessages/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationMessages/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationMessages/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationMessages/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationMessages/session">
+        <Annotation Term="Common.Label" String="Session"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationMessages/session_ID">
+        <Annotation Term="Common.Label" String="Session"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationMessages/messageType">
+        <Annotation Term="Common.Label" String="Message Type"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="USER"/>
+              <PropertyValue Property="Value" String="USER"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="ASSISTANT"/>
+              <PropertyValue Property="Value" String="ASSISTANT"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="SYSTEM"/>
+              <PropertyValue Property="Value" String="SYSTEM"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="ERROR"/>
+              <PropertyValue Property="Value" String="ERROR"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationMessages/content">
+        <Annotation Term="Common.Label" String="Message Content"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationMessages/role">
+        <Annotation Term="Common.Label" String="Role"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationMessages/metadata">
+        <Annotation Term="Common.Label" String="Metadata (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationMessages/timestamp">
+        <Annotation Term="Common.Label" String="Timestamp"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationMessages/tokens">
+        <Annotation Term="Common.Label" String="Token Count"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationMessages/IsActiveEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationMessages/HasActiveEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationMessages/HasDraftEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationMessages/DraftAdministrativeData">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.EntityContainer/ConversationHistory">
+        <Annotation Term="Common.DraftNode">
+          <Record Type="Common.DraftNodeType">
+            <PropertyValue Property="PreparationAction" String="com.rex.cryptotrading.user.service.UserService.draftPrepare"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationHistory/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationHistory/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationHistory/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationHistory/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationHistory/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationHistory/session">
+        <Annotation Term="Common.Label" String="Session"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationHistory/session_ID">
+        <Annotation Term="Common.Label" String="Session"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationHistory/summary">
+        <Annotation Term="Common.Label" String="Conversation Summary"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationHistory/keyPoints">
+        <Annotation Term="Common.Label" String="Key Points (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationHistory/decisions">
+        <Annotation Term="Common.Label" String="Decisions Made (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationHistory/followUps">
+        <Annotation Term="Common.Label" String="Follow-ups (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationHistory/sentiment">
+        <Annotation Term="Common.Label" String="Overall Sentiment"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationHistory/quality">
+        <Annotation Term="Common.Label" String="Quality Score"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationHistory/IsActiveEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationHistory/HasActiveEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationHistory/HasDraftEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ConversationHistory/DraftAdministrativeData">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.EntityContainer/APICredentials">
+        <Annotation Term="Common.DraftNode">
+          <Record Type="Common.DraftNodeType">
+            <PropertyValue Property="PreparationAction" String="com.rex.cryptotrading.user.service.UserService.draftPrepare"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.APICredentials/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.APICredentials/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.APICredentials/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.APICredentials/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.APICredentials/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.APICredentials/user">
+        <Annotation Term="Common.Label" String="User"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.APICredentials/user_ID">
+        <Annotation Term="Common.Label" String="User"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.APICredentials/apiKey">
+        <Annotation Term="Common.Label" String="API Key"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.APICredentials/apiSecret">
+        <Annotation Term="Common.Label" String="API Secret (Hashed)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.APICredentials/name">
+        <Annotation Term="Common.Label" String="Key Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.APICredentials/description">
+        <Annotation Term="Common.Label" String="Description"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.APICredentials/permissions">
+        <Annotation Term="Common.Label" String="Permissions (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.APICredentials/status">
+        <Annotation Term="Common.Label" String="Status"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="ACTIVE"/>
+              <PropertyValue Property="Value" String="ACTIVE"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="REVOKED"/>
+              <PropertyValue Property="Value" String="REVOKED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="EXPIRED"/>
+              <PropertyValue Property="Value" String="EXPIRED"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.APICredentials/expiresAt">
+        <Annotation Term="Common.Label" String="Expires At"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.APICredentials/lastUsed">
+        <Annotation Term="Common.Label" String="Last Used"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.APICredentials/usageCount">
+        <Annotation Term="Common.Label" String="Usage Count"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.APICredentials/rateLimit">
+        <Annotation Term="Common.Label" String="Rate Limit (req/hour)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.APICredentials/IsActiveEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.APICredentials/HasActiveEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.APICredentials/HasDraftEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.APICredentials/DraftAdministrativeData">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.EntityContainer/ActiveUsers">
+        <Annotation Term="Capabilities.DeleteRestrictions">
+          <Record Type="Capabilities.DeleteRestrictionsType">
+            <PropertyValue Property="Deletable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.InsertRestrictions">
+          <Record Type="Capabilities.InsertRestrictionsType">
+            <PropertyValue Property="Insertable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.UpdateRestrictions">
+          <Record Type="Capabilities.UpdateRestrictionsType">
+            <PropertyValue Property="Updatable" Bool="false"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ActiveUsers/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ActiveUsers/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ActiveUsers/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ActiveUsers/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ActiveUsers/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ActiveUsers/username">
+        <Annotation Term="Common.Label" String="Username"/>
+        <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/Mandatory"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ActiveUsers/email">
+        <Annotation Term="Common.Label" String="Email"/>
+        <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/Mandatory"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ActiveUsers/firstName">
+        <Annotation Term="Common.Label" String="First Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ActiveUsers/lastName">
+        <Annotation Term="Common.Label" String="Last Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ActiveUsers/displayName">
+        <Annotation Term="Common.Label" String="Display Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ActiveUsers/status">
+        <Annotation Term="Common.Label" String="Status"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="ACTIVE"/>
+              <PropertyValue Property="Value" String="ACTIVE"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="INACTIVE"/>
+              <PropertyValue Property="Value" String="INACTIVE"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="SUSPENDED"/>
+              <PropertyValue Property="Value" String="SUSPENDED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="PENDING"/>
+              <PropertyValue Property="Value" String="PENDING"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ActiveUsers/role">
+        <Annotation Term="Common.Label" String="Role"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="ADMIN"/>
+              <PropertyValue Property="Value" String="ADMIN"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="TRADER"/>
+              <PropertyValue Property="Value" String="TRADER"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="ANALYST"/>
+              <PropertyValue Property="Value" String="ANALYST"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="VIEWER"/>
+              <PropertyValue Property="Value" String="VIEWER"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="API_USER"/>
+              <PropertyValue Property="Value" String="API_USER"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ActiveUsers/lastLogin">
+        <Annotation Term="Common.Label" String="Last Login"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ActiveUsers/loginCount">
+        <Annotation Term="Common.Label" String="Login Count"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ActiveUsers/preferences">
+        <Annotation Term="Common.Label" String="User Preferences (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ActiveUsers/twoFactorEnabled">
+        <Annotation Term="Common.Label" String="2FA Enabled"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.ActiveUsers/apiKeysEnabled">
+        <Annotation Term="Common.Label" String="API Keys Enabled"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.EntityContainer/RecentSessions">
+        <Annotation Term="Capabilities.DeleteRestrictions">
+          <Record Type="Capabilities.DeleteRestrictionsType">
+            <PropertyValue Property="Deletable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.InsertRestrictions">
+          <Record Type="Capabilities.InsertRestrictionsType">
+            <PropertyValue Property="Insertable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.UpdateRestrictions">
+          <Record Type="Capabilities.UpdateRestrictionsType">
+            <PropertyValue Property="Updatable" Bool="false"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.RecentSessions/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.RecentSessions/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.RecentSessions/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.RecentSessions/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.RecentSessions/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.RecentSessions/user">
+        <Annotation Term="Common.Label" String="User"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.RecentSessions/user_ID">
+        <Annotation Term="Common.Label" String="User"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.RecentSessions/sessionName">
+        <Annotation Term="Common.Label" String="Session Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.RecentSessions/sessionType">
+        <Annotation Term="Common.Label" String="Session Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.RecentSessions/status">
+        <Annotation Term="Common.Label" String="Status"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="ACTIVE"/>
+              <PropertyValue Property="Value" String="ACTIVE"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="PAUSED"/>
+              <PropertyValue Property="Value" String="PAUSED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="COMPLETED"/>
+              <PropertyValue Property="Value" String="COMPLETED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="EXPIRED"/>
+              <PropertyValue Property="Value" String="EXPIRED"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.RecentSessions/startedAt">
+        <Annotation Term="Common.Label" String="Started At"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.RecentSessions/endedAt">
+        <Annotation Term="Common.Label" String="Ended At"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.RecentSessions/metadata">
+        <Annotation Term="Common.Label" String="Session Metadata (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.EntityContainer/UserActivity">
+        <Annotation Term="Capabilities.DeleteRestrictions">
+          <Record Type="Capabilities.DeleteRestrictionsType">
+            <PropertyValue Property="Deletable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.InsertRestrictions">
+          <Record Type="Capabilities.InsertRestrictionsType">
+            <PropertyValue Property="Insertable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.UpdateRestrictions">
+          <Record Type="Capabilities.UpdateRestrictionsType">
+            <PropertyValue Property="Updatable" Bool="false"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.UserActivity/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.UserActivity/username">
+        <Annotation Term="Common.Label" String="Username"/>
+        <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/Mandatory"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.UserActivity/email">
+        <Annotation Term="Common.Label" String="Email"/>
+        <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/Mandatory"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.UserActivity/role">
+        <Annotation Term="Common.Label" String="Role"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="ADMIN"/>
+              <PropertyValue Property="Value" String="ADMIN"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="TRADER"/>
+              <PropertyValue Property="Value" String="TRADER"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="ANALYST"/>
+              <PropertyValue Property="Value" String="ANALYST"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="VIEWER"/>
+              <PropertyValue Property="Value" String="VIEWER"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="API_USER"/>
+              <PropertyValue Property="Value" String="API_USER"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.UserActivity/lastLogin">
+        <Annotation Term="Common.Label" String="Last Login"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.UserActivity/loginCount">
+        <Annotation Term="Common.Label" String="Login Count"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.UserActivity/totalSessions">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.UserActivity/totalApiKeys">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.getUserProfile(Edm.String)/userId">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.getUserActivity(Edm.String,Edm.String)/userId">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.getUserActivity(Edm.String,Edm.String)/period">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.getConversationSummary(Edm.String)/sessionId">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.validateAPIKey(Edm.String)/apiKey">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.getUserPermissions(Edm.String)/userId">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.DraftAdministrativeData">
+        <Annotation Term="Common.Label" String="{i18n>Draft_DraftAdministrativeData}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.DraftAdministrativeData/DraftUUID">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>Draft_DraftUUID}"/>
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.DraftAdministrativeData/CreationDateTime">
+        <Annotation Term="Common.Label" String="{i18n>Draft_CreationDateTime}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.DraftAdministrativeData/CreatedByUser">
+        <Annotation Term="Common.Label" String="{i18n>Draft_CreatedByUser}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.DraftAdministrativeData/DraftIsCreatedByMe">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>Draft_DraftIsCreatedByMe}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.DraftAdministrativeData/LastChangeDateTime">
+        <Annotation Term="Common.Label" String="{i18n>Draft_LastChangeDateTime}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.DraftAdministrativeData/LastChangedByUser">
+        <Annotation Term="Common.Label" String="{i18n>Draft_LastChangedByUser}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.DraftAdministrativeData/InProcessByUser">
+        <Annotation Term="Common.Label" String="{i18n>Draft_InProcessByUser}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.user.service.UserService.DraftAdministrativeData/DraftIsProcessedByMe">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>Draft_DraftIsProcessedByMe}"/>
+      </Annotations>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

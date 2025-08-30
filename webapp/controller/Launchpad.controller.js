@@ -4,19 +4,63 @@ sap.ui.define([
     "sap/m/Dialog",
     "sap/m/Button",
     "sap/m/Text",
-    "sap/ui/core/Fragment"
-], function(Controller, MessageToast, Dialog, Button, Text, Fragment) {
+    "sap/ui/core/Fragment",
+    "sap/ui/model/json/JSONModel"
+], function(Controller, MessageToast, Dialog, Button, Text, Fragment, JSONModel) {
     "use strict";
 
     return Controller.extend("com.rex.cryptotrading.controller.Launchpad", {
         
         onInit: function() {
-            // Initialize controller
-            this._oEventBusManager = sap.ui.getCore().EventBusManager;
-            this._oWalletDataManager = sap.ui.getCore().getModel("wallet").getProperty("/");
-            
-            // Subscribe to EventBus events
-            this._setupEventHandlers();
+            // Very defensive initialization
+            try {
+                console.log("Launchpad controller onInit started");
+                
+                // Wait for models to be available before proceeding
+                var that = this;
+                var checkModels = function() {
+                    try {
+                        var oComponent = that.getOwnerComponent();
+                        var oAppModel = oComponent ? oComponent.getModel("app") : null;
+                        
+                        if (oAppModel) {
+                            console.log("App model is available");
+                            that._initializeController();
+                        } else {
+                            console.log("Waiting for app model...");
+                            setTimeout(checkModels, 100);
+                        }
+                    } catch (e) {
+                        console.warn("Model check failed, retrying:", e.message);
+                        setTimeout(checkModels, 100);
+                    }
+                };
+                
+                // Start checking for models
+                setTimeout(checkModels, 10);
+                
+            } catch (e) {
+                console.error("Controller onInit error:", e);
+            }
+        },
+        
+        _initializeController: function() {
+            try {
+                console.log("Initializing controller with available models");
+                
+                // Initialize basic properties safely
+                this._oEventBusManager = null;
+                this._oWalletDataManager = {
+                    status: "disconnected",
+                    connection: { connected: false, provider: null, address: null, network: null, chainId: null },
+                    balances: {},
+                    error: null
+                };
+                
+                console.log("Controller initialization completed successfully");
+            } catch (e) {
+                console.error("Controller initialization error:", e);
+            }
         },
         
         onExit: function() {
@@ -27,21 +71,29 @@ sap.ui.define([
         },
         
         _setupEventHandlers: function() {
-            // Subscribe to wallet connection events
-            this._oEventBusManager.subscribe(
-                this._oEventBusManager.CHANNELS.WALLET,
-                this._oEventBusManager.EVENTS.WALLET.CONNECTION_CHANGED,
-                this._onWalletConnectionChanged.bind(this),
-                this
-            );
+            if (!this._oEventBusManager || !this._oEventBusManager.subscribe) {
+                return;
+            }
             
-            // Subscribe to UI notifications
-            this._oEventBusManager.subscribe(
-                this._oEventBusManager.CHANNELS.UI,
-                this._oEventBusManager.EVENTS.UI.NOTIFICATION,
-                this._onNotification.bind(this),
-                this
-            );
+            try {
+                // Subscribe to wallet connection events
+                this._oEventBusManager.subscribe(
+                    this._oEventBusManager.CHANNELS.WALLET,
+                    this._oEventBusManager.EVENTS.WALLET.CONNECTION_CHANGED,
+                    this._onWalletConnectionChanged.bind(this),
+                    this
+                );
+                
+                // Subscribe to UI notifications
+                this._oEventBusManager.subscribe(
+                    this._oEventBusManager.CHANNELS.UI,
+                    this._oEventBusManager.EVENTS.UI.NOTIFICATION,
+                    this._onNotification.bind(this),
+                    this
+                );
+            } catch (e) {
+                console.warn("EventBus not available:", e);
+            }
         },
         
         _onWalletConnectionChanged: function(sChannel, sEvent, oData) {
@@ -59,13 +111,33 @@ sap.ui.define([
         onTilePress: function(oEvent) {
             var oTile = oEvent.getSource();
             var oBindingContext = oTile.getBindingContext("app");
-            var sTilePress = oBindingContext.getProperty("press");
             
-            MessageToast.show("Opening " + oBindingContext.getProperty("title") + "...");
+            // Check if binding context exists
+            if (!oBindingContext) {
+                console.warn("No binding context found for tile");
+                MessageToast.show("Navigation not configured for this tile");
+                return;
+            }
+            
+            var sTilePress = oBindingContext.getProperty("press");
+            var sTitle = oBindingContext.getProperty("title");
+            
+            if (!sTilePress) {
+                console.warn("No press action configured for tile");
+                MessageToast.show("Navigation not configured for this tile");
+                return;
+            }
+            
+            MessageToast.show("Opening " + (sTitle || "Application") + "...");
             
             // Navigate to the appropriate view
-            var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
-            oRouter.navTo(sTilePress);
+            try {
+                var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+                oRouter.navTo(sTilePress);
+            } catch (e) {
+                console.error("Navigation error:", e);
+                MessageToast.show("Navigation failed: " + e.message);
+            }
         },
         
         onMenuPress: function() {
@@ -218,6 +290,40 @@ sap.ui.define([
             oRouter.navTo("technicalAnalysis", {
                 symbol: "BTC-USD"
             });
+        },
+        
+        // Additional press handlers for static tiles
+        onMarketOverviewPress: function() {
+            var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+            oRouter.navTo("market");
+        },
+        
+        onMLPredictionsPress: function() {
+            MessageToast.show("ML Predictions dashboard coming soon");
+        },
+        
+        onModelTrainingPress: function() {
+            MessageToast.show("Model Training interface coming soon");
+        },
+        
+        onAIMarketIntelligencePress: function() {
+            MessageToast.show("AI Market Intelligence coming soon");
+        },
+        
+        onFeatureStorePress: function() {
+            MessageToast.show("Feature Store interface coming soon");
+        },
+        
+        onRiskManagementPress: function() {
+            MessageToast.show("Risk Management dashboard coming soon");
+        },
+        
+        onHistoricalDataPress: function() {
+            MessageToast.show("Historical Data viewer coming soon");
+        },
+        
+        onSystemSettingsPress: function() {
+            MessageToast.show("System Settings coming soon");
         }
     });
 });

@@ -1,0 +1,163 @@
+<mvc:View
+    controllerName="com.rex.cryptotrading.controller.NewsPanel"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:f="sap.f"
+    xmlns:card="sap.f.cards">
+    
+    <Page id="newsPage" title="{i18n>newsTitle}" showNavButton="false" class="sapUiResponsiveContentPadding">
+        
+        <!-- Header with Language Toggle and Refresh -->
+        <customHeader>
+            <Bar>
+                <contentLeft>
+                    <Title text="{i18n>cryptoNews}" level="H2" class="sapUiMediumMarginBegin"/>
+                </contentLeft>
+                <contentMiddle>
+                    <SegmentedButton id="languageToggle" selectedKey="{/selectedLanguage}">
+                        <items>
+                            <SegmentedButtonItem key="en" text="English" icon="sap-icon://globe"/>
+                            <SegmentedButtonItem key="ru" text="Русский" icon="sap-icon://globe"/>
+                        </items>
+                    </SegmentedButton>
+                </contentMiddle>
+                <contentRight>
+                    <Button id="refreshButton" icon="sap-icon://refresh" press="onRefreshNews" type="Transparent" tooltip="{i18n>refresh}"/>
+                    <Button id="settingsButton" icon="sap-icon://action-settings" press="onOpenSettings" type="Transparent" tooltip="{i18n>settings}"/>
+                </contentRight>
+            </Bar>
+        </customHeader>
+
+        <content>
+            <!-- Loading Indicator -->
+            <BusyIndicator id="loadingIndicator" visible="{/loading}" size="Large" class="sapUiMediumMargin"/>
+            
+            <!-- Category Filter Bar -->
+            <Bar class="sapUiSmallMarginBottom">
+                <contentLeft>
+                    <Label text="{i18n>categories}:" class="sapUiSmallMarginEnd"/>
+                </contentLeft>
+                <contentMiddle>
+                    <SegmentedButton id="categoryFilter" selectedKey="{/selectedCategory}" selectionChange="onCategoryChange">
+                        <items>
+                            <SegmentedButtonItem key="all" text="{i18n>all}" icon="sap-icon://overview-chart"/>
+                            <SegmentedButtonItem key="market_analysis" text="{i18n>marketAnalysis}" icon="sap-icon://line-chart"/>
+                            <SegmentedButtonItem key="regulatory" text="{i18n>regulatory}" icon="sap-icon://legal"/>
+                            <SegmentedButtonItem key="technology" text="{i18n>technology}" icon="sap-icon://technical-object"/>
+                            <SegmentedButtonItem key="russian_crypto" text="{i18n>russianCrypto}" icon="sap-icon://world"/>
+                        </items>
+                    </SegmentedButton>
+                </contentMiddle>
+                <contentRight>
+                    <Text text="{/newsCount} {i18n>articles}" class="sapUiSmallMarginEnd"/>
+                </contentRight>
+            </Bar>
+
+            <!-- News Articles List -->
+            <List id="newsList" 
+                  items="{path: '/articles', sorter: {path: 'publishedAt', descending: true}}"
+                  mode="SingleSelection"
+                  selectionChange="onArticleSelect"
+                  class="sapUiResponsiveMargin">
+                
+                <CustomListItem press="onArticlePress" class="newsArticleItem">
+                    <content>
+                        <f:Card class="newsCard" width="100%">
+                            <f:header>
+                                <card:Header>
+                                    <card:title>
+                                        <Title text="{title}" maxLines="2" class="newsTitle"/>
+                                    </card:title>
+                                    <card:subtitle>
+                                        <HBox alignItems="Center" class="newsMetadata">
+                                            <core:Icon src="{categoryIcon}" class="categoryIcon sapUiTinyMarginEnd"/>
+                                            <Text text="{source}" class="newsSource sapUiSmallMarginEnd"/>
+                                            <core:Icon src="sap-icon://time-entry-request" class="sapUiTinyMarginEnd"/>
+                                            <Text text="{timeAgo}" class="newsTime sapUiSmallMarginEnd"/>
+                                            <core:Icon src="sap-icon://reading-mode" class="sapUiTinyMarginEnd"/>
+                                            <Text text="{readingTime}" class="readingTime"/>
+                                        </HBox>
+                                    </card:subtitle>
+                                </card:Header>
+                            </f:header>
+                            
+                            <f:content>
+                                <VBox class="sapUiSmallMargin">
+                                    <!-- Article Summary -->
+                                    <Text text="{summary}" maxLines="3" class="newsSummary sapUiSmallMarginBottom"/>
+                                    
+                                    <!-- Sentiment and Symbols -->
+                                    <HBox alignItems="Center" justifyContent="SpaceBetween" class="newsFooter">
+                                        <HBox alignItems="Center">
+                                            <!-- Sentiment Indicator -->
+                                            <core:Icon src="sap-icon://circle-task" color="{sentimentColor}" class="sentimentIcon sapUiTinyMarginEnd"/>
+                                            <Text text="{sentiment}" class="sentimentText sapUiSmallMarginEnd"/>
+                                            
+                                            <!-- Translation Indicator -->
+                                            <core:Icon src="sap-icon://translate" visible="{isTranslated}" class="translationIcon sapUiTinyMarginEnd"/>
+                                            <Text text="{i18n>translated}" visible="{isTranslated}" class="translationText sapUiSmallMarginEnd"/>
+                                            
+                                            <!-- Russian Specific Indicator -->
+                                            <core:Icon src="sap-icon://world" visible="{isRussianSpecific}" class="russianIcon sapUiTinyMarginEnd"/>
+                                            <Text text="🇷🇺" visible="{isRussianSpecific}" class="russianText"/>
+                                        </HBox>
+                                        
+                                        <HBox alignItems="Center">
+                                            <!-- Crypto Symbols -->
+                                            <HBox items="{symbols}" class="symbolsContainer">
+                                                <ObjectStatus text="{}" state="Information" class="cryptoSymbol sapUiTinyMarginEnd"/>
+                                            </HBox>
+                                            
+                                            <!-- View Count -->
+                                            <core:Icon src="sap-icon://show" class="sapUiTinyMarginEnd"/>
+                                            <Text text="{viewCount}" class="viewCount"/>
+                                        </HBox>
+                                    </HBox>
+                                </VBox>
+                            </f:content>
+                            
+                            <f:actions>
+                                <Button text="{i18n>readMore}" press="onReadMore" type="Transparent" icon="sap-icon://detail-view"/>
+                                <Button text="{i18n>translate}" press="onTranslateArticle" type="Transparent" icon="sap-icon://translate" visible="{= !${isTranslated} &amp;&amp; ${language} === 'en'}"/>
+                                <Button text="{i18n>share}" press="onShareArticle" type="Transparent" icon="sap-icon://share-2"/>
+                                <Button text="{i18n>bookmark}" press="onBookmarkArticle" type="Transparent" icon="sap-icon://bookmark"/>
+                            </f:actions>
+                        </f:Card>
+                    </content>
+                </CustomListItem>
+            </List>
+
+            <!-- Load More Button -->
+            <Button id="loadMoreButton" 
+                    text="{i18n>loadMore}" 
+                    press="onLoadMore" 
+                    type="Transparent" 
+                    icon="sap-icon://download"
+                    visible="{= ${/articles}.length >= 10}"
+                    class="sapUiMediumMarginTop"/>
+
+            <!-- Empty State -->
+            <MessageStrip text="{i18n>noArticles}" 
+                         type="Information" 
+                         visible="{= ${/articles}.length === 0 &amp;&amp; !${/loading}}"
+                         class="sapUiMediumMargin"/>
+
+            <!-- Error State -->
+            <MessageStrip text="{/errorMessage}" 
+                         type="Error" 
+                         visible="{/hasError}"
+                         class="sapUiMediumMargin"/>
+        </content>
+
+        <!-- Floating Action Button for Fresh News -->
+        <dependents>
+            <Button id="fetchFreshButton" 
+                    icon="sap-icon://cloud" 
+                    press="onFetchFreshNews" 
+                    type="Emphasized"
+                    tooltip="{i18n>fetchFreshNews}"
+                    class="fetchFreshButton"/>
+        </dependents>
+    </Page>
+</mvc:View>

@@ -42,6 +42,8 @@ class ResourceType(Enum):
     TRANSACTION_HISTORY = "transaction_history"
     RISK_ANALYSIS = "risk_analysis"
     COMPLIANCE_REPORTING = "compliance_reporting"
+    STORAGE = "storage"  # S3 and other storage operations
+    LOGGING = "logging"  # Agent logging operations
 
 @dataclass
 class AgentContext:
@@ -141,9 +143,9 @@ class AgentSegregationManager:
                 return context
             
         except jwt.ExpiredSignatureError:
-            logger.warning(f"Expired session token: {token[:20]}...")
+            logger.warning(f"Expired session token: {str(token)[:20]}...")
         except jwt.InvalidTokenError:
-            logger.warning(f"Invalid session token: {token[:20]}...")
+            logger.warning(f"Invalid session token: {str(token)[:20]}...")
         
         return None
     

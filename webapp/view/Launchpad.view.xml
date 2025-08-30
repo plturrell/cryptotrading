@@ -45,7 +45,7 @@
                         <VBox class="sapUiSmallMargin">
                             <HBox justifyContent="SpaceBetween" class="sapUiSmallMarginBottom">
                                 <VBox>
-                                    <Title text="Good Morning, {app>/user/name}" level="H3"/>
+                                    <Title text="Good Morning, {= ${app>/user/name} || 'Trader'}" level="H3"/>
                                     <Text text="Your portfolio is up 12.5% today"/>
                                 </VBox>
                                 <HBox>
@@ -53,9 +53,9 @@
                                             type="Emphasized" 
                                             icon="sap-icon://wallet"
                                             press="onConnectWallet"
-                                            visible="{= !${app>/wallet/connected}}"/>
-                                    <Text text="Wallet: {app>/wallet/address}" 
-                                          visible="{app>/wallet/connected}"
+                                            visible="{= !${app>/wallet/connected} || false}"/>
+                                    <Text text="Wallet: {= ${app>/wallet/address} || ''}" 
+                                          visible="{= ${app>/wallet/connected} || false}"
                                           class="sapUiSmallMarginTop"/>
                                 </HBox>
                             </HBox>

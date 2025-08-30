@@ -1,5 +1,12 @@
 """
 Perplexity AI client for cryptotrading.com - Real-time crypto intelligence
+
+Available Models (2025):
+- sonar: Main search-augmented generation model
+- sonar-reasoning: Enhanced reasoning capabilities  
+- sonar-deep-research: Advanced research model
+
+Note: All methods use 'sonar' model which is the current working model.
 """
 
 import os
@@ -10,7 +17,7 @@ from datetime import datetime
 
 class PerplexityClient:
     def __init__(self):
-        self.api_key = os.getenv('PERPLEXITY_API_KEY')
+        self.api_key = os.getenv('PERPLEXITY_API_KEY') or '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'
         self.base_url = "https://api.perplexity.ai"
         self.client = httpx.AsyncClient(
             timeout=30.0,
@@ -28,7 +35,7 @@ class PerplexityClient:
             response = await self.client.post(
                 f"{self.base_url}/chat/completions",
                 json={
-                    "model": "pplx-7b-online",
+                    "model": "sonar",
                     "messages": [
                         {
                             "role": "system",
@@ -65,7 +72,7 @@ class PerplexityClient:
             response = await self.client.post(
                 f"{self.base_url}/chat/completions",
                 json={
-                    "model": "pplx-70b-online",
+                    "model": "sonar",
                     "messages": [
                         {
                             "role": "user",
@@ -92,7 +99,7 @@ class PerplexityClient:
             response = await self.client.post(
                 f"{self.base_url}/chat/completions",
                 json={
-                    "model": "pplx-7b-online",
+                    "model": "sonar",
                     "messages": [
                         {
                             "role": "system",

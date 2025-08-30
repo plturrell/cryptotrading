@@ -10,6 +10,7 @@ import logging
 import sqlite3
 import pandas as pd
 import asyncio
+import threading
 from typing import Dict, List, Any, Optional, Union
 from datetime import datetime
 from pathlib import Path
@@ -89,7 +90,16 @@ class UnifiedDatabase:
         self._migrator = None
         self._health_monitor = None
         self._performance_monitor = None
-        self._db_lock = asyncio.Lock()  # Fix race condition
+        # Use threading lock for sync contexts, async lock for async contexts
+        try:
+            # Try to get current event loop for async contexts
+            asyncio.get_running_loop()
+            self._db_lock = asyncio.Lock()
+            self._is_async_context = True
+        except RuntimeError:
+            # No event loop running, use threading lock for sync contexts
+            self._db_lock = threading.Lock()
+            self._is_async_context = False
         
     def _get_database_url(self) -> str:
         """Get database URL from environment or config"""

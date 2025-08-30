@@ -1,0 +1,976 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/Common.xml">
+    <edmx:Include Alias="Common" Namespace="com.sap.vocabularies.Common.v1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Core.V1.xml">
+    <edmx:Include Alias="Core" Namespace="Org.OData.Core.V1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/UI.xml">
+    <edmx:Include Alias="UI" Namespace="com.sap.vocabularies.UI.v1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Validation.V1.xml">
+    <edmx:Include Alias="Validation" Namespace="Org.OData.Validation.V1"/>
+  </edmx:Reference>
+  <edmx:DataServices>
+    <Schema Namespace="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <Annotation Term="Core.Links">
+        <Collection>
+          <Record>
+            <PropertyValue Property="rel" String="author"/>
+            <PropertyValue Property="href" String="https://cap.cloud.sap"/>
+          </Record>
+        </Collection>
+      </Annotation>
+      <EntityContainer Name="EntityContainer">
+        <EntitySet Name="Projects" EntityType="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.Projects">
+          <NavigationPropertyBinding Path="indexingSessions" Target="IndexingSessions"/>
+          <NavigationPropertyBinding Path="codeFiles" Target="CodeFiles"/>
+          <NavigationPropertyBinding Path="analysisResults" Target="AnalysisResults"/>
+        </EntitySet>
+        <EntitySet Name="IndexingSessions" EntityType="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions">
+          <NavigationPropertyBinding Path="project" Target="Projects"/>
+          <NavigationPropertyBinding Path="codeFiles" Target="CodeFiles"/>
+          <NavigationPropertyBinding Path="analysisResults" Target="AnalysisResults"/>
+        </EntitySet>
+        <EntitySet Name="CodeFiles" EntityType="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.CodeFiles">
+          <NavigationPropertyBinding Path="project" Target="Projects"/>
+          <NavigationPropertyBinding Path="indexingSession" Target="IndexingSessions"/>
+        </EntitySet>
+        <EntitySet Name="AnalysisResults" EntityType="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.AnalysisResults">
+          <NavigationPropertyBinding Path="project" Target="Projects"/>
+          <NavigationPropertyBinding Path="indexingSession" Target="IndexingSessions"/>
+        </EntitySet>
+        <EntitySet Name="IndexerStats" EntityType="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexerStats"/>
+        <EntitySet Name="BlindSpots" EntityType="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.BlindSpots">
+          <NavigationPropertyBinding Path="project" Target="Projects"/>
+          <NavigationPropertyBinding Path="indexingSession" Target="IndexingSessions"/>
+        </EntitySet>
+        <EntitySet Name="ProjectAnalytics" EntityType="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.ProjectAnalytics"/>
+        <EntitySet Name="LanguageBreakdown" EntityType="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.LanguageBreakdown"/>
+        <EntitySet Name="SessionProgress" EntityType="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.SessionProgress"/>
+        <ActionImport Name="startIndexing" Action="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.startIndexing"/>
+        <ActionImport Name="stopIndexing" Action="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.stopIndexing"/>
+        <ActionImport Name="validateResults" Action="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.validateResults"/>
+        <ActionImport Name="exportResults" Action="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.exportResults"/>
+        <FunctionImport Name="getAnalytics" Function="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.getAnalytics"/>
+        <FunctionImport Name="getBlindSpotAnalysis" Function="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.getBlindSpotAnalysis"/>
+        <FunctionImport Name="getPerformanceMetrics" Function="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.getPerformanceMetrics"/>
+      </EntityContainer>
+      <EntityType Name="Projects">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="name" Type="Edm.String" MaxLength="100"/>
+        <Property Name="description" Type="Edm.String" MaxLength="500"/>
+        <Property Name="path" Type="Edm.String" MaxLength="1000"/>
+        <Property Name="status" Type="Edm.String" MaxLength="20"/>
+        <NavigationProperty Name="indexingSessions" Type="Collection(com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions)" Partner="project">
+          <OnDelete Action="Cascade"/>
+        </NavigationProperty>
+        <NavigationProperty Name="codeFiles" Type="Collection(com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.CodeFiles)" Partner="project">
+          <OnDelete Action="Cascade"/>
+        </NavigationProperty>
+        <NavigationProperty Name="analysisResults" Type="Collection(com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.AnalysisResults)" Partner="project">
+          <OnDelete Action="Cascade"/>
+        </NavigationProperty>
+      </EntityType>
+      <EntityType Name="IndexingSessions">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <NavigationProperty Name="project" Type="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.Projects" Partner="indexingSessions">
+          <ReferentialConstraint Property="project_ID" ReferencedProperty="ID"/>
+        </NavigationProperty>
+        <Property Name="project_ID" Type="Edm.Guid"/>
+        <Property Name="sessionName" Type="Edm.String" MaxLength="100"/>
+        <Property Name="startTime" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="endTime" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="status" Type="Edm.String" MaxLength="20"/>
+        <Property Name="totalFiles" Type="Edm.Int32"/>
+        <Property Name="processedFiles" Type="Edm.Int32"/>
+        <Property Name="totalFacts" Type="Edm.Int32"/>
+        <Property Name="coveragePercent" Type="Edm.Decimal" Precision="5" Scale="2"/>
+        <Property Name="blindSpots" Type="Edm.Int32"/>
+        <Property Name="pythonFiles" Type="Edm.Int32"/>
+        <Property Name="jsFiles" Type="Edm.Int32"/>
+        <Property Name="tsFiles" Type="Edm.Int32"/>
+        <Property Name="capFiles" Type="Edm.Int32"/>
+        <Property Name="xmlFiles" Type="Edm.Int32"/>
+        <Property Name="configFiles" Type="Edm.Int32"/>
+        <Property Name="errorMessage" Type="Edm.String" MaxLength="1000"/>
+        <NavigationProperty Name="codeFiles" Type="Collection(com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.CodeFiles)" Partner="indexingSession"/>
+        <NavigationProperty Name="analysisResults" Type="Collection(com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.AnalysisResults)" Partner="indexingSession"/>
+      </EntityType>
+      <EntityType Name="CodeFiles">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <NavigationProperty Name="project" Type="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.Projects" Partner="codeFiles">
+          <ReferentialConstraint Property="project_ID" ReferencedProperty="ID"/>
+        </NavigationProperty>
+        <Property Name="project_ID" Type="Edm.Guid"/>
+        <NavigationProperty Name="indexingSession" Type="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions" Partner="codeFiles">
+          <ReferentialConstraint Property="indexingSession_ID" ReferencedProperty="ID"/>
+        </NavigationProperty>
+        <Property Name="indexingSession_ID" Type="Edm.Guid"/>
+        <Property Name="fileName" Type="Edm.String" MaxLength="255"/>
+        <Property Name="relativePath" Type="Edm.String" MaxLength="1000"/>
+        <Property Name="language" Type="Edm.String" MaxLength="20"/>
+        <Property Name="fileSize" Type="Edm.Int32"/>
+        <Property Name="linesOfCode" Type="Edm.Int32"/>
+        <Property Name="factsGenerated" Type="Edm.Int32"/>
+        <Property Name="parseStatus" Type="Edm.String" MaxLength="20"/>
+        <Property Name="parseError" Type="Edm.String" MaxLength="1000"/>
+        <Property Name="declarations" Type="Edm.Int32"/>
+        <Property Name="references" Type="Edm.Int32"/>
+        <Property Name="imports" Type="Edm.Int32"/>
+        <Property Name="exports" Type="Edm.Int32"/>
+        <Property Name="ui5Controllers" Type="Edm.Int32"/>
+        <Property Name="ui5Views" Type="Edm.Int32"/>
+        <Property Name="capEntities" Type="Edm.Int32"/>
+        <Property Name="capServices" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="AnalysisResults">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <NavigationProperty Name="project" Type="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.Projects" Partner="analysisResults">
+          <ReferentialConstraint Property="project_ID" ReferencedProperty="ID"/>
+        </NavigationProperty>
+        <Property Name="project_ID" Type="Edm.Guid"/>
+        <NavigationProperty Name="indexingSession" Type="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions" Partner="analysisResults">
+          <ReferentialConstraint Property="indexingSession_ID" ReferencedProperty="ID"/>
+        </NavigationProperty>
+        <Property Name="indexingSession_ID" Type="Edm.Guid"/>
+        <Property Name="factType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="predicate" Type="Edm.String" MaxLength="100"/>
+        <Property Name="symbolName" Type="Edm.String" MaxLength="255"/>
+        <Property Name="symbolType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="fileName" Type="Edm.String" MaxLength="255"/>
+        <Property Name="lineNumber" Type="Edm.Int32"/>
+        <Property Name="columnNumber" Type="Edm.Int32"/>
+        <Property Name="factData" Type="Edm.String"/>
+        <Property Name="confidence" Type="Edm.Decimal" Precision="3" Scale="2"/>
+        <Property Name="validated" Type="Edm.Boolean"/>
+      </EntityType>
+      <EntityType Name="IndexerStats">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="language" Type="Edm.String" MaxLength="20"/>
+        <Property Name="totalFiles" Type="Edm.Int32"/>
+        <Property Name="successRate" Type="Edm.Decimal" Precision="5" Scale="2"/>
+        <Property Name="avgFactsPerFile" Type="Edm.Decimal" Precision="8" Scale="2"/>
+        <Property Name="totalFacts" Type="Edm.Int32"/>
+        <Property Name="avgProcessingTime" Type="Edm.Int32"/>
+        <Property Name="totalProcessingTime" Type="Edm.Int32"/>
+        <Property Name="parseErrors" Type="Edm.Int32"/>
+        <Property Name="commonErrors" Type="Edm.String"/>
+        <Property Name="lastUpdated" Type="Edm.DateTimeOffset" Precision="7"/>
+      </EntityType>
+      <EntityType Name="BlindSpots">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <NavigationProperty Name="project" Type="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.Projects">
+          <ReferentialConstraint Property="project_ID" ReferencedProperty="ID"/>
+        </NavigationProperty>
+        <Property Name="project_ID" Type="Edm.Guid"/>
+        <NavigationProperty Name="indexingSession" Type="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions">
+          <ReferentialConstraint Property="indexingSession_ID" ReferencedProperty="ID"/>
+        </NavigationProperty>
+        <Property Name="indexingSession_ID" Type="Edm.Guid"/>
+        <Property Name="filePattern" Type="Edm.String" MaxLength="255"/>
+        <Property Name="language" Type="Edm.String" MaxLength="50"/>
+        <Property Name="fileCount" Type="Edm.Int32"/>
+        <Property Name="severity" Type="Edm.String" MaxLength="20"/>
+        <Property Name="description" Type="Edm.String" MaxLength="500"/>
+        <Property Name="recommendation" Type="Edm.String" MaxLength="1000"/>
+        <Property Name="resolved" Type="Edm.Boolean"/>
+        <Property Name="resolvedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="resolvedBy" Type="Edm.String" MaxLength="100"/>
+      </EntityType>
+      <EntityType Name="ProjectAnalytics">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="name" Type="Edm.String" MaxLength="100"/>
+        <Property Name="status" Type="Edm.String" MaxLength="20"/>
+        <Property Name="totalSessions" Type="Edm.Int32"/>
+        <Property Name="totalFacts" Type="Edm.Int32"/>
+        <Property Name="avgCoverage" Type="Edm.Decimal" Precision="5" Scale="2"/>
+        <Property Name="totalFiles" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="LanguageBreakdown">
+        <Key>
+          <PropertyRef Name="language"/>
+        </Key>
+        <Property Name="language" Type="Edm.String" Nullable="false"/>
+        <Property Name="fileCount" Type="Edm.Int32"/>
+        <Property Name="totalFacts" Type="Edm.Int32"/>
+        <Property Name="avgFactsPerFile" Type="Edm.Decimal" Precision="8" Scale="2"/>
+        <Property Name="successCount" Type="Edm.Int32"/>
+        <Property Name="successRate" Type="Edm.Decimal" Precision="5" Scale="2"/>
+      </EntityType>
+      <EntityType Name="SessionProgress">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="sessionName" Type="Edm.String" MaxLength="100"/>
+        <Property Name="projectName" Type="Edm.String" MaxLength="100"/>
+        <Property Name="status" Type="Edm.String" MaxLength="20"/>
+        <Property Name="startTime" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="endTime" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="totalFiles" Type="Edm.Int32"/>
+        <Property Name="processedFiles" Type="Edm.Int32"/>
+        <Property Name="progressPercent" Type="Edm.Decimal" Precision="5" Scale="2"/>
+        <Property Name="totalFacts" Type="Edm.Int32"/>
+        <Property Name="coveragePercent" Type="Edm.Decimal" Precision="5" Scale="2"/>
+        <Property Name="blindSpots" Type="Edm.Int32"/>
+      </EntityType>
+      <ComplexType Name="return_com_rex_cryptotrading_codeanalysis_service_CodeAnalysisService_startIndexing">
+        <Property Name="sessionId" Type="Edm.String"/>
+        <Property Name="status" Type="Edm.String"/>
+        <Property Name="message" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_codeanalysis_service_CodeAnalysisService_stopIndexing">
+        <Property Name="status" Type="Edm.String"/>
+        <Property Name="message" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_codeanalysis_service_CodeAnalysisService_validateResults">
+        <Property Name="validationScore" Type="Edm.Decimal" Precision="5" Scale="2"/>
+        <Property Name="issues" Type="Collection(com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.return_com_rex_cryptotrading_codeanalysis_service_CodeAnalysisService_validateResults_issues)" Nullable="true"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_codeanalysis_service_CodeAnalysisService_validateResults_issues">
+        <Property Name="type" Type="Edm.String"/>
+        <Property Name="severity" Type="Edm.String"/>
+        <Property Name="description" Type="Edm.String"/>
+        <Property Name="recommendation" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_codeanalysis_service_CodeAnalysisService_exportResults">
+        <Property Name="downloadUrl" Type="Edm.String"/>
+        <Property Name="fileSize" Type="Edm.Int32"/>
+        <Property Name="recordCount" Type="Edm.Int32"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_codeanalysis_service_CodeAnalysisService_getAnalytics">
+        <Property Name="totalProjects" Type="Edm.Int32"/>
+        <Property Name="totalFiles" Type="Edm.Int32"/>
+        <Property Name="totalFacts" Type="Edm.Int32"/>
+        <Property Name="coveragePercent" Type="Edm.Decimal" Precision="5" Scale="2"/>
+        <Property Name="languages" Type="Collection(com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.return_com_rex_cryptotrading_codeanalysis_service_CodeAnalysisService_getAnalytics_languages)" Nullable="true"/>
+        <Property Name="recentSessions" Type="Collection(com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.return_com_rex_cryptotrading_codeanalysis_service_CodeAnalysisService_getAnalytics_recentSessions)" Nullable="true"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_codeanalysis_service_CodeAnalysisService_getAnalytics_languages">
+        <Property Name="language" Type="Edm.String"/>
+        <Property Name="files" Type="Edm.Int32"/>
+        <Property Name="successRate" Type="Edm.Decimal" Precision="5" Scale="2"/>
+        <Property Name="facts" Type="Edm.Int32"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_codeanalysis_service_CodeAnalysisService_getAnalytics_recentSessions">
+        <Property Name="sessionName" Type="Edm.String"/>
+        <Property Name="status" Type="Edm.String"/>
+        <Property Name="duration" Type="Edm.String"/>
+        <Property Name="facts" Type="Edm.Int32"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_codeanalysis_service_CodeAnalysisService_getBlindSpotAnalysis">
+        <Property Name="totalBlindSpots" Type="Edm.Int32"/>
+        <Property Name="criticalCount" Type="Edm.Int32"/>
+        <Property Name="highCount" Type="Edm.Int32"/>
+        <Property Name="mediumCount" Type="Edm.Int32"/>
+        <Property Name="lowCount" Type="Edm.Int32"/>
+        <Property Name="topPatterns" Type="Collection(com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.return_com_rex_cryptotrading_codeanalysis_service_CodeAnalysisService_getBlindSpotAnalysis_topPatterns)" Nullable="true"/>
+        <Property Name="recommendations" Type="Collection(com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.return_com_rex_cryptotrading_codeanalysis_service_CodeAnalysisService_getBlindSpotAnalysis_recommendations)" Nullable="true"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_codeanalysis_service_CodeAnalysisService_getBlindSpotAnalysis_topPatterns">
+        <Property Name="pattern" Type="Edm.String"/>
+        <Property Name="count" Type="Edm.Int32"/>
+        <Property Name="severity" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_codeanalysis_service_CodeAnalysisService_getBlindSpotAnalysis_recommendations">
+        <Property Name="priority" Type="Edm.String"/>
+        <Property Name="action" Type="Edm.String"/>
+        <Property Name="impact" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_codeanalysis_service_CodeAnalysisService_getPerformanceMetrics">
+        <Property Name="avgProcessingTime" Type="Edm.Int32"/>
+        <Property Name="throughputPerHour" Type="Edm.Int32"/>
+        <Property Name="errorRate" Type="Edm.Decimal" Precision="5" Scale="2"/>
+        <Property Name="memoryUsage" Type="Edm.Int32"/>
+        <Property Name="cpuUtilization" Type="Edm.Decimal" Precision="5" Scale="2"/>
+        <Property Name="queueLength" Type="Edm.Int32"/>
+      </ComplexType>
+      <Action Name="startIndexing" IsBound="false">
+        <Parameter Name="projectId" Type="Edm.String"/>
+        <Parameter Name="sessionName" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.return_com_rex_cryptotrading_codeanalysis_service_CodeAnalysisService_startIndexing"/>
+      </Action>
+      <Action Name="stopIndexing" IsBound="false">
+        <Parameter Name="sessionId" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.return_com_rex_cryptotrading_codeanalysis_service_CodeAnalysisService_stopIndexing"/>
+      </Action>
+      <Action Name="validateResults" IsBound="false">
+        <Parameter Name="sessionId" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.return_com_rex_cryptotrading_codeanalysis_service_CodeAnalysisService_validateResults"/>
+      </Action>
+      <Action Name="exportResults" IsBound="false">
+        <Parameter Name="sessionId" Type="Edm.String"/>
+        <Parameter Name="format" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.return_com_rex_cryptotrading_codeanalysis_service_CodeAnalysisService_exportResults"/>
+      </Action>
+      <Function Name="getAnalytics" IsBound="false" IsComposable="false">
+        <ReturnType Type="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.return_com_rex_cryptotrading_codeanalysis_service_CodeAnalysisService_getAnalytics"/>
+      </Function>
+      <Function Name="getBlindSpotAnalysis" IsBound="false" IsComposable="false">
+        <ReturnType Type="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.return_com_rex_cryptotrading_codeanalysis_service_CodeAnalysisService_getBlindSpotAnalysis"/>
+      </Function>
+      <Function Name="getPerformanceMetrics" IsBound="false" IsComposable="false">
+        <ReturnType Type="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.return_com_rex_cryptotrading_codeanalysis_service_CodeAnalysisService_getPerformanceMetrics"/>
+      </Function>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.Projects/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.Projects/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.Projects/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.Projects/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.Projects/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.Projects/name">
+        <Annotation Term="Common.Label" String="Project Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.Projects/description">
+        <Annotation Term="Common.Label" String="Description"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.Projects/path">
+        <Annotation Term="Common.Label" String="Project Path"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.Projects/status">
+        <Annotation Term="Common.Label" String="Status"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="ACTIVE"/>
+              <PropertyValue Property="Value" String="ACTIVE"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="INDEXING"/>
+              <PropertyValue Property="Value" String="INDEXING"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="COMPLETED"/>
+              <PropertyValue Property="Value" String="COMPLETED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="ERROR"/>
+              <PropertyValue Property="Value" String="ERROR"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions/sessionName">
+        <Annotation Term="Common.Label" String="Session Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions/startTime">
+        <Annotation Term="Common.Label" String="Start Time"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions/endTime">
+        <Annotation Term="Common.Label" String="End Time"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions/status">
+        <Annotation Term="Common.Label" String="Status"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="RUNNING"/>
+              <PropertyValue Property="Value" String="RUNNING"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="COMPLETED"/>
+              <PropertyValue Property="Value" String="COMPLETED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="FAILED"/>
+              <PropertyValue Property="Value" String="FAILED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="CANCELLED"/>
+              <PropertyValue Property="Value" String="CANCELLED"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions/totalFiles">
+        <Annotation Term="Common.Label" String="Total Files"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions/processedFiles">
+        <Annotation Term="Common.Label" String="Processed Files"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions/totalFacts">
+        <Annotation Term="Common.Label" String="Total Facts Generated"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions/coveragePercent">
+        <Annotation Term="Common.Label" String="Coverage Percentage"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions/blindSpots">
+        <Annotation Term="Common.Label" String="Blind Spots Count"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions/pythonFiles">
+        <Annotation Term="Common.Label" String="Python Files"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions/jsFiles">
+        <Annotation Term="Common.Label" String="JavaScript Files"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions/tsFiles">
+        <Annotation Term="Common.Label" String="TypeScript Files"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions/capFiles">
+        <Annotation Term="Common.Label" String="SAP CAP Files"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions/xmlFiles">
+        <Annotation Term="Common.Label" String="XML Files"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions/configFiles">
+        <Annotation Term="Common.Label" String="Config Files"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexingSessions/errorMessage">
+        <Annotation Term="Common.Label" String="Error Message"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.CodeFiles/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.CodeFiles/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.CodeFiles/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.CodeFiles/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.CodeFiles/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.CodeFiles/fileName">
+        <Annotation Term="Common.Label" String="File Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.CodeFiles/relativePath">
+        <Annotation Term="Common.Label" String="Relative Path"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.CodeFiles/language">
+        <Annotation Term="Common.Label" String="Language"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="PYTHON"/>
+              <PropertyValue Property="Value" String="PYTHON"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="JAVASCRIPT"/>
+              <PropertyValue Property="Value" String="JAVASCRIPT"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="TYPESCRIPT"/>
+              <PropertyValue Property="Value" String="TYPESCRIPT"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="SAP_CAP"/>
+              <PropertyValue Property="Value" String="SAP_CAP"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="XML"/>
+              <PropertyValue Property="Value" String="XML"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="JSON"/>
+              <PropertyValue Property="Value" String="JSON"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="YAML"/>
+              <PropertyValue Property="Value" String="YAML"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="OTHER"/>
+              <PropertyValue Property="Value" String="OTHER"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.CodeFiles/fileSize">
+        <Annotation Term="Common.Label" String="File Size (bytes)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.CodeFiles/linesOfCode">
+        <Annotation Term="Common.Label" String="Lines of Code"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.CodeFiles/factsGenerated">
+        <Annotation Term="Common.Label" String="Facts Generated"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.CodeFiles/parseStatus">
+        <Annotation Term="Common.Label" String="Parse Status"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="SUCCESS"/>
+              <PropertyValue Property="Value" String="SUCCESS"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="PARTIAL"/>
+              <PropertyValue Property="Value" String="PARTIAL"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="FAILED"/>
+              <PropertyValue Property="Value" String="FAILED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="SKIPPED"/>
+              <PropertyValue Property="Value" String="SKIPPED"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.CodeFiles/parseError">
+        <Annotation Term="Common.Label" String="Parse Error"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.CodeFiles/declarations">
+        <Annotation Term="Common.Label" String="Declarations Found"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.CodeFiles/references">
+        <Annotation Term="Common.Label" String="References Found"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.CodeFiles/imports">
+        <Annotation Term="Common.Label" String="Imports Found"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.CodeFiles/exports">
+        <Annotation Term="Common.Label" String="Exports Found"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.CodeFiles/ui5Controllers">
+        <Annotation Term="Common.Label" String="UI5 Controllers"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.CodeFiles/ui5Views">
+        <Annotation Term="Common.Label" String="UI5 Views"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.CodeFiles/capEntities">
+        <Annotation Term="Common.Label" String="CAP Entities"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.CodeFiles/capServices">
+        <Annotation Term="Common.Label" String="CAP Services"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.AnalysisResults/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.AnalysisResults/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.AnalysisResults/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.AnalysisResults/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.AnalysisResults/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.AnalysisResults/factType">
+        <Annotation Term="Common.Label" String="Fact Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.AnalysisResults/predicate">
+        <Annotation Term="Common.Label" String="Predicate"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.AnalysisResults/symbolName">
+        <Annotation Term="Common.Label" String="Symbol Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.AnalysisResults/symbolType">
+        <Annotation Term="Common.Label" String="Symbol Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.AnalysisResults/fileName">
+        <Annotation Term="Common.Label" String="File Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.AnalysisResults/lineNumber">
+        <Annotation Term="Common.Label" String="Line Number"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.AnalysisResults/columnNumber">
+        <Annotation Term="Common.Label" String="Column Number"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.AnalysisResults/factData">
+        <Annotation Term="Common.Label" String="Fact Data (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.AnalysisResults/confidence">
+        <Annotation Term="Common.Label" String="Confidence Score"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.AnalysisResults/validated">
+        <Annotation Term="Common.Label" String="Validated"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexerStats/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexerStats/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexerStats/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexerStats/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexerStats/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexerStats/language">
+        <Annotation Term="Common.Label" String="Language"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexerStats/totalFiles">
+        <Annotation Term="Common.Label" String="Total Files Indexed"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexerStats/successRate">
+        <Annotation Term="Common.Label" String="Success Rate %"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexerStats/avgFactsPerFile">
+        <Annotation Term="Common.Label" String="Avg Facts per File"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexerStats/totalFacts">
+        <Annotation Term="Common.Label" String="Total Facts Generated"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexerStats/avgProcessingTime">
+        <Annotation Term="Common.Label" String="Avg Processing Time (ms)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexerStats/totalProcessingTime">
+        <Annotation Term="Common.Label" String="Total Processing Time (ms)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexerStats/parseErrors">
+        <Annotation Term="Common.Label" String="Parse Errors"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexerStats/commonErrors">
+        <Annotation Term="Common.Label" String="Common Error Patterns (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.IndexerStats/lastUpdated">
+        <Annotation Term="Common.Label" String="Last Updated"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.BlindSpots/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.BlindSpots/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.BlindSpots/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.BlindSpots/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.BlindSpots/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.BlindSpots/filePattern">
+        <Annotation Term="Common.Label" String="File Pattern"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.BlindSpots/language">
+        <Annotation Term="Common.Label" String="Detected Language"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.BlindSpots/fileCount">
+        <Annotation Term="Common.Label" String="Affected Files"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.BlindSpots/severity">
+        <Annotation Term="Common.Label" String="Severity"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="LOW"/>
+              <PropertyValue Property="Value" String="LOW"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="MEDIUM"/>
+              <PropertyValue Property="Value" String="MEDIUM"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="HIGH"/>
+              <PropertyValue Property="Value" String="HIGH"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="CRITICAL"/>
+              <PropertyValue Property="Value" String="CRITICAL"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.BlindSpots/description">
+        <Annotation Term="Common.Label" String="Description"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.BlindSpots/recommendation">
+        <Annotation Term="Common.Label" String="Recommendation"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.BlindSpots/resolved">
+        <Annotation Term="Common.Label" String="Resolved"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.BlindSpots/resolvedAt">
+        <Annotation Term="Common.Label" String="Resolved At"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.BlindSpots/resolvedBy">
+        <Annotation Term="Common.Label" String="Resolved By"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.ProjectAnalytics/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.ProjectAnalytics/name">
+        <Annotation Term="Common.Label" String="Project Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.ProjectAnalytics/status">
+        <Annotation Term="Common.Label" String="Status"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="ACTIVE"/>
+              <PropertyValue Property="Value" String="ACTIVE"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="INDEXING"/>
+              <PropertyValue Property="Value" String="INDEXING"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="COMPLETED"/>
+              <PropertyValue Property="Value" String="COMPLETED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="ERROR"/>
+              <PropertyValue Property="Value" String="ERROR"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.ProjectAnalytics/totalSessions">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.ProjectAnalytics/totalFacts">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.ProjectAnalytics/avgCoverage">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.ProjectAnalytics/totalFiles">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.LanguageBreakdown/language">
+        <Annotation Term="Common.Label" String="Language"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.LanguageBreakdown/fileCount">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.LanguageBreakdown/totalFacts">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.LanguageBreakdown/avgFactsPerFile">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.LanguageBreakdown/successCount">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.LanguageBreakdown/successRate">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.SessionProgress/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.SessionProgress/sessionName">
+        <Annotation Term="Common.Label" String="Session Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.SessionProgress/projectName">
+        <Annotation Term="Common.Label" String="Project Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.SessionProgress/status">
+        <Annotation Term="Common.Label" String="Status"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="RUNNING"/>
+              <PropertyValue Property="Value" String="RUNNING"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="COMPLETED"/>
+              <PropertyValue Property="Value" String="COMPLETED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="FAILED"/>
+              <PropertyValue Property="Value" String="FAILED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="CANCELLED"/>
+              <PropertyValue Property="Value" String="CANCELLED"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.SessionProgress/startTime">
+        <Annotation Term="Common.Label" String="Start Time"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.SessionProgress/endTime">
+        <Annotation Term="Common.Label" String="End Time"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.SessionProgress/totalFiles">
+        <Annotation Term="Common.Label" String="Total Files"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.SessionProgress/processedFiles">
+        <Annotation Term="Common.Label" String="Processed Files"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.SessionProgress/progressPercent">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.SessionProgress/totalFacts">
+        <Annotation Term="Common.Label" String="Total Facts Generated"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.SessionProgress/coveragePercent">
+        <Annotation Term="Common.Label" String="Coverage Percentage"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.codeanalysis.service.CodeAnalysisService.SessionProgress/blindSpots">
+        <Annotation Term="Common.Label" String="Blind Spots Count"/>
+      </Annotations>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

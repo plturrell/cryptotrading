@@ -87,6 +87,28 @@
                     "refreshAfterChange": false
                 }
             },
+            "tradingServiceOData": {
+                "uri": "/api/odata/v4/MarketAnalysisService/",
+                "type": "OData",
+                "settings": {
+                    "odataVersion": "4.0",
+                    "operationMode": "Server",
+                    "autoExpandSelect": true,
+                    "earlyRequests": true,
+                    "refreshAfterChange": false
+                }
+            },
+            "codeAnalysisServiceOData": {
+                "uri": "/api/odata/v4/CodeAnalysisService/",
+                "type": "OData",
+                "settings": {
+                    "odataVersion": "4.0",
+                    "operationMode": "Server",
+                    "autoExpandSelect": true,
+                    "earlyRequests": true,
+                    "refreshAfterChange": false
+                }
+            },
             "annotation": {
                 "uri": "localService/annotation.xml",
                 "type": "ODataAnnotation"
@@ -139,7 +161,7 @@
         ]
     },
     "sap.ui5": {
-        "flexEnabled": true,
+        "flexEnabled": false,
         "dependencies": {
             "minUI5Version": "1.84.0",
             "libs": {
@@ -154,6 +176,32 @@
         "models": {
             "": {
                 "dataSource": "mainService",
+                "type": "sap.ui.model.odata.v4.ODataModel",
+                "settings": {
+                    "synchronizationMode": "None",
+                    "operationMode": "Server",
+                    "autoExpandSelect": true,
+                    "earlyRequests": true,
+                    "refreshAfterChange": false,
+                    "updateGroupId": "$auto",
+                    "groupId": "$auto"
+                }
+            },
+            "trading": {
+                "dataSource": "tradingServiceOData",
+                "type": "sap.ui.model.odata.v4.ODataModel",
+                "settings": {
+                    "synchronizationMode": "None",
+                    "operationMode": "Server",
+                    "autoExpandSelect": true,
+                    "earlyRequests": true,
+                    "refreshAfterChange": false,
+                    "updateGroupId": "$auto",
+                    "groupId": "$auto"
+                }
+            },
+            "codeAnalysis": {
+                "dataSource": "codeAnalysisServiceOData",
                 "type": "sap.ui.model.odata.v4.ODataModel",
                 "settings": {
                     "synchronizationMode": "None",

@@ -206,28 +206,6 @@ A2A_CAPABILITIES = {
         'analyze_dependencies', 'calculate_impact_analysis', 'generate_quality_report',
         'code_analysis', 'quality_metrics', 'code_smells', 'dependency_analysis',
         'impact_analysis', 'quality_reporting'
-    ],
-    
-    # Legacy capability groups (for backward compatibility)
-    'historical-loader-001': [
-        'data_loading', 'historical_data', 'technical_indicators', 
-        'bulk_processing', 'multi_source_aggregation'
-    ],
-    'database-001': [
-        'data_storage', 'data_retrieval', 'bulk_insert', 'ai_analysis_storage',
-        'portfolio_management', 'trade_history', 'multi_ai_analysis'
-    ],
-    'transform-001': [
-        'data_preprocessing', 'format_conversion', 'data_validation',
-        'technical_analysis', 'feature_engineering'
-    ],
-    'illuminate-001': [
-        'market_analysis', 'pattern_recognition', 'insight_generation',
-        'multi_ai_integration', 'sentiment_analysis'
-    ],
-    'execute-001': [
-        'trade_execution', 'order_management', 'risk_control',
-        'portfolio_optimization', 'execution_analytics'
     ]
 }
 

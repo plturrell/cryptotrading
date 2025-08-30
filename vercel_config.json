@@ -28,7 +28,7 @@
       "maxDuration": 30,
       "memory": 1024
     },
-    "api/mcts-python.py": {
+    "api/mcts_python.py": {
       "runtime": "python3.9",
       "maxDuration": 30,
       "memory": 1024,

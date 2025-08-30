@@ -1,0 +1,259 @@
+{
+    "_version": "1.49.0",
+    "sap.app": {
+        "id": "com.rex.trading.launchpad",
+        "type": "application",
+        "i18n": "i18n/i18n.properties",
+        "applicationVersion": {
+            "version": "1.0.0"
+        },
+        "title": "rex.com - SAP Fiori Launchpad",
+        "description": "Professional Crypto Trading Platform - SAP Fiori Launchpad",
+        "tags": {
+            "keywords": ["crypto", "trading", "fiori", "launchpad", "sap"]
+        },
+        "ach": "FIN-FSCM-TRM",
+        "crossNavigation": {
+            "inbounds": {
+                "launchpad": {
+                    "semanticObject": "CryptoTrading",
+                    "action": "display",
+                    "title": "rex.com Launchpad",
+                    "signature": {
+                        "parameters": {},
+                        "additionalParameters": "allowed"
+                    }
+                },
+                "bitcoin": {
+                    "semanticObject": "Bitcoin",
+                    "action": "analyze",
+                    "title": "Bitcoin Analytics",
+                    "signature": {
+                        "parameters": {
+                            "symbol": {
+                                "defaultValue": {
+                                    "value": "BTC"
+                                }
+                            }
+                        }
+                    }
+                },
+                "wallet": {
+                    "semanticObject": "Wallet",
+                    "action": "manage",
+                    "title": "Wallet Management",
+                    "signature": {
+                        "parameters": {},
+                        "additionalParameters": "allowed"
+                    }
+                },
+                "trading": {
+                    "semanticObject": "Trading",
+                    "action": "execute",
+                    "title": "Trading Console",
+                    "signature": {
+                        "parameters": {},
+                        "additionalParameters": "allowed"
+                    }
+                },
+                "technicalAnalysis": {
+                    "semanticObject": "TechnicalAnalysis",
+                    "action": "analyze",
+                    "title": "Technical Analysis Dashboard",
+                    "signature": {
+                        "parameters": {
+                            "symbol": {
+                                "defaultValue": {
+                                    "value": "BTC-USD"
+                                }
+                            }
+                        },
+                        "additionalParameters": "allowed"
+                    }
+                }
+            }
+        },
+        "dataSources": {
+            "mainService": {
+                "uri": "/api/odata/v4/MarketAnalysisService/",
+                "type": "OData",
+                "settings": {
+                    "localUri": "localService/metadata.xml",
+                    "odataVersion": "4.0",
+                    "operationMode": "Server",
+                    "autoExpandSelect": true,
+                    "earlyRequests": true
+                }
+            },
+            "tradingServiceOData": {
+                "uri": "/api/odata/v4/MarketAnalysisService/",
+                "type": "OData",
+                "settings": {
+                    "odataVersion": "4.0",
+                    "operationMode": "Server",
+                    "autoExpandSelect": true,
+                    "earlyRequests": true
+                }
+            },
+            "marketData": {
+                "uri": "/api/market/data",
+                "type": "REST"
+            },
+            "walletService": {
+                "uri": "/api/wallet/balance",
+                "type": "REST"
+            },
+            "tradingService": {
+                "uri": "/api/trading/status",
+                "type": "REST"
+            }
+        }
+    },
+    "sap.ui": {
+        "technology": "UI5",
+        "icons": {
+            "icon": "sap-icon://business-objects-experience",
+            "favIcon": "favicon.ico",
+            "phone": "sap-icon://business-objects-experience",
+            "phone@2": "sap-icon://business-objects-experience",
+            "tablet": "sap-icon://business-objects-experience",
+            "tablet@2": "sap-icon://business-objects-experience"
+        },
+        "deviceTypes": {
+            "desktop": true,
+            "tablet": true,
+            "phone": true
+        },
+        "supportedThemes": [
+            "sap_fiori_3",
+            "sap_fiori_3_dark",
+            "sap_fiori_3_hcb",
+            "sap_fiori_3_hcw"
+        ]
+    },
+    "sap.ui5": {
+        "flexEnabled": true,
+        "dependencies": {
+            "minUI5Version": "1.84.0",
+            "libs": {
+                "sap.m": {},
+                "sap.ui.core": {},
+                "sap.f": {},
+                "sap.ui.layout": {},
+                "sap.fe.core": {},
+                "sap.suite.ui.commons": {}
+            }
+        },
+        "models": {
+            "": {
+                "dataSource": "mainService",
+                "type": "sap.ui.model.odata.v4.ODataModel",
+                "settings": {
+                    "synchronizationMode": "None",
+                    "operationMode": "Server",
+                    "autoExpandSelect": true,
+                    "earlyRequests": true,
+                    "updateGroupId": "$auto",
+                    "groupId": "$auto"
+                }
+            },
+            "trading": {
+                "dataSource": "tradingServiceOData",
+                "type": "sap.ui.model.odata.v4.ODataModel",
+                "settings": {
+                    "synchronizationMode": "None",
+                    "operationMode": "Server",
+                    "autoExpandSelect": true,
+                    "earlyRequests": true,
+                    "updateGroupId": "$auto",
+                    "groupId": "$auto"
+                }
+            },
+            "i18n": {
+                "type": "sap.ui.model.resource.ResourceModel",
+                "settings": {
+                    "bundleName": "com.rex.cryptotrading.i18n.i18n"
+                }
+            }
+        },
+        "contentDensities": {
+            "compact": true,
+            "cozy": true
+        },
+        "resources": {
+            "css": [{
+                "uri": "css/style.css"
+            }]
+        },
+        "rootView": {
+            "viewName": "com.rex.cryptotrading.view.App",
+            "type": "XML",
+            "async": true,
+            "id": "app"
+        },
+        "routing": {
+            "config": {
+                "routerClass": "sap.m.routing.Router",
+                "viewType": "XML",
+                "async": true,
+                "viewPath": "com.rex.cryptotrading.view",
+                "controlAggregation": "pages",
+                "controlId": "app"
+            },
+            "routes": [{
+                "name": "launchpad",
+                "pattern": "",
+                "target": ["launchpad"]
+            }, {
+                "name": "market",
+                "pattern": "market",
+                "target": ["market"]
+            }, {
+                "name": "portfolio",
+                "pattern": "portfolio",
+                "target": ["portfolio"]
+            }, {
+                "name": "trading",
+                "pattern": "trading",
+                "target": ["trading"]
+            }, {
+                "name": "technicalAnalysis",
+                "pattern": "technical-analysis/{symbol}",
+                "target": ["technicalAnalysis"]
+            }],
+            "targets": {
+                "launchpad": {
+                    "viewType": "XML",
+                    "viewName": "Launchpad"
+                },
+                "market": {
+                    "viewType": "XML",
+                    "viewName": "Market"
+                },
+                "portfolio": {
+                    "viewType": "XML",
+                    "viewName": "Portfolio"
+                },
+                "trading": {
+                    "viewType": "XML",
+                    "viewName": "Trading"
+                },
+                "technicalAnalysis": {
+                    "viewType": "XML",
+                    "viewName": "TechnicalAnalysis"
+                }
+            }
+        }
+    },
+    "sap.platform.hcp": {
+        "uri": ""
+    },
+    "sap.fiori": {
+        "registrationIds": ["F4375"],
+        "archeType": "analytical"
+    },
+    "sap.cloud": {
+        "public": true,
+        "service": "com.rex.trading.launchpad"
+    }
+}

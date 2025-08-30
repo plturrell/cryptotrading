@@ -316,11 +316,8 @@ def handler(request):
     """Vercel handler for web interface"""
     return {
         "statusCode": 200,
-        "headers": {
-            "Content-Type": "text/html",
-            "Cache-Control": "public, max-age=3600"
-        },
-        "body": generate_html()
+        "headers": {"Content-Type": "text/html", "Cache-Control": "public, max-age=3600"},
+        "body": generate_html(),
     }
 
 

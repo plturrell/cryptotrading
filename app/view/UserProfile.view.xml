@@ -1,0 +1,414 @@
+<mvc:View
+    controllerName="com.rex.trading.controller.UserProfile"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:core="sap.ui.core"
+    xmlns:l="sap.ui.layout"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:u="sap.ui.unified"
+    xmlns="sap.m"
+    displayBlock="true">
+    
+    <Page
+        title="{i18n>userProfile}"
+        showNavButton="true"
+        navButtonPress="onNavBack">
+        
+        <headerContent>
+            <Button
+                icon="sap-icon://log"
+                text="{i18n>logout}"
+                press="onLogout"/>
+        </headerContent>
+        
+        <content>
+            <IconTabBar
+                id="userProfileTabs"
+                selectedKey="profile"
+                class="sapUiResponsiveContentPadding">
+                
+                <!-- Profile Tab -->
+                <items>
+                    <IconTabFilter
+                        key="profile"
+                        text="{i18n>profile}"
+                        icon="sap-icon://person-placeholder">
+                        
+                        <VBox class="sapUiMediumMargin">
+                            
+                            <!-- User Avatar and Basic Info -->
+                            <HBox alignItems="Center" class="sapUiMediumMarginBottom">
+                                <Avatar
+                                    src="{user>/avatarUrl}"
+                                    displaySize="XL"
+                                    press="onChangeAvatar"
+                                    class="sapUiSmallMarginEnd"/>
+                                <VBox>
+                                    <Title
+                                        text="{user>/firstName} {user>/lastName}"
+                                        level="H2"/>
+                                    <Text text="@{user>/username}" />
+                                    <Text text="{user>/email}" />
+                                    <ObjectStatus
+                                        text="{user>/role}"
+                                        state="{= ${user>/role} === 'admin' ? 'Error' : 'Success' }"/>
+                                </VBox>
+                            </HBox>
+                            
+                            <!-- Personal Information Form -->
+                            <Panel headerText="{i18n>personalInfo}">
+                                <f:SimpleForm
+                                    id="personalInfoForm"
+                                    editable="true"
+                                    layout="ResponsiveGridLayout"
+                                    labelSpanXL="3"
+                                    labelSpanL="3"
+                                    labelSpanM="3"
+                                    labelSpanS="12"
+                                    adjustLabelSpan="false"
+                                    emptySpanXL="4"
+                                    emptySpanL="4"
+                                    emptySpanM="4"
+                                    emptySpanS="0"
+                                    columnsXL="1"
+                                    columnsL="1"
+                                    columnsM="1">
+                                    
+                                    <f:content>
+                                        <Label text="{i18n>firstName}" required="true"/>
+                                        <Input value="{user>/firstName}" />
+                                        
+                                        <Label text="{i18n>lastName}" required="true"/>
+                                        <Input value="{user>/lastName}" />
+                                        
+                                        <Label text="{i18n>email}" required="true"/>
+                                        <Input value="{user>/email}" type="Email"/>
+                                        
+                                        <Label text="{i18n>phone}"/>
+                                        <Input value="{user>/phone}" type="Tel"/>
+                                        
+                                        <Label text="{i18n>language}"/>
+                                        <Select selectedKey="{user>/language}">
+                                            <items>
+                                                <core:Item key="en" text="English"/>
+                                                <core:Item key="ru" text="Русский"/>
+                                            </items>
+                                        </Select>
+                                        
+                                        <Label text="{i18n>timezone}"/>
+                                        <Select selectedKey="{user>/timezone}">
+                                            <items>
+                                                <core:Item key="UTC" text="UTC"/>
+                                                <core:Item key="America/New_York" text="Eastern Time"/>
+                                                <core:Item key="America/Chicago" text="Central Time"/>
+                                                <core:Item key="America/Los_Angeles" text="Pacific Time"/>
+                                                <core:Item key="Europe/London" text="London"/>
+                                                <core:Item key="Europe/Moscow" text="Moscow"/>
+                                                <core:Item key="Asia/Shanghai" text="Shanghai"/>
+                                            </items>
+                                        </Select>
+                                    </f:content>
+                                </f:SimpleForm>
+                                
+                                <OverflowToolbar>
+                                    <ToolbarSpacer/>
+                                    <Button
+                                        text="{i18n>saveChanges}"
+                                        type="Emphasized"
+                                        press="onSaveProfile"/>
+                                </OverflowToolbar>
+                            </Panel>
+                            
+                        </VBox>
+                        
+                    </IconTabFilter>
+                    
+                    <!-- Preferences Tab -->
+                    <IconTabFilter
+                        key="preferences"
+                        text="{i18n>preferences}"
+                        icon="sap-icon://settings">
+                        
+                        <VBox class="sapUiMediumMargin">
+                            
+                            <!-- Trading Preferences -->
+                            <Panel headerText="{i18n>tradingPreferences}">
+                                <f:SimpleForm
+                                    editable="true"
+                                    layout="ResponsiveGridLayout">
+                                    
+                                    <f:content>
+                                        <Label text="{i18n>theme}"/>
+                                        <RadioButtonGroup selectedIndex="{= ${preferences>/theme} === 'dark' ? 0 : 1 }">
+                                            <RadioButton text="{i18n>darkTheme}"/>
+                                            <RadioButton text="{i18n>lightTheme}"/>
+                                        </RadioButtonGroup>
+                                        
+                                        <Label text="{i18n>tradingView}"/>
+                                        <Select selectedKey="{preferences>/tradingView}">
+                                            <items>
+                                                <core:Item key="basic" text="{i18n>basic}"/>
+                                                <core:Item key="advanced" text="{i18n>advanced}"/>
+                                                <core:Item key="professional" text="{i18n>professional}"/>
+                                                <core:Item key="analyst" text="{i18n>analyst}"/>
+                                            </items>
+                                        </Select>
+                                        
+                                        <Label text="{i18n>defaultExchange}"/>
+                                        <Select selectedKey="{preferences>/defaultExchange}">
+                                            <items>
+                                                <core:Item key="binance" text="Binance"/>
+                                                <core:Item key="coinbase" text="Coinbase"/>
+                                                <core:Item key="kraken" text="Kraken"/>
+                                                <core:Item key="ftx" text="FTX"/>
+                                            </items>
+                                        </Select>
+                                        
+                                        <Label text="{i18n>currency}"/>
+                                        <Select selectedKey="{preferences>/currency}">
+                                            <items>
+                                                <core:Item key="USD" text="USD"/>
+                                                <core:Item key="EUR" text="EUR"/>
+                                                <core:Item key="GBP" text="GBP"/>
+                                                <core:Item key="RUB" text="RUB"/>
+                                                <core:Item key="USDT" text="USDT"/>
+                                            </items>
+                                        </Select>
+                                        
+                                        <Label text="{i18n>favoritePairs}"/>
+                                        <MultiComboBox
+                                            id="favoritePairsBox"
+                                            selectedKeys="{preferences>/favoritePairs}">
+                                            <items>
+                                                <core:Item key="BTC/USD" text="BTC/USD"/>
+                                                <core:Item key="ETH/USD" text="ETH/USD"/>
+                                                <core:Item key="BTC/USDT" text="BTC/USDT"/>
+                                                <core:Item key="ETH/USDT" text="ETH/USDT"/>
+                                                <core:Item key="SOL/USDT" text="SOL/USDT"/>
+                                                <core:Item key="BNB/USDT" text="BNB/USDT"/>
+                                            </items>
+                                        </MultiComboBox>
+                                        
+                                        <Label text="{i18n>chartIndicators}"/>
+                                        <MultiComboBox
+                                            id="indicatorsBox"
+                                            selectedKeys="{preferences>/chartIndicators}">
+                                            <items>
+                                                <core:Item key="RSI" text="RSI"/>
+                                                <core:Item key="MACD" text="MACD"/>
+                                                <core:Item key="Bollinger" text="Bollinger Bands"/>
+                                                <core:Item key="Volume" text="Volume"/>
+                                                <core:Item key="SMA" text="SMA"/>
+                                                <core:Item key="EMA" text="EMA"/>
+                                                <core:Item key="Fibonacci" text="Fibonacci"/>
+                                            </items>
+                                        </MultiComboBox>
+                                    </f:content>
+                                </f:SimpleForm>
+                                
+                                <OverflowToolbar>
+                                    <ToolbarSpacer/>
+                                    <Button
+                                        text="{i18n>savePreferences}"
+                                        type="Emphasized"
+                                        press="onSavePreferences"/>
+                                </OverflowToolbar>
+                            </Panel>
+                            
+                            <!-- Notification Preferences -->
+                            <Panel headerText="{i18n>notifications}">
+                                <VBox>
+                                    <CheckBox
+                                        text="{i18n>enableNotifications}"
+                                        selected="{preferences>/notificationsEnabled}"/>
+                                    <CheckBox
+                                        text="{i18n>emailNotifications}"
+                                        selected="{preferences>/emailNotifications}"
+                                        enabled="{preferences>/notificationsEnabled}"/>
+                                    <CheckBox
+                                        text="{i18n>smsNotifications}"
+                                        selected="{preferences>/smsNotifications}"
+                                        enabled="{preferences>/notificationsEnabled}"/>
+                                </VBox>
+                            </Panel>
+                            
+                        </VBox>
+                        
+                    </IconTabFilter>
+                    
+                    <!-- Security Tab -->
+                    <IconTabFilter
+                        key="security"
+                        text="{i18n>security}"
+                        icon="sap-icon://locked">
+                        
+                        <VBox class="sapUiMediumMargin">
+                            
+                            <!-- Change Password -->
+                            <Panel headerText="{i18n>changePassword}">
+                                <f:SimpleForm
+                                    editable="true"
+                                    layout="ResponsiveGridLayout">
+                                    
+                                    <f:content>
+                                        <Label text="{i18n>currentPassword}" required="true"/>
+                                        <Input
+                                            id="currentPassword"
+                                            type="Password"
+                                            value="{security>/currentPassword}"/>
+                                        
+                                        <Label text="{i18n>newPassword}" required="true"/>
+                                        <Input
+                                            id="newPassword"
+                                            type="Password"
+                                            value="{security>/newPassword}"/>
+                                        
+                                        <Label text="{i18n>confirmPassword}" required="true"/>
+                                        <Input
+                                            id="confirmPassword"
+                                            type="Password"
+                                            value="{security>/confirmPassword}"/>
+                                    </f:content>
+                                </f:SimpleForm>
+                                
+                                <OverflowToolbar>
+                                    <ToolbarSpacer/>
+                                    <Button
+                                        text="{i18n>changePassword}"
+                                        type="Emphasized"
+                                        press="onChangePassword"/>
+                                </OverflowToolbar>
+                            </Panel>
+                            
+                            <!-- Two-Factor Authentication -->
+                            <Panel headerText="{i18n>twoFactorAuth}">
+                                <VBox>
+                                    <HBox alignItems="Center">
+                                        <Switch
+                                            state="{user>/twoFactorEnabled}"
+                                            change="onToggle2FA"
+                                            class="sapUiSmallMarginEnd"/>
+                                        <Text text="{i18n>enable2FA}"/>
+                                    </HBox>
+                                    
+                                    <MessageStrip
+                                        text="{i18n>2FADescription}"
+                                        type="Information"
+                                        showIcon="true"
+                                        class="sapUiSmallMarginTop"/>
+                                </VBox>
+                            </Panel>
+                            
+                            <!-- API Keys -->
+                            <Panel headerText="{i18n>apiKeys}">
+                                <Table
+                                    id="apiKeysTable"
+                                    items="{apiKeys>/keys}">
+                                    
+                                    <headerToolbar>
+                                        <OverflowToolbar>
+                                            <Title text="{i18n>yourAPIKeys}"/>
+                                            <ToolbarSpacer/>
+                                            <Button
+                                                text="{i18n>generateNew}"
+                                                press="onGenerateAPIKey"/>
+                                        </OverflowToolbar>
+                                    </headerToolbar>
+                                    
+                                    <columns>
+                                        <Column>
+                                            <Text text="{i18n>keyName}"/>
+                                        </Column>
+                                        <Column>
+                                            <Text text="{i18n>created}"/>
+                                        </Column>
+                                        <Column>
+                                            <Text text="{i18n>lastUsed}"/>
+                                        </Column>
+                                        <Column>
+                                            <Text text="{i18n>actions}"/>
+                                        </Column>
+                                    </columns>
+                                    
+                                    <items>
+                                        <ColumnListItem>
+                                            <cells>
+                                                <Text text="{apiKeys>name}"/>
+                                                <Text text="{apiKeys>created}"/>
+                                                <Text text="{apiKeys>lastUsed}"/>
+                                                <Button
+                                                    icon="sap-icon://delete"
+                                                    press="onDeleteAPIKey"/>
+                                            </cells>
+                                        </ColumnListItem>
+                                    </items>
+                                </Table>
+                            </Panel>
+                            
+                        </VBox>
+                        
+                    </IconTabFilter>
+                    
+                    <!-- Activity Tab -->
+                    <IconTabFilter
+                        key="activity"
+                        text="{i18n>activity}"
+                        icon="sap-icon://history">
+                        
+                        <Table
+                            id="activityTable"
+                            items="{activity>/logs}"
+                            growing="true"
+                            growingThreshold="20">
+                            
+                            <headerToolbar>
+                                <OverflowToolbar>
+                                    <Title text="{i18n>recentActivity}"/>
+                                    <ToolbarSpacer/>
+                                    <DateRangeSelection
+                                        id="activityDateRange"
+                                        change="onActivityDateChange"/>
+                                </OverflowToolbar>
+                            </headerToolbar>
+                            
+                            <columns>
+                                <Column>
+                                    <Text text="{i18n>timestamp}"/>
+                                </Column>
+                                <Column>
+                                    <Text text="{i18n>action}"/>
+                                </Column>
+                                <Column>
+                                    <Text text="{i18n>details}"/>
+                                </Column>
+                                <Column>
+                                    <Text text="{i18n>ipAddress}"/>
+                                </Column>
+                                <Column>
+                                    <Text text="{i18n>status}"/>
+                                </Column>
+                            </columns>
+                            
+                            <items>
+                                <ColumnListItem>
+                                    <cells>
+                                        <Text text="{activity>timestamp}"/>
+                                        <Text text="{activity>action}"/>
+                                        <Text text="{activity>details}"/>
+                                        <Text text="{activity>ipAddress}"/>
+                                        <ObjectStatus
+                                            text="{activity>status}"
+                                            state="{= ${activity>status} === 'success' ? 'Success' : 'Error' }"/>
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                        
+                    </IconTabFilter>
+                    
+                </items>
+            </IconTabBar>
+        </content>
+        
+    </Page>
+    
+</mvc:View>

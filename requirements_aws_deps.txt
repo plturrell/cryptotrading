@@ -1,0 +1,12 @@
+# AWS Data Exchange Requirements
+boto3>=1.26.0
+botocore>=1.29.0
+
+# Data processing
+pandas>=1.5.0
+numpy>=1.24.0
+
+# Optional: for advanced data formats
+openpyxl>=3.0.0  # Excel files
+xlrd>=2.0.0      # Legacy Excel files
+lxml>=4.9.0      # XML parsing

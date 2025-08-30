@@ -2471,7 +2471,7 @@ class EnhancedStrandsAgent(MemoryAgent):
                 "timestamp": datetime.utcnow().isoformat()
             }
     
-    def _calculate_symbol_correlations(self, symbols: List[str]) -> Dict[str, float]:
+    async def _calculate_symbol_correlations(self, symbols: List[str]) -> Dict[str, float]:
         """Calculate correlations between symbols using available data"""
         correlations = {}
         
@@ -2479,15 +2479,21 @@ class EnhancedStrandsAgent(MemoryAgent):
         symbol_data = {}
         for symbol in symbols:
             try:
-                # Note: This would need to be made async in a real implementation
-                # For now, use synchronous approximation
+                # Get real market data - no hardcoded values
+                from ...infrastructure.data.market_data_service import MarketDataService
+                market_service = MarketDataService()
+                market_data = await market_service.get_market_data_dict(symbol)
+                
                 symbol_data[symbol] = {
-                    "change_24h": 0.0,  # Would get from market data
-                    "volume": 0,
-                    "market_cap": 0
+                    "change_24h": market_data.get("change_24h", 0.0),
+                    "volume": market_data.get("volume_24h", 0),
+                    "market_cap": market_data.get("market_cap", 0)
                 }
-            except Exception:
-                symbol_data[symbol] = {"change_24h": 0.0, "volume": 0, "market_cap": 0}
+            except Exception as e:
+                # Log error but don't use fake data
+                logger.warning(f"Could not get market data for {symbol}: {e}")
+                # Skip symbols without real data
+                continue
         
         # Calculate basic correlations using price changes and market relationships
         for i, symbol1 in enumerate(symbols):

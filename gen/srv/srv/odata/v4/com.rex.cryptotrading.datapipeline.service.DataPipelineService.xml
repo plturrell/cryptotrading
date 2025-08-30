@@ -1,0 +1,1303 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Capabilities.V1.xml">
+    <edmx:Include Alias="Capabilities" Namespace="Org.OData.Capabilities.V1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/Common.xml">
+    <edmx:Include Alias="Common" Namespace="com.sap.vocabularies.Common.v1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Core.V1.xml">
+    <edmx:Include Alias="Core" Namespace="Org.OData.Core.V1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/UI.xml">
+    <edmx:Include Alias="UI" Namespace="com.sap.vocabularies.UI.v1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Validation.V1.xml">
+    <edmx:Include Alias="Validation" Namespace="Org.OData.Validation.V1"/>
+  </edmx:Reference>
+  <edmx:DataServices>
+    <Schema Namespace="com.rex.cryptotrading.datapipeline.service.DataPipelineService" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <Annotation Term="Core.Links">
+        <Collection>
+          <Record>
+            <PropertyValue Property="rel" String="author"/>
+            <PropertyValue Property="href" String="https://cap.cloud.sap"/>
+          </Record>
+        </Collection>
+      </Annotation>
+      <EntityContainer Name="EntityContainer">
+        <EntitySet Name="DataIngestionJobs" EntityType="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs">
+          <NavigationPropertyBinding Path="SiblingEntity" Target="DataIngestionJobs"/>
+        </EntitySet>
+        <EntitySet Name="DataQualityMetrics" EntityType="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityMetrics"/>
+        <EntitySet Name="MarketDataSources" EntityType="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MarketDataSources"/>
+        <EntitySet Name="AggregatedMarketData" EntityType="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AggregatedMarketData"/>
+        <EntitySet Name="MLModelRegistry" EntityType="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry">
+          <NavigationPropertyBinding Path="SiblingEntity" Target="MLModelRegistry"/>
+        </EntitySet>
+        <EntitySet Name="OnchainData" EntityType="com.rex.cryptotrading.datapipeline.service.DataPipelineService.OnchainData"/>
+        <EntitySet Name="AIAnalyses" EntityType="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AIAnalyses"/>
+        <EntitySet Name="ActiveDataJobs" EntityType="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ActiveDataJobs"/>
+        <EntitySet Name="DataQualityDashboard" EntityType="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityDashboard"/>
+        <EntitySet Name="ModelPerformance" EntityType="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ModelPerformance"/>
+        <ActionImport Name="startIngestionJob" Action="com.rex.cryptotrading.datapipeline.service.DataPipelineService.startIngestionJob"/>
+        <ActionImport Name="stopIngestionJob" Action="com.rex.cryptotrading.datapipeline.service.DataPipelineService.stopIngestionJob"/>
+        <ActionImport Name="validateDataQuality" Action="com.rex.cryptotrading.datapipeline.service.DataPipelineService.validateDataQuality"/>
+        <ActionImport Name="deployModel" Action="com.rex.cryptotrading.datapipeline.service.DataPipelineService.deployModel"/>
+        <ActionImport Name="syncMarketData" Action="com.rex.cryptotrading.datapipeline.service.DataPipelineService.syncMarketData"/>
+        <FunctionImport Name="getJobStatus" Function="com.rex.cryptotrading.datapipeline.service.DataPipelineService.getJobStatus"/>
+        <FunctionImport Name="getDataQualityReport" Function="com.rex.cryptotrading.datapipeline.service.DataPipelineService.getDataQualityReport"/>
+        <FunctionImport Name="getModelMetrics" Function="com.rex.cryptotrading.datapipeline.service.DataPipelineService.getModelMetrics"/>
+        <FunctionImport Name="getOnchainStats" Function="com.rex.cryptotrading.datapipeline.service.DataPipelineService.getOnchainStats"/>
+      </EntityContainer>
+      <EntityType Name="DataIngestionJobs">
+        <Key>
+          <PropertyRef Name="ID"/>
+          <PropertyRef Name="IsActiveEntity"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="jobName" Type="Edm.String" MaxLength="100"/>
+        <Property Name="jobType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="source" Type="Edm.String" MaxLength="100"/>
+        <Property Name="destination" Type="Edm.String" MaxLength="100"/>
+        <Property Name="schedule" Type="Edm.String" MaxLength="100"/>
+        <Property Name="status" Type="Edm.String" MaxLength="20"/>
+        <Property Name="startTime" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="endTime" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="recordsProcessed" Type="Edm.Int32"/>
+        <Property Name="recordsFailed" Type="Edm.Int32"/>
+        <Property Name="errorMessage" Type="Edm.String" MaxLength="1000"/>
+        <Property Name="configuration" Type="Edm.String"/>
+        <Property Name="lastRun" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="nextRun" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="IsActiveEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="true"/>
+        <Property Name="HasActiveEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="false"/>
+        <Property Name="HasDraftEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="false"/>
+        <NavigationProperty Name="DraftAdministrativeData" Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DraftAdministrativeData" ContainsTarget="true"/>
+        <NavigationProperty Name="SiblingEntity" Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs"/>
+      </EntityType>
+      <EntityType Name="DataQualityMetrics">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="dataSource" Type="Edm.String" MaxLength="100"/>
+        <Property Name="tableName" Type="Edm.String" MaxLength="100"/>
+        <Property Name="metricType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="metricName" Type="Edm.String" MaxLength="100"/>
+        <Property Name="metricValue" Type="Edm.Decimal" Precision="20" Scale="4"/>
+        <Property Name="threshold" Type="Edm.Decimal" Precision="20" Scale="4"/>
+        <Property Name="status" Type="Edm.String" MaxLength="20"/>
+        <Property Name="checkTime" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="details" Type="Edm.String"/>
+        <Property Name="recordCount" Type="Edm.Int32"/>
+        <Property Name="nullCount" Type="Edm.Int32"/>
+        <Property Name="duplicateCount" Type="Edm.Int32"/>
+        <Property Name="anomalyCount" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="MarketDataSources">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="sourceName" Type="Edm.String" MaxLength="100"/>
+        <Property Name="sourceType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="apiEndpoint" Type="Edm.String" MaxLength="500"/>
+        <Property Name="authentication" Type="Edm.String" MaxLength="50"/>
+        <Property Name="rateLimit" Type="Edm.Int32"/>
+        <Property Name="dataTypes" Type="Edm.String"/>
+        <Property Name="symbols" Type="Edm.String"/>
+        <Property Name="isActive" Type="Edm.Boolean" DefaultValue="true"/>
+        <Property Name="priority" Type="Edm.Int32" DefaultValue="5"/>
+        <Property Name="lastSync" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="syncFrequency" Type="Edm.Int32"/>
+        <Property Name="errorCount" Type="Edm.Int32" DefaultValue="0"/>
+        <Property Name="successRate" Type="Edm.Decimal" Precision="5" Scale="2"/>
+      </EntityType>
+      <EntityType Name="AggregatedMarketData">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="symbol" Type="Edm.String" MaxLength="20"/>
+        <Property Name="timeframe" Type="Edm.String" MaxLength="20"/>
+        <Property Name="periodStart" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="periodEnd" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="openPrice" Type="Edm.Decimal" Precision="20" Scale="8"/>
+        <Property Name="highPrice" Type="Edm.Decimal" Precision="20" Scale="8"/>
+        <Property Name="lowPrice" Type="Edm.Decimal" Precision="20" Scale="8"/>
+        <Property Name="closePrice" Type="Edm.Decimal" Precision="20" Scale="8"/>
+        <Property Name="volume" Type="Edm.Decimal" Precision="30" Scale="8"/>
+        <Property Name="trades" Type="Edm.Int32"/>
+        <Property Name="vwap" Type="Edm.Decimal" Precision="20" Scale="8"/>
+        <Property Name="spread" Type="Edm.Decimal" Precision="10" Scale="8"/>
+        <Property Name="volatility" Type="Edm.Decimal" Precision="10" Scale="4"/>
+      </EntityType>
+      <EntityType Name="MLModelRegistry">
+        <Key>
+          <PropertyRef Name="ID"/>
+          <PropertyRef Name="IsActiveEntity"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modelName" Type="Edm.String" MaxLength="100"/>
+        <Property Name="modelType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="version" Type="Edm.String" MaxLength="20"/>
+        <Property Name="framework" Type="Edm.String" MaxLength="50"/>
+        <Property Name="description" Type="Edm.String" MaxLength="500"/>
+        <Property Name="modelPath" Type="Edm.String" MaxLength="500"/>
+        <Property Name="parameters" Type="Edm.String"/>
+        <Property Name="metrics" Type="Edm.String"/>
+        <Property Name="status" Type="Edm.String" MaxLength="20"/>
+        <Property Name="trainedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="deployedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="accuracy" Type="Edm.Decimal" Precision="5" Scale="4"/>
+        <Property Name="performance" Type="Edm.String"/>
+        <Property Name="inputFeatures" Type="Edm.String"/>
+        <Property Name="outputFormat" Type="Edm.String" MaxLength="100"/>
+        <Property Name="IsActiveEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="true"/>
+        <Property Name="HasActiveEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="false"/>
+        <Property Name="HasDraftEntity" Type="Edm.Boolean" Nullable="false" DefaultValue="false"/>
+        <NavigationProperty Name="DraftAdministrativeData" Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DraftAdministrativeData" ContainsTarget="true"/>
+        <NavigationProperty Name="SiblingEntity" Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry"/>
+      </EntityType>
+      <EntityType Name="OnchainData">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="chainName" Type="Edm.String" MaxLength="50"/>
+        <Property Name="blockNumber" Type="Edm.Int32"/>
+        <Property Name="blockHash" Type="Edm.String" MaxLength="100"/>
+        <Property Name="transactionHash" Type="Edm.String" MaxLength="100"/>
+        <Property Name="contractAddress" Type="Edm.String" MaxLength="100"/>
+        <Property Name="eventName" Type="Edm.String" MaxLength="100"/>
+        <Property Name="eventData" Type="Edm.String"/>
+        <Property Name="timestamp" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="gasUsed" Type="Edm.Int32"/>
+        <Property Name="gasPrice" Type="Edm.Decimal" Precision="20" Scale="8"/>
+        <Property Name="value" Type="Edm.Decimal" Precision="30" Scale="8"/>
+        <Property Name="from" Type="Edm.String" MaxLength="100"/>
+        <Property Name="to" Type="Edm.String" MaxLength="100"/>
+        <Property Name="status" Type="Edm.String" MaxLength="20"/>
+      </EntityType>
+      <EntityType Name="AIAnalyses">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="analysisType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="targetSymbol" Type="Edm.String" MaxLength="20"/>
+        <Property Name="modelUsed" Type="Edm.String" MaxLength="100"/>
+        <Property Name="inputData" Type="Edm.String"/>
+        <Property Name="results" Type="Edm.String"/>
+        <Property Name="confidence" Type="Edm.Decimal" Precision="5" Scale="4"/>
+        <Property Name="recommendations" Type="Edm.String"/>
+        <Property Name="performedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="duration" Type="Edm.Int32"/>
+        <Property Name="status" Type="Edm.String" MaxLength="20"/>
+        <Property Name="errorDetails" Type="Edm.String" MaxLength="1000"/>
+      </EntityType>
+      <EntityType Name="ActiveDataJobs">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="jobName" Type="Edm.String" MaxLength="100"/>
+        <Property Name="jobType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="source" Type="Edm.String" MaxLength="100"/>
+        <Property Name="destination" Type="Edm.String" MaxLength="100"/>
+        <Property Name="schedule" Type="Edm.String" MaxLength="100"/>
+        <Property Name="status" Type="Edm.String" MaxLength="20"/>
+        <Property Name="startTime" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="endTime" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="recordsProcessed" Type="Edm.Int32"/>
+        <Property Name="recordsFailed" Type="Edm.Int32"/>
+        <Property Name="errorMessage" Type="Edm.String" MaxLength="1000"/>
+        <Property Name="configuration" Type="Edm.String"/>
+        <Property Name="lastRun" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="nextRun" Type="Edm.DateTimeOffset" Precision="7"/>
+      </EntityType>
+      <EntityType Name="DataQualityDashboard">
+        <Key>
+          <PropertyRef Name="dataSource"/>
+        </Key>
+        <Property Name="dataSource" Type="Edm.String" Nullable="false"/>
+        <Property Name="totalChecks" Type="Edm.Int32"/>
+        <Property Name="passCount" Type="Edm.Int32"/>
+        <Property Name="failCount" Type="Edm.Int32"/>
+        <Property Name="passRate" Type="Edm.Decimal" Precision="5" Scale="2"/>
+      </EntityType>
+      <EntityType Name="ModelPerformance">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="modelName" Type="Edm.String" MaxLength="100"/>
+        <Property Name="modelType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="version" Type="Edm.String" MaxLength="20"/>
+        <Property Name="status" Type="Edm.String" MaxLength="20"/>
+        <Property Name="accuracy" Type="Edm.Decimal" Precision="5" Scale="4"/>
+        <Property Name="trainedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="deployedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+      </EntityType>
+      <EntityType Name="DraftAdministrativeData">
+        <Key>
+          <PropertyRef Name="DraftUUID"/>
+        </Key>
+        <Property Name="DraftUUID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="CreationDateTime" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="CreatedByUser" Type="Edm.String" MaxLength="256"/>
+        <Property Name="DraftIsCreatedByMe" Type="Edm.Boolean"/>
+        <Property Name="LastChangeDateTime" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="LastChangedByUser" Type="Edm.String" MaxLength="256"/>
+        <Property Name="InProcessByUser" Type="Edm.String" MaxLength="256"/>
+        <Property Name="DraftIsProcessedByMe" Type="Edm.Boolean"/>
+      </EntityType>
+      <ComplexType Name="return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_startIngestionJob">
+        <Property Name="jobId" Type="Edm.String"/>
+        <Property Name="status" Type="Edm.String"/>
+        <Property Name="estimatedTime" Type="Edm.Int32"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_stopIngestionJob">
+        <Property Name="success" Type="Edm.Boolean"/>
+        <Property Name="recordsProcessed" Type="Edm.Int32"/>
+        <Property Name="message" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_validateDataQuality">
+        <Property Name="qualityScore" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="issues" Type="Collection(com.rex.cryptotrading.datapipeline.service.DataPipelineService.return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_validateDataQuality_issues)" Nullable="true"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_validateDataQuality_issues">
+        <Property Name="metricName" Type="Edm.String"/>
+        <Property Name="status" Type="Edm.String"/>
+        <Property Name="value" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="threshold" Type="Edm.Decimal" Scale="variable"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_deployModel">
+        <Property Name="deploymentId" Type="Edm.String"/>
+        <Property Name="status" Type="Edm.String"/>
+        <Property Name="endpoint" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_syncMarketData">
+        <Property Name="recordsSynced" Type="Edm.Int32"/>
+        <Property Name="errors" Type="Edm.Int32"/>
+        <Property Name="nextSync" Type="Edm.DateTimeOffset"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_getJobStatus">
+        <Property Name="status" Type="Edm.String"/>
+        <Property Name="progress" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="recordsProcessed" Type="Edm.Int32"/>
+        <Property Name="estimatedCompletion" Type="Edm.DateTimeOffset"/>
+        <Property Name="errors" Type="Collection(Edm.String)" Nullable="true"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_getDataQualityReport">
+        <Property Name="overallScore" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="bySource" Type="Collection(com.rex.cryptotrading.datapipeline.service.DataPipelineService.return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_getDataQualityReport_bySource)" Nullable="true"/>
+        <Property Name="trends" Type="Collection(com.rex.cryptotrading.datapipeline.service.DataPipelineService.return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_getDataQualityReport_trends)" Nullable="true"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_getDataQualityReport_bySource">
+        <Property Name="source" Type="Edm.String"/>
+        <Property Name="score" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="passRate" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="issues" Type="Edm.Int32"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_getDataQualityReport_trends">
+        <Property Name="date" Type="Edm.Date"/>
+        <Property Name="score" Type="Edm.Decimal" Scale="variable"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_getModelMetrics">
+        <Property Name="accuracy" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="precision" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="recall" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="f1Score" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="latency" Type="Edm.Int32"/>
+        <Property Name="throughput" Type="Edm.Int32"/>
+        <Property Name="lastPrediction" Type="Edm.DateTimeOffset"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_getOnchainStats">
+        <Property Name="totalTransactions" Type="Edm.Int32"/>
+        <Property Name="totalVolume" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="avgGasPrice" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="uniqueAddresses" Type="Edm.Int32"/>
+        <Property Name="topContracts" Type="Collection(com.rex.cryptotrading.datapipeline.service.DataPipelineService.return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_getOnchainStats_topContracts)" Nullable="true"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_getOnchainStats_topContracts">
+        <Property Name="address" Type="Edm.String"/>
+        <Property Name="transactions" Type="Edm.Int32"/>
+        <Property Name="volume" Type="Edm.Decimal" Scale="variable"/>
+      </ComplexType>
+      <Action Name="draftPrepare" IsBound="true" EntitySetPath="in">
+        <Parameter Name="in" Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs"/>
+        <Parameter Name="SideEffectsQualifier" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs"/>
+      </Action>
+      <Action Name="draftPrepare" IsBound="true" EntitySetPath="in">
+        <Parameter Name="in" Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry"/>
+        <Parameter Name="SideEffectsQualifier" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry"/>
+      </Action>
+      <Action Name="draftActivate" IsBound="true" EntitySetPath="in">
+        <Parameter Name="in" Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs"/>
+        <ReturnType Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs"/>
+      </Action>
+      <Action Name="draftActivate" IsBound="true" EntitySetPath="in">
+        <Parameter Name="in" Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry"/>
+        <ReturnType Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry"/>
+      </Action>
+      <Action Name="draftEdit" IsBound="true" EntitySetPath="in">
+        <Parameter Name="in" Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs"/>
+        <Parameter Name="PreserveChanges" Type="Edm.Boolean"/>
+        <ReturnType Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs"/>
+      </Action>
+      <Action Name="draftEdit" IsBound="true" EntitySetPath="in">
+        <Parameter Name="in" Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry"/>
+        <Parameter Name="PreserveChanges" Type="Edm.Boolean"/>
+        <ReturnType Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry"/>
+      </Action>
+      <Action Name="startIngestionJob" IsBound="false">
+        <Parameter Name="jobName" Type="Edm.String"/>
+        <Parameter Name="source" Type="Edm.String"/>
+        <Parameter Name="destination" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_startIngestionJob"/>
+      </Action>
+      <Action Name="stopIngestionJob" IsBound="false">
+        <Parameter Name="jobId" Type="Edm.String"/>
+        <Parameter Name="reason" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_stopIngestionJob"/>
+      </Action>
+      <Action Name="validateDataQuality" IsBound="false">
+        <Parameter Name="dataSource" Type="Edm.String"/>
+        <Parameter Name="tableName" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_validateDataQuality"/>
+      </Action>
+      <Action Name="deployModel" IsBound="false">
+        <Parameter Name="modelId" Type="Edm.String"/>
+        <Parameter Name="targetEnvironment" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_deployModel"/>
+      </Action>
+      <Action Name="syncMarketData" IsBound="false">
+        <Parameter Name="sourceId" Type="Edm.String"/>
+        <Parameter Name="symbols" Type="Collection(Edm.String)" Nullable="true"/>
+        <ReturnType Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_syncMarketData"/>
+      </Action>
+      <Function Name="getJobStatus" IsBound="false" IsComposable="false">
+        <Parameter Name="jobId" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_getJobStatus"/>
+      </Function>
+      <Function Name="getDataQualityReport" IsBound="false" IsComposable="false">
+        <Parameter Name="period" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_getDataQualityReport"/>
+      </Function>
+      <Function Name="getModelMetrics" IsBound="false" IsComposable="false">
+        <Parameter Name="modelId" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_getModelMetrics"/>
+      </Function>
+      <Function Name="getOnchainStats" IsBound="false" IsComposable="false">
+        <Parameter Name="chainName" Type="Edm.String"/>
+        <Parameter Name="period" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.datapipeline.service.DataPipelineService.return_com_rex_cryptotrading_datapipeline_service_DataPipelineService_getOnchainStats"/>
+      </Function>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.EntityContainer/DataIngestionJobs">
+        <Annotation Term="Common.DraftRoot">
+          <Record Type="Common.DraftRootType">
+            <PropertyValue Property="ActivationAction" String="com.rex.cryptotrading.datapipeline.service.DataPipelineService.draftActivate"/>
+            <PropertyValue Property="EditAction" String="com.rex.cryptotrading.datapipeline.service.DataPipelineService.draftEdit"/>
+            <PropertyValue Property="PreparationAction" String="com.rex.cryptotrading.datapipeline.service.DataPipelineService.draftPrepare"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs/jobName">
+        <Annotation Term="Common.Label" String="Job Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs/jobType">
+        <Annotation Term="Common.Label" String="Job Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs/source">
+        <Annotation Term="Common.Label" String="Data Source"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs/destination">
+        <Annotation Term="Common.Label" String="Destination"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs/schedule">
+        <Annotation Term="Common.Label" String="Schedule (Cron)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs/status">
+        <Annotation Term="Common.Label" String="Status"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="SCHEDULED"/>
+              <PropertyValue Property="Value" String="SCHEDULED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="RUNNING"/>
+              <PropertyValue Property="Value" String="RUNNING"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="COMPLETED"/>
+              <PropertyValue Property="Value" String="COMPLETED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="FAILED"/>
+              <PropertyValue Property="Value" String="FAILED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="CANCELLED"/>
+              <PropertyValue Property="Value" String="CANCELLED"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs/startTime">
+        <Annotation Term="Common.Label" String="Start Time"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs/endTime">
+        <Annotation Term="Common.Label" String="End Time"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs/recordsProcessed">
+        <Annotation Term="Common.Label" String="Records Processed"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs/recordsFailed">
+        <Annotation Term="Common.Label" String="Records Failed"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs/errorMessage">
+        <Annotation Term="Common.Label" String="Error Message"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs/configuration">
+        <Annotation Term="Common.Label" String="Configuration (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs/lastRun">
+        <Annotation Term="Common.Label" String="Last Run"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs/nextRun">
+        <Annotation Term="Common.Label" String="Next Run"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs/IsActiveEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs/HasActiveEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs/HasDraftEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataIngestionJobs/DraftAdministrativeData">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityMetrics/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityMetrics/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityMetrics/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityMetrics/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityMetrics/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityMetrics/dataSource">
+        <Annotation Term="Common.Label" String="Data Source"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityMetrics/tableName">
+        <Annotation Term="Common.Label" String="Table Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityMetrics/metricType">
+        <Annotation Term="Common.Label" String="Metric Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityMetrics/metricName">
+        <Annotation Term="Common.Label" String="Metric Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityMetrics/metricValue">
+        <Annotation Term="Common.Label" String="Metric Value"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityMetrics/threshold">
+        <Annotation Term="Common.Label" String="Threshold"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityMetrics/status">
+        <Annotation Term="Common.Label" String="Status"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="PASS"/>
+              <PropertyValue Property="Value" String="PASS"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="WARNING"/>
+              <PropertyValue Property="Value" String="WARNING"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="FAIL"/>
+              <PropertyValue Property="Value" String="FAIL"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityMetrics/checkTime">
+        <Annotation Term="Common.Label" String="Check Time"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityMetrics/details">
+        <Annotation Term="Common.Label" String="Details (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityMetrics/recordCount">
+        <Annotation Term="Common.Label" String="Record Count"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityMetrics/nullCount">
+        <Annotation Term="Common.Label" String="Null Count"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityMetrics/duplicateCount">
+        <Annotation Term="Common.Label" String="Duplicate Count"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityMetrics/anomalyCount">
+        <Annotation Term="Common.Label" String="Anomaly Count"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MarketDataSources/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MarketDataSources/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MarketDataSources/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MarketDataSources/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MarketDataSources/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MarketDataSources/sourceName">
+        <Annotation Term="Common.Label" String="Source Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MarketDataSources/sourceType">
+        <Annotation Term="Common.Label" String="Source Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MarketDataSources/apiEndpoint">
+        <Annotation Term="Common.Label" String="API Endpoint"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MarketDataSources/authentication">
+        <Annotation Term="Common.Label" String="Auth Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MarketDataSources/rateLimit">
+        <Annotation Term="Common.Label" String="Rate Limit (req/min)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MarketDataSources/dataTypes">
+        <Annotation Term="Common.Label" String="Data Types (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MarketDataSources/symbols">
+        <Annotation Term="Common.Label" String="Symbols (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MarketDataSources/isActive">
+        <Annotation Term="Common.Label" String="Is Active"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MarketDataSources/priority">
+        <Annotation Term="Common.Label" String="Priority"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MarketDataSources/lastSync">
+        <Annotation Term="Common.Label" String="Last Sync"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MarketDataSources/syncFrequency">
+        <Annotation Term="Common.Label" String="Sync Frequency (seconds)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MarketDataSources/errorCount">
+        <Annotation Term="Common.Label" String="Error Count"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MarketDataSources/successRate">
+        <Annotation Term="Common.Label" String="Success Rate %"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AggregatedMarketData/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AggregatedMarketData/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AggregatedMarketData/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AggregatedMarketData/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AggregatedMarketData/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AggregatedMarketData/symbol">
+        <Annotation Term="Common.Label" String="Symbol"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AggregatedMarketData/timeframe">
+        <Annotation Term="Common.Label" String="Timeframe"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AggregatedMarketData/periodStart">
+        <Annotation Term="Common.Label" String="Period Start"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AggregatedMarketData/periodEnd">
+        <Annotation Term="Common.Label" String="Period End"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AggregatedMarketData/openPrice">
+        <Annotation Term="Common.Label" String="Open Price"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AggregatedMarketData/highPrice">
+        <Annotation Term="Common.Label" String="High Price"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AggregatedMarketData/lowPrice">
+        <Annotation Term="Common.Label" String="Low Price"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AggregatedMarketData/closePrice">
+        <Annotation Term="Common.Label" String="Close Price"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AggregatedMarketData/volume">
+        <Annotation Term="Common.Label" String="Volume"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AggregatedMarketData/trades">
+        <Annotation Term="Common.Label" String="Number of Trades"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AggregatedMarketData/vwap">
+        <Annotation Term="Common.Label" String="VWAP"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AggregatedMarketData/spread">
+        <Annotation Term="Common.Label" String="Spread"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AggregatedMarketData/volatility">
+        <Annotation Term="Common.Label" String="Volatility"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.EntityContainer/MLModelRegistry">
+        <Annotation Term="Common.DraftRoot">
+          <Record Type="Common.DraftRootType">
+            <PropertyValue Property="ActivationAction" String="com.rex.cryptotrading.datapipeline.service.DataPipelineService.draftActivate"/>
+            <PropertyValue Property="EditAction" String="com.rex.cryptotrading.datapipeline.service.DataPipelineService.draftEdit"/>
+            <PropertyValue Property="PreparationAction" String="com.rex.cryptotrading.datapipeline.service.DataPipelineService.draftPrepare"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry/modelName">
+        <Annotation Term="Common.Label" String="Model Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry/modelType">
+        <Annotation Term="Common.Label" String="Model Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry/version">
+        <Annotation Term="Common.Label" String="Version"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry/framework">
+        <Annotation Term="Common.Label" String="Framework"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry/description">
+        <Annotation Term="Common.Label" String="Description"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry/modelPath">
+        <Annotation Term="Common.Label" String="Model Path"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry/parameters">
+        <Annotation Term="Common.Label" String="Parameters (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry/metrics">
+        <Annotation Term="Common.Label" String="Metrics (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry/status">
+        <Annotation Term="Common.Label" String="Status"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="TRAINING"/>
+              <PropertyValue Property="Value" String="TRAINING"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="VALIDATING"/>
+              <PropertyValue Property="Value" String="VALIDATING"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="DEPLOYED"/>
+              <PropertyValue Property="Value" String="DEPLOYED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="ARCHIVED"/>
+              <PropertyValue Property="Value" String="ARCHIVED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="FAILED"/>
+              <PropertyValue Property="Value" String="FAILED"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry/trainedAt">
+        <Annotation Term="Common.Label" String="Trained At"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry/deployedAt">
+        <Annotation Term="Common.Label" String="Deployed At"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry/accuracy">
+        <Annotation Term="Common.Label" String="Accuracy"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry/performance">
+        <Annotation Term="Common.Label" String="Performance Metrics (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry/inputFeatures">
+        <Annotation Term="Common.Label" String="Input Features (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry/outputFormat">
+        <Annotation Term="Common.Label" String="Output Format"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry/IsActiveEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry/HasActiveEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry/HasDraftEntity">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.MLModelRegistry/DraftAdministrativeData">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.OnchainData/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.OnchainData/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.OnchainData/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.OnchainData/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.OnchainData/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.OnchainData/chainName">
+        <Annotation Term="Common.Label" String="Chain Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.OnchainData/blockNumber">
+        <Annotation Term="Common.Label" String="Block Number"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.OnchainData/blockHash">
+        <Annotation Term="Common.Label" String="Block Hash"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.OnchainData/transactionHash">
+        <Annotation Term="Common.Label" String="Transaction Hash"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.OnchainData/contractAddress">
+        <Annotation Term="Common.Label" String="Contract Address"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.OnchainData/eventName">
+        <Annotation Term="Common.Label" String="Event Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.OnchainData/eventData">
+        <Annotation Term="Common.Label" String="Event Data (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.OnchainData/timestamp">
+        <Annotation Term="Common.Label" String="Timestamp"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.OnchainData/gasUsed">
+        <Annotation Term="Common.Label" String="Gas Used"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.OnchainData/gasPrice">
+        <Annotation Term="Common.Label" String="Gas Price"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.OnchainData/value">
+        <Annotation Term="Common.Label" String="Value"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.OnchainData/from">
+        <Annotation Term="Common.Label" String="From Address"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.OnchainData/to">
+        <Annotation Term="Common.Label" String="To Address"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.OnchainData/status">
+        <Annotation Term="Common.Label" String="Status"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AIAnalyses/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AIAnalyses/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AIAnalyses/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AIAnalyses/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AIAnalyses/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AIAnalyses/analysisType">
+        <Annotation Term="Common.Label" String="Analysis Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AIAnalyses/targetSymbol">
+        <Annotation Term="Common.Label" String="Target Symbol"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AIAnalyses/modelUsed">
+        <Annotation Term="Common.Label" String="Model Used"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AIAnalyses/inputData">
+        <Annotation Term="Common.Label" String="Input Data (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AIAnalyses/results">
+        <Annotation Term="Common.Label" String="Results (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AIAnalyses/confidence">
+        <Annotation Term="Common.Label" String="Confidence Score"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AIAnalyses/recommendations">
+        <Annotation Term="Common.Label" String="Recommendations (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AIAnalyses/performedAt">
+        <Annotation Term="Common.Label" String="Performed At"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AIAnalyses/duration">
+        <Annotation Term="Common.Label" String="Duration (ms)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AIAnalyses/status">
+        <Annotation Term="Common.Label" String="Status"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.AIAnalyses/errorDetails">
+        <Annotation Term="Common.Label" String="Error Details"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.EntityContainer/ActiveDataJobs">
+        <Annotation Term="Capabilities.DeleteRestrictions">
+          <Record Type="Capabilities.DeleteRestrictionsType">
+            <PropertyValue Property="Deletable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.InsertRestrictions">
+          <Record Type="Capabilities.InsertRestrictionsType">
+            <PropertyValue Property="Insertable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.UpdateRestrictions">
+          <Record Type="Capabilities.UpdateRestrictionsType">
+            <PropertyValue Property="Updatable" Bool="false"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ActiveDataJobs/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ActiveDataJobs/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ActiveDataJobs/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ActiveDataJobs/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ActiveDataJobs/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ActiveDataJobs/jobName">
+        <Annotation Term="Common.Label" String="Job Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ActiveDataJobs/jobType">
+        <Annotation Term="Common.Label" String="Job Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ActiveDataJobs/source">
+        <Annotation Term="Common.Label" String="Data Source"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ActiveDataJobs/destination">
+        <Annotation Term="Common.Label" String="Destination"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ActiveDataJobs/schedule">
+        <Annotation Term="Common.Label" String="Schedule (Cron)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ActiveDataJobs/status">
+        <Annotation Term="Common.Label" String="Status"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="SCHEDULED"/>
+              <PropertyValue Property="Value" String="SCHEDULED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="RUNNING"/>
+              <PropertyValue Property="Value" String="RUNNING"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="COMPLETED"/>
+              <PropertyValue Property="Value" String="COMPLETED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="FAILED"/>
+              <PropertyValue Property="Value" String="FAILED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="CANCELLED"/>
+              <PropertyValue Property="Value" String="CANCELLED"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ActiveDataJobs/startTime">
+        <Annotation Term="Common.Label" String="Start Time"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ActiveDataJobs/endTime">
+        <Annotation Term="Common.Label" String="End Time"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ActiveDataJobs/recordsProcessed">
+        <Annotation Term="Common.Label" String="Records Processed"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ActiveDataJobs/recordsFailed">
+        <Annotation Term="Common.Label" String="Records Failed"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ActiveDataJobs/errorMessage">
+        <Annotation Term="Common.Label" String="Error Message"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ActiveDataJobs/configuration">
+        <Annotation Term="Common.Label" String="Configuration (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ActiveDataJobs/lastRun">
+        <Annotation Term="Common.Label" String="Last Run"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ActiveDataJobs/nextRun">
+        <Annotation Term="Common.Label" String="Next Run"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.EntityContainer/DataQualityDashboard">
+        <Annotation Term="Capabilities.DeleteRestrictions">
+          <Record Type="Capabilities.DeleteRestrictionsType">
+            <PropertyValue Property="Deletable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.InsertRestrictions">
+          <Record Type="Capabilities.InsertRestrictionsType">
+            <PropertyValue Property="Insertable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.UpdateRestrictions">
+          <Record Type="Capabilities.UpdateRestrictionsType">
+            <PropertyValue Property="Updatable" Bool="false"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityDashboard/dataSource">
+        <Annotation Term="Common.Label" String="Data Source"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityDashboard/totalChecks">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityDashboard/passCount">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityDashboard/failCount">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DataQualityDashboard/passRate">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.EntityContainer/ModelPerformance">
+        <Annotation Term="Capabilities.DeleteRestrictions">
+          <Record Type="Capabilities.DeleteRestrictionsType">
+            <PropertyValue Property="Deletable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.InsertRestrictions">
+          <Record Type="Capabilities.InsertRestrictionsType">
+            <PropertyValue Property="Insertable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.UpdateRestrictions">
+          <Record Type="Capabilities.UpdateRestrictionsType">
+            <PropertyValue Property="Updatable" Bool="false"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ModelPerformance/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ModelPerformance/modelName">
+        <Annotation Term="Common.Label" String="Model Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ModelPerformance/modelType">
+        <Annotation Term="Common.Label" String="Model Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ModelPerformance/version">
+        <Annotation Term="Common.Label" String="Version"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ModelPerformance/status">
+        <Annotation Term="Common.Label" String="Status"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="TRAINING"/>
+              <PropertyValue Property="Value" String="TRAINING"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="VALIDATING"/>
+              <PropertyValue Property="Value" String="VALIDATING"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="DEPLOYED"/>
+              <PropertyValue Property="Value" String="DEPLOYED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="ARCHIVED"/>
+              <PropertyValue Property="Value" String="ARCHIVED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="FAILED"/>
+              <PropertyValue Property="Value" String="FAILED"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ModelPerformance/accuracy">
+        <Annotation Term="Common.Label" String="Accuracy"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ModelPerformance/trainedAt">
+        <Annotation Term="Common.Label" String="Trained At"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.ModelPerformance/deployedAt">
+        <Annotation Term="Common.Label" String="Deployed At"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.getJobStatus(Edm.String)/jobId">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.getDataQualityReport(Edm.String)/period">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.getModelMetrics(Edm.String)/modelId">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.getOnchainStats(Edm.String,Edm.String)/chainName">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.getOnchainStats(Edm.String,Edm.String)/period">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DraftAdministrativeData">
+        <Annotation Term="Common.Label" String="{i18n>Draft_DraftAdministrativeData}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DraftAdministrativeData/DraftUUID">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>Draft_DraftUUID}"/>
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DraftAdministrativeData/CreationDateTime">
+        <Annotation Term="Common.Label" String="{i18n>Draft_CreationDateTime}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DraftAdministrativeData/CreatedByUser">
+        <Annotation Term="Common.Label" String="{i18n>Draft_CreatedByUser}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DraftAdministrativeData/DraftIsCreatedByMe">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>Draft_DraftIsCreatedByMe}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DraftAdministrativeData/LastChangeDateTime">
+        <Annotation Term="Common.Label" String="{i18n>Draft_LastChangeDateTime}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DraftAdministrativeData/LastChangedByUser">
+        <Annotation Term="Common.Label" String="{i18n>Draft_LastChangedByUser}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DraftAdministrativeData/InProcessByUser">
+        <Annotation Term="Common.Label" String="{i18n>Draft_InProcessByUser}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.datapipeline.service.DataPipelineService.DraftAdministrativeData/DraftIsProcessedByMe">
+        <Annotation Term="UI.Hidden" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>Draft_DraftIsProcessedByMe}"/>
+      </Annotations>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

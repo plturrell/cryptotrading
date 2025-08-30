@@ -1,0 +1,364 @@
+{
+  "timestamp": "2025-08-30T13:20:07.127895",
+  "summary": {
+    "total_agents": 8,
+    "agents_with_cli": 8,
+    "total_capabilities": 70,
+    "covered_capabilities": 67,
+    "overall_coverage": 0.9571428571428572
+  },
+  "agents": [
+    {
+      "agent_id": "technical_analysis_agent",
+      "cli_available": true,
+      "script_name": "a2a_technical_analysis_cli.py",
+      "commands": [
+        "capabilities",
+        "comprehensive",
+        "levels",
+        "momentum",
+        "oscillators",
+        "patterns",
+        "sentiment",
+        "status",
+        "trend",
+        "volume"
+      ],
+      "capabilities": [
+        "technical_indicators",
+        "momentum_analysis",
+        "volume_analysis",
+        "pattern_recognition",
+        "trend_analysis",
+        "oscillator_analysis",
+        "support_resistance",
+        "market_sentiment"
+      ],
+      "capabilities_coverage": {
+        "technical_indicators": false,
+        "momentum_analysis": true,
+        "volume_analysis": true,
+        "pattern_recognition": true,
+        "trend_analysis": true,
+        "oscillator_analysis": true,
+        "support_resistance": true,
+        "market_sentiment": true
+      },
+      "covered_capabilities": 7,
+      "total_capabilities": 8,
+      "coverage_score": 0.875,
+      "mcp_tools": [
+        "clrs_analysis",
+        "optimization_recommendation"
+      ],
+      "missing_capabilities": [
+        "technical_indicators"
+      ]
+    },
+    {
+      "agent_id": "ml_agent",
+      "cli_available": true,
+      "script_name": "a2a_ml_agent_cli.py",
+      "commands": [
+        "batch",
+        "capabilities",
+        "engineering",
+        "evaluate",
+        "inference",
+        "models",
+        "optimize",
+        "predict",
+        "status",
+        "train"
+      ],
+      "capabilities": [
+        "price_prediction",
+        "model_training",
+        "feature_engineering",
+        "batch_prediction",
+        "model_evaluation",
+        "hyperparameter_optimization",
+        "ml_inference"
+      ],
+      "capabilities_coverage": {
+        "price_prediction": true,
+        "model_training": true,
+        "feature_engineering": true,
+        "batch_prediction": true,
+        "model_evaluation": true,
+        "hyperparameter_optimization": true,
+        "ml_inference": true
+      },
+      "covered_capabilities": 7,
+      "total_capabilities": 7,
+      "coverage_score": 1.0,
+      "mcp_tools": [
+        "optimization_recommendation",
+        "configuration_merge"
+      ],
+      "missing_capabilities": []
+    },
+    {
+      "agent_id": "strands_glean_agent",
+      "cli_available": true,
+      "script_name": "a2a_strands_glean_cli.py",
+      "commands": [
+        "analyze",
+        "capabilities",
+        "coverage",
+        "dependencies",
+        "search",
+        "status"
+      ],
+      "capabilities": [
+        "code_analysis",
+        "dependency_mapping",
+        "symbol_search",
+        "code_navigation",
+        "insight_generation",
+        "coverage_validation",
+        "change_monitoring",
+        "code_quality"
+      ],
+      "capabilities_coverage": {
+        "code_analysis": true,
+        "dependency_mapping": true,
+        "symbol_search": true,
+        "code_navigation": true,
+        "insight_generation": true,
+        "coverage_validation": true,
+        "change_monitoring": true,
+        "code_quality": true
+      },
+      "covered_capabilities": 8,
+      "total_capabilities": 8,
+      "coverage_score": 1.0,
+      "mcp_tools": [
+        "code_similarity",
+        "hierarchical_indexing"
+      ],
+      "missing_capabilities": []
+    },
+    {
+      "agent_id": "feature_store_agent",
+      "cli_available": true,
+      "script_name": "a2a_feature_store_cli.py",
+      "commands": [
+        "capabilities",
+        "compute",
+        "importance",
+        "status",
+        "vector"
+      ],
+      "capabilities": [
+        "compute_features",
+        "get_feature_vector",
+        "get_training_features",
+        "get_feature_definitions",
+        "get_feature_importance",
+        "feature_engineering",
+        "ml_features",
+        "technical_indicators"
+      ],
+      "capabilities_coverage": {
+        "compute_features": true,
+        "get_feature_vector": true,
+        "get_training_features": true,
+        "get_feature_definitions": true,
+        "get_feature_importance": true,
+        "feature_engineering": false,
+        "ml_features": true,
+        "technical_indicators": true
+      },
+      "covered_capabilities": 7,
+      "total_capabilities": 8,
+      "coverage_score": 0.875,
+      "mcp_tools": [
+        "configuration_merge",
+        "optimization_recommendation"
+      ],
+      "missing_capabilities": [
+        "feature_engineering"
+      ]
+    },
+    {
+      "agent_id": "clrs_algorithms_agent",
+      "cli_available": true,
+      "script_name": "a2a_clrs_algorithms_cli.py",
+      "commands": [
+        "algorithms",
+        "capabilities",
+        "minmax",
+        "quick-sort",
+        "search",
+        "status"
+      ],
+      "capabilities": [
+        "binary_search",
+        "linear_search",
+        "quick_select",
+        "find_minimum",
+        "find_maximum",
+        "insertion_sort",
+        "merge_sort",
+        "quick_sort",
+        "algorithmic_calculations",
+        "search_algorithms",
+        "sorting_algorithms",
+        "clrs_algorithms"
+      ],
+      "capabilities_coverage": {
+        "binary_search": true,
+        "linear_search": true,
+        "quick_select": true,
+        "find_minimum": true,
+        "find_maximum": true,
+        "insertion_sort": true,
+        "merge_sort": true,
+        "quick_sort": true,
+        "algorithmic_calculations": true,
+        "search_algorithms": true,
+        "sorting_algorithms": true,
+        "clrs_algorithms": true
+      },
+      "covered_capabilities": 12,
+      "total_capabilities": 12,
+      "coverage_score": 1.0,
+      "mcp_tools": [
+        "clrs_analysis"
+      ],
+      "missing_capabilities": []
+    },
+    {
+      "agent_id": "historical_data_loader_agent",
+      "cli_available": true,
+      "script_name": "a2a_data_loader_cli.py",
+      "commands": [
+        "crypto",
+        "economic",
+        "full-sync",
+        "load",
+        "status",
+        "symbols"
+      ],
+      "capabilities": [
+        "data_loading",
+        "historical_data",
+        "multi_source_aggregation",
+        "temporal_alignment",
+        "data_validation",
+        "catalog_management",
+        "yahoo_finance",
+        "fred_data",
+        "cboe_data",
+        "defillama_data"
+      ],
+      "capabilities_coverage": {
+        "data_loading": true,
+        "historical_data": true,
+        "multi_source_aggregation": true,
+        "temporal_alignment": true,
+        "data_validation": false,
+        "catalog_management": true,
+        "yahoo_finance": true,
+        "fred_data": true,
+        "cboe_data": true,
+        "defillama_data": true
+      },
+      "covered_capabilities": 9,
+      "total_capabilities": 10,
+      "coverage_score": 0.9,
+      "mcp_tools": [],
+      "missing_capabilities": [
+        "data_validation"
+      ]
+    },
+    {
+      "agent_id": "database_agent",
+      "cli_available": true,
+      "script_name": "a2a_database_agent_cli.py",
+      "commands": [
+        "ai-store",
+        "bulk",
+        "capabilities",
+        "cleanup",
+        "health",
+        "optimize",
+        "portfolio",
+        "retrieve",
+        "status",
+        "store",
+        "trades"
+      ],
+      "capabilities": [
+        "data_storage",
+        "data_retrieval",
+        "bulk_insert",
+        "ai_analysis_storage",
+        "portfolio_management",
+        "trade_history",
+        "database_health",
+        "query_optimization",
+        "data_cleanup"
+      ],
+      "capabilities_coverage": {
+        "data_storage": true,
+        "data_retrieval": true,
+        "bulk_insert": true,
+        "ai_analysis_storage": true,
+        "portfolio_management": true,
+        "trade_history": true,
+        "database_health": true,
+        "query_optimization": true,
+        "data_cleanup": true
+      },
+      "covered_capabilities": 9,
+      "total_capabilities": 9,
+      "coverage_score": 1.0,
+      "mcp_tools": [],
+      "missing_capabilities": []
+    },
+    {
+      "agent_id": "data_analysis_agent",
+      "cli_available": true,
+      "script_name": "a2a_data_analysis_agent_cli.py",
+      "commands": [
+        "capabilities",
+        "correlation",
+        "distribution",
+        "outliers",
+        "quality",
+        "rolling",
+        "schema",
+        "statistical",
+        "status",
+        "validate"
+      ],
+      "capabilities": [
+        "validate_data_quality",
+        "analyze_data_distribution",
+        "compute_correlation_matrix",
+        "detect_outliers",
+        "compute_rolling_statistics",
+        "statistical_analysis",
+        "data_validation",
+        "quality_assessment"
+      ],
+      "capabilities_coverage": {
+        "validate_data_quality": true,
+        "analyze_data_distribution": true,
+        "compute_correlation_matrix": true,
+        "detect_outliers": true,
+        "compute_rolling_statistics": true,
+        "statistical_analysis": true,
+        "data_validation": true,
+        "quality_assessment": true
+      },
+      "covered_capabilities": 8,
+      "total_capabilities": 8,
+      "coverage_score": 1.0,
+      "mcp_tools": [],
+      "missing_capabilities": []
+    }
+  ]
+}

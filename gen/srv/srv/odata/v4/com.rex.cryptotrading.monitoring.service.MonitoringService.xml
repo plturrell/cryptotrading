@@ -1,0 +1,1068 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Capabilities.V1.xml">
+    <edmx:Include Alias="Capabilities" Namespace="Org.OData.Capabilities.V1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/Common.xml">
+    <edmx:Include Alias="Common" Namespace="com.sap.vocabularies.Common.v1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Core.V1.xml">
+    <edmx:Include Alias="Core" Namespace="Org.OData.Core.V1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/UI.xml">
+    <edmx:Include Alias="UI" Namespace="com.sap.vocabularies.UI.v1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Validation.V1.xml">
+    <edmx:Include Alias="Validation" Namespace="Org.OData.Validation.V1"/>
+  </edmx:Reference>
+  <edmx:DataServices>
+    <Schema Namespace="com.rex.cryptotrading.monitoring.service.MonitoringService" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <Annotation Term="Core.Links">
+        <Collection>
+          <Record>
+            <PropertyValue Property="rel" String="author"/>
+            <PropertyValue Property="href" String="https://cap.cloud.sap"/>
+          </Record>
+        </Collection>
+      </Annotation>
+      <EntityContainer Name="EntityContainer">
+        <EntitySet Name="SystemHealth" EntityType="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemHealth"/>
+        <EntitySet Name="SystemMetrics" EntityType="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemMetrics"/>
+        <EntitySet Name="MonitoringEvents" EntityType="com.rex.cryptotrading.monitoring.service.MonitoringService.MonitoringEvents"/>
+        <EntitySet Name="ErrorLogs" EntityType="com.rex.cryptotrading.monitoring.service.MonitoringService.ErrorLogs"/>
+        <EntitySet Name="CacheEntries" EntityType="com.rex.cryptotrading.monitoring.service.MonitoringService.CacheEntries"/>
+        <EntitySet Name="FeatureCache" EntityType="com.rex.cryptotrading.monitoring.service.MonitoringService.FeatureCache"/>
+        <EntitySet Name="HistoricalDataCache" EntityType="com.rex.cryptotrading.monitoring.service.MonitoringService.HistoricalDataCache"/>
+        <EntitySet Name="EncryptionKeyMetadata" EntityType="com.rex.cryptotrading.monitoring.service.MonitoringService.EncryptionKeyMetadata"/>
+        <EntitySet Name="SystemHealthDashboard" EntityType="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemHealthDashboard"/>
+        <EntitySet Name="CriticalErrors" EntityType="com.rex.cryptotrading.monitoring.service.MonitoringService.CriticalErrors"/>
+        <EntitySet Name="CacheEfficiency" EntityType="com.rex.cryptotrading.monitoring.service.MonitoringService.CacheEfficiency"/>
+        <ActionImport Name="checkSystemHealth" Action="com.rex.cryptotrading.monitoring.service.MonitoringService.checkSystemHealth"/>
+        <ActionImport Name="clearCache" Action="com.rex.cryptotrading.monitoring.service.MonitoringService.clearCache"/>
+        <ActionImport Name="resolveError" Action="com.rex.cryptotrading.monitoring.service.MonitoringService.resolveError"/>
+        <ActionImport Name="triggerAlert" Action="com.rex.cryptotrading.monitoring.service.MonitoringService.triggerAlert"/>
+        <FunctionImport Name="getSystemMetrics" Function="com.rex.cryptotrading.monitoring.service.MonitoringService.getSystemMetrics"/>
+        <FunctionImport Name="getCacheStatistics" Function="com.rex.cryptotrading.monitoring.service.MonitoringService.getCacheStatistics"/>
+        <FunctionImport Name="getErrorAnalytics" Function="com.rex.cryptotrading.monitoring.service.MonitoringService.getErrorAnalytics"/>
+      </EntityContainer>
+      <EntityType Name="SystemHealth">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="componentName" Type="Edm.String" MaxLength="100"/>
+        <Property Name="status" Type="Edm.String" MaxLength="20"/>
+        <Property Name="cpuUsage" Type="Edm.Decimal" Precision="5" Scale="2"/>
+        <Property Name="memoryUsage" Type="Edm.Decimal" Precision="5" Scale="2"/>
+        <Property Name="diskUsage" Type="Edm.Decimal" Precision="5" Scale="2"/>
+        <Property Name="uptime" Type="Edm.Int32"/>
+        <Property Name="lastCheck" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="checkInterval" Type="Edm.Int32"/>
+        <Property Name="alerts" Type="Edm.String"/>
+      </EntityType>
+      <EntityType Name="SystemMetrics">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="metricType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="metricName" Type="Edm.String" MaxLength="100"/>
+        <Property Name="metricValue" Type="Edm.Decimal" Precision="20" Scale="4"/>
+        <Property Name="unit" Type="Edm.String" MaxLength="20"/>
+        <Property Name="timestamp" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="source" Type="Edm.String" MaxLength="100"/>
+        <Property Name="tags" Type="Edm.String"/>
+        <Property Name="threshold" Type="Edm.Decimal" Precision="20" Scale="4"/>
+        <Property Name="isAlert" Type="Edm.Boolean" DefaultValue="false"/>
+      </EntityType>
+      <EntityType Name="MonitoringEvents">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="eventType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="severity" Type="Edm.String" MaxLength="20"/>
+        <Property Name="source" Type="Edm.String" MaxLength="100"/>
+        <Property Name="message" Type="Edm.String" MaxLength="1000"/>
+        <Property Name="details" Type="Edm.String"/>
+        <Property Name="timestamp" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="resolved" Type="Edm.Boolean" DefaultValue="false"/>
+        <Property Name="resolvedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="resolvedBy" Type="Edm.String" MaxLength="100"/>
+        <Property Name="actionTaken" Type="Edm.String" MaxLength="500"/>
+      </EntityType>
+      <EntityType Name="ErrorLogs">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="errorCode" Type="Edm.String" MaxLength="50"/>
+        <Property Name="errorType" Type="Edm.String" MaxLength="100"/>
+        <Property Name="message" Type="Edm.String" MaxLength="1000"/>
+        <Property Name="stackTrace" Type="Edm.String"/>
+        <Property Name="source" Type="Edm.String" MaxLength="200"/>
+        <Property Name="userId" Type="Edm.String" MaxLength="50"/>
+        <Property Name="sessionId" Type="Edm.String" MaxLength="100"/>
+        <Property Name="requestId" Type="Edm.String" MaxLength="100"/>
+        <Property Name="timestamp" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="severity" Type="Edm.String" MaxLength="20"/>
+        <Property Name="resolved" Type="Edm.Boolean" DefaultValue="false"/>
+        <Property Name="resolution" Type="Edm.String" MaxLength="500"/>
+      </EntityType>
+      <EntityType Name="CacheEntries">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="cacheKey" Type="Edm.String" MaxLength="200"/>
+        <Property Name="cacheValue" Type="Edm.String"/>
+        <Property Name="cacheType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="ttl" Type="Edm.Int32"/>
+        <Property Name="expiresAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="hits" Type="Edm.Int32" DefaultValue="0"/>
+        <Property Name="lastAccessed" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="size" Type="Edm.Int32"/>
+        <Property Name="tags" Type="Edm.String" MaxLength="500"/>
+      </EntityType>
+      <EntityType Name="FeatureCache">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="featureName" Type="Edm.String" MaxLength="100"/>
+        <Property Name="featureVersion" Type="Edm.String" MaxLength="20"/>
+        <Property Name="symbol" Type="Edm.String" MaxLength="20"/>
+        <Property Name="featureData" Type="Edm.String"/>
+        <Property Name="computedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="validUntil" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="computeTime" Type="Edm.Int32"/>
+        <Property Name="dependencies" Type="Edm.String"/>
+        <Property Name="quality" Type="Edm.Decimal" Precision="3" Scale="2"/>
+      </EntityType>
+      <EntityType Name="HistoricalDataCache">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="dataType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="symbol" Type="Edm.String" MaxLength="20"/>
+        <Property Name="timeframe" Type="Edm.String" MaxLength="20"/>
+        <Property Name="startDate" Type="Edm.Date"/>
+        <Property Name="endDate" Type="Edm.Date"/>
+        <Property Name="dataPoints" Type="Edm.Int32"/>
+        <Property Name="cachedData" Type="Edm.String"/>
+        <Property Name="compression" Type="Edm.String" MaxLength="20"/>
+        <Property Name="sizeBytes" Type="Edm.Int32"/>
+        <Property Name="lastUpdated" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="accessCount" Type="Edm.Int32" DefaultValue="0"/>
+      </EntityType>
+      <EntityType Name="EncryptionKeyMetadata">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="keyId" Type="Edm.String" MaxLength="100"/>
+        <Property Name="keyType" Type="Edm.String" MaxLength="50"/>
+        <Property Name="algorithm" Type="Edm.String" MaxLength="50"/>
+        <Property Name="keyLength" Type="Edm.Int32"/>
+        <Property Name="purpose" Type="Edm.String" MaxLength="100"/>
+        <Property Name="status" Type="Edm.String" MaxLength="20"/>
+        <Property Name="rotatedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="expiresAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="lastUsed" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="usageCount" Type="Edm.Int32" DefaultValue="0"/>
+      </EntityType>
+      <EntityType Name="SystemHealthDashboard">
+        <Key>
+          <PropertyRef Name="componentName"/>
+        </Key>
+        <Property Name="componentName" Type="Edm.String" Nullable="false"/>
+        <Property Name="status" Type="Edm.String" MaxLength="20"/>
+        <Property Name="cpuUsage" Type="Edm.Decimal" Precision="5" Scale="2"/>
+        <Property Name="memoryUsage" Type="Edm.Decimal" Precision="5" Scale="2"/>
+        <Property Name="diskUsage" Type="Edm.Decimal" Precision="5" Scale="2"/>
+        <Property Name="uptime" Type="Edm.Int32"/>
+        <Property Name="lastCheck" Type="Edm.DateTimeOffset" Precision="7"/>
+      </EntityType>
+      <EntityType Name="CriticalErrors">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="errorCode" Type="Edm.String" MaxLength="50"/>
+        <Property Name="errorType" Type="Edm.String" MaxLength="100"/>
+        <Property Name="message" Type="Edm.String" MaxLength="1000"/>
+        <Property Name="stackTrace" Type="Edm.String"/>
+        <Property Name="source" Type="Edm.String" MaxLength="200"/>
+        <Property Name="userId" Type="Edm.String" MaxLength="50"/>
+        <Property Name="sessionId" Type="Edm.String" MaxLength="100"/>
+        <Property Name="requestId" Type="Edm.String" MaxLength="100"/>
+        <Property Name="timestamp" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="severity" Type="Edm.String" MaxLength="20"/>
+        <Property Name="resolved" Type="Edm.Boolean" DefaultValue="false"/>
+        <Property Name="resolution" Type="Edm.String" MaxLength="500"/>
+      </EntityType>
+      <EntityType Name="CacheEfficiency">
+        <Key>
+          <PropertyRef Name="cacheType"/>
+        </Key>
+        <Property Name="cacheType" Type="Edm.String" Nullable="false"/>
+        <Property Name="totalEntries" Type="Edm.Int32"/>
+        <Property Name="totalHits" Type="Edm.Int32"/>
+        <Property Name="avgSize" Type="Edm.Int32"/>
+      </EntityType>
+      <ComplexType Name="return_com_rex_cryptotrading_monitoring_service_MonitoringService_checkSystemHealth">
+        <Property Name="overallStatus" Type="Edm.String"/>
+        <Property Name="components" Type="Collection(com.rex.cryptotrading.monitoring.service.MonitoringService.return_com_rex_cryptotrading_monitoring_service_MonitoringService_checkSystemHealth_components)" Nullable="true"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_monitoring_service_MonitoringService_checkSystemHealth_components">
+        <Property Name="name" Type="Edm.String"/>
+        <Property Name="status" Type="Edm.String"/>
+        <Property Name="metrics" Type="com.rex.cryptotrading.monitoring.service.MonitoringService.return_com_rex_cryptotrading_monitoring_service_MonitoringService_checkSystemHealth_components_metrics"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_monitoring_service_MonitoringService_checkSystemHealth_components_metrics">
+        <Property Name="cpu" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="memory" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="disk" Type="Edm.Decimal" Scale="variable"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_monitoring_service_MonitoringService_clearCache">
+        <Property Name="entriesCleared" Type="Edm.Int32"/>
+        <Property Name="spaceFreed" Type="Edm.Int32"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_monitoring_service_MonitoringService_resolveError">
+        <Property Name="success" Type="Edm.Boolean"/>
+        <Property Name="message" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_monitoring_service_MonitoringService_triggerAlert">
+        <Property Name="eventId" Type="Edm.String"/>
+        <Property Name="notificationsSent" Type="Edm.Int32"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_monitoring_service_MonitoringService_getSystemMetrics">
+        <Property Name="timestamp" Type="Edm.DateTimeOffset"/>
+        <Property Name="metricName" Type="Edm.String"/>
+        <Property Name="value" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="unit" Type="Edm.String"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_monitoring_service_MonitoringService_getCacheStatistics">
+        <Property Name="totalEntries" Type="Edm.Int32"/>
+        <Property Name="totalSize" Type="Edm.Int32"/>
+        <Property Name="hitRate" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="missRate" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="evictionRate" Type="Edm.Decimal" Scale="variable"/>
+        <Property Name="byType" Type="Collection(com.rex.cryptotrading.monitoring.service.MonitoringService.return_com_rex_cryptotrading_monitoring_service_MonitoringService_getCacheStatistics_byType)" Nullable="true"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_monitoring_service_MonitoringService_getCacheStatistics_byType">
+        <Property Name="cacheType" Type="Edm.String"/>
+        <Property Name="entries" Type="Edm.Int32"/>
+        <Property Name="hits" Type="Edm.Int32"/>
+        <Property Name="efficiency" Type="Edm.Decimal" Scale="variable"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_monitoring_service_MonitoringService_getErrorAnalytics">
+        <Property Name="totalErrors" Type="Edm.Int32"/>
+        <Property Name="criticalErrors" Type="Edm.Int32"/>
+        <Property Name="resolvedErrors" Type="Edm.Int32"/>
+        <Property Name="avgResolutionTime" Type="Edm.Int32"/>
+        <Property Name="topErrors" Type="Collection(com.rex.cryptotrading.monitoring.service.MonitoringService.return_com_rex_cryptotrading_monitoring_service_MonitoringService_getErrorAnalytics_topErrors)" Nullable="true"/>
+      </ComplexType>
+      <ComplexType Name="return_com_rex_cryptotrading_monitoring_service_MonitoringService_getErrorAnalytics_topErrors">
+        <Property Name="errorType" Type="Edm.String"/>
+        <Property Name="count" Type="Edm.Int32"/>
+        <Property Name="lastOccurrence" Type="Edm.DateTimeOffset"/>
+      </ComplexType>
+      <Action Name="checkSystemHealth" IsBound="false">
+        <ReturnType Type="com.rex.cryptotrading.monitoring.service.MonitoringService.return_com_rex_cryptotrading_monitoring_service_MonitoringService_checkSystemHealth"/>
+      </Action>
+      <Action Name="clearCache" IsBound="false">
+        <Parameter Name="cacheType" Type="Edm.String"/>
+        <Parameter Name="olderThan" Type="Edm.DateTimeOffset"/>
+        <ReturnType Type="com.rex.cryptotrading.monitoring.service.MonitoringService.return_com_rex_cryptotrading_monitoring_service_MonitoringService_clearCache"/>
+      </Action>
+      <Action Name="resolveError" IsBound="false">
+        <Parameter Name="errorId" Type="Edm.String"/>
+        <Parameter Name="resolution" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.monitoring.service.MonitoringService.return_com_rex_cryptotrading_monitoring_service_MonitoringService_resolveError"/>
+      </Action>
+      <Action Name="triggerAlert" IsBound="false">
+        <Parameter Name="severity" Type="Edm.String"/>
+        <Parameter Name="message" Type="Edm.String"/>
+        <Parameter Name="source" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.monitoring.service.MonitoringService.return_com_rex_cryptotrading_monitoring_service_MonitoringService_triggerAlert"/>
+      </Action>
+      <Function Name="getSystemMetrics" IsBound="false" IsComposable="false">
+        <Parameter Name="metricType" Type="Edm.String"/>
+        <Parameter Name="period" Type="Edm.String"/>
+        <ReturnType Type="Collection(com.rex.cryptotrading.monitoring.service.MonitoringService.return_com_rex_cryptotrading_monitoring_service_MonitoringService_getSystemMetrics)" Nullable="true"/>
+      </Function>
+      <Function Name="getCacheStatistics" IsBound="false" IsComposable="false">
+        <ReturnType Type="com.rex.cryptotrading.monitoring.service.MonitoringService.return_com_rex_cryptotrading_monitoring_service_MonitoringService_getCacheStatistics"/>
+      </Function>
+      <Function Name="getErrorAnalytics" IsBound="false" IsComposable="false">
+        <Parameter Name="period" Type="Edm.String"/>
+        <ReturnType Type="com.rex.cryptotrading.monitoring.service.MonitoringService.return_com_rex_cryptotrading_monitoring_service_MonitoringService_getErrorAnalytics"/>
+      </Function>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemHealth/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemHealth/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemHealth/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemHealth/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemHealth/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemHealth/componentName">
+        <Annotation Term="Common.Label" String="Component Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemHealth/status">
+        <Annotation Term="Common.Label" String="Status"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="HEALTHY"/>
+              <PropertyValue Property="Value" String="HEALTHY"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="WARNING"/>
+              <PropertyValue Property="Value" String="WARNING"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="CRITICAL"/>
+              <PropertyValue Property="Value" String="CRITICAL"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="OFFLINE"/>
+              <PropertyValue Property="Value" String="OFFLINE"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemHealth/cpuUsage">
+        <Annotation Term="Common.Label" String="CPU Usage %"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemHealth/memoryUsage">
+        <Annotation Term="Common.Label" String="Memory Usage %"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemHealth/diskUsage">
+        <Annotation Term="Common.Label" String="Disk Usage %"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemHealth/uptime">
+        <Annotation Term="Common.Label" String="Uptime (seconds)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemHealth/lastCheck">
+        <Annotation Term="Common.Label" String="Last Check"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemHealth/checkInterval">
+        <Annotation Term="Common.Label" String="Check Interval (seconds)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemHealth/alerts">
+        <Annotation Term="Common.Label" String="Active Alerts (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemMetrics/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemMetrics/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemMetrics/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemMetrics/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemMetrics/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemMetrics/metricType">
+        <Annotation Term="Common.Label" String="Metric Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemMetrics/metricName">
+        <Annotation Term="Common.Label" String="Metric Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemMetrics/metricValue">
+        <Annotation Term="Common.Label" String="Metric Value"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemMetrics/unit">
+        <Annotation Term="Common.Label" String="Unit"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemMetrics/timestamp">
+        <Annotation Term="Common.Label" String="Timestamp"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemMetrics/source">
+        <Annotation Term="Common.Label" String="Source"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemMetrics/tags">
+        <Annotation Term="Common.Label" String="Tags (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemMetrics/threshold">
+        <Annotation Term="Common.Label" String="Threshold"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemMetrics/isAlert">
+        <Annotation Term="Common.Label" String="Is Alert"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.MonitoringEvents/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.MonitoringEvents/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.MonitoringEvents/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.MonitoringEvents/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.MonitoringEvents/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.MonitoringEvents/eventType">
+        <Annotation Term="Common.Label" String="Event Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.MonitoringEvents/severity">
+        <Annotation Term="Common.Label" String="Severity"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="INFO"/>
+              <PropertyValue Property="Value" String="INFO"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="WARNING"/>
+              <PropertyValue Property="Value" String="WARNING"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="ERROR"/>
+              <PropertyValue Property="Value" String="ERROR"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="CRITICAL"/>
+              <PropertyValue Property="Value" String="CRITICAL"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.MonitoringEvents/source">
+        <Annotation Term="Common.Label" String="Source"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.MonitoringEvents/message">
+        <Annotation Term="Common.Label" String="Message"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.MonitoringEvents/details">
+        <Annotation Term="Common.Label" String="Details (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.MonitoringEvents/timestamp">
+        <Annotation Term="Common.Label" String="Timestamp"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.MonitoringEvents/resolved">
+        <Annotation Term="Common.Label" String="Resolved"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.MonitoringEvents/resolvedAt">
+        <Annotation Term="Common.Label" String="Resolved At"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.MonitoringEvents/resolvedBy">
+        <Annotation Term="Common.Label" String="Resolved By"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.MonitoringEvents/actionTaken">
+        <Annotation Term="Common.Label" String="Action Taken"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.ErrorLogs/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.ErrorLogs/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.ErrorLogs/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.ErrorLogs/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.ErrorLogs/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.ErrorLogs/errorCode">
+        <Annotation Term="Common.Label" String="Error Code"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.ErrorLogs/errorType">
+        <Annotation Term="Common.Label" String="Error Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.ErrorLogs/message">
+        <Annotation Term="Common.Label" String="Error Message"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.ErrorLogs/stackTrace">
+        <Annotation Term="Common.Label" String="Stack Trace"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.ErrorLogs/source">
+        <Annotation Term="Common.Label" String="Source"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.ErrorLogs/userId">
+        <Annotation Term="Common.Label" String="User ID"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.ErrorLogs/sessionId">
+        <Annotation Term="Common.Label" String="Session ID"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.ErrorLogs/requestId">
+        <Annotation Term="Common.Label" String="Request ID"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.ErrorLogs/timestamp">
+        <Annotation Term="Common.Label" String="Timestamp"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.ErrorLogs/severity">
+        <Annotation Term="Common.Label" String="Severity"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.ErrorLogs/resolved">
+        <Annotation Term="Common.Label" String="Resolved"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.ErrorLogs/resolution">
+        <Annotation Term="Common.Label" String="Resolution"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CacheEntries/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CacheEntries/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CacheEntries/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CacheEntries/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CacheEntries/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CacheEntries/cacheKey">
+        <Annotation Term="Common.Label" String="Cache Key"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CacheEntries/cacheValue">
+        <Annotation Term="Common.Label" String="Cache Value"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CacheEntries/cacheType">
+        <Annotation Term="Common.Label" String="Cache Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CacheEntries/ttl">
+        <Annotation Term="Common.Label" String="TTL (seconds)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CacheEntries/expiresAt">
+        <Annotation Term="Common.Label" String="Expires At"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CacheEntries/hits">
+        <Annotation Term="Common.Label" String="Hit Count"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CacheEntries/lastAccessed">
+        <Annotation Term="Common.Label" String="Last Accessed"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CacheEntries/size">
+        <Annotation Term="Common.Label" String="Size (bytes)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CacheEntries/tags">
+        <Annotation Term="Common.Label" String="Tags"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.FeatureCache/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.FeatureCache/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.FeatureCache/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.FeatureCache/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.FeatureCache/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.FeatureCache/featureName">
+        <Annotation Term="Common.Label" String="Feature Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.FeatureCache/featureVersion">
+        <Annotation Term="Common.Label" String="Feature Version"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.FeatureCache/symbol">
+        <Annotation Term="Common.Label" String="Symbol"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.FeatureCache/featureData">
+        <Annotation Term="Common.Label" String="Feature Data (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.FeatureCache/computedAt">
+        <Annotation Term="Common.Label" String="Computed At"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.FeatureCache/validUntil">
+        <Annotation Term="Common.Label" String="Valid Until"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.FeatureCache/computeTime">
+        <Annotation Term="Common.Label" String="Compute Time (ms)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.FeatureCache/dependencies">
+        <Annotation Term="Common.Label" String="Dependencies (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.FeatureCache/quality">
+        <Annotation Term="Common.Label" String="Quality Score"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.HistoricalDataCache/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.HistoricalDataCache/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.HistoricalDataCache/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.HistoricalDataCache/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.HistoricalDataCache/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.HistoricalDataCache/dataType">
+        <Annotation Term="Common.Label" String="Data Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.HistoricalDataCache/symbol">
+        <Annotation Term="Common.Label" String="Symbol"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.HistoricalDataCache/timeframe">
+        <Annotation Term="Common.Label" String="Timeframe"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.HistoricalDataCache/startDate">
+        <Annotation Term="Common.Label" String="Start Date"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.HistoricalDataCache/endDate">
+        <Annotation Term="Common.Label" String="End Date"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.HistoricalDataCache/dataPoints">
+        <Annotation Term="Common.Label" String="Data Points"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.HistoricalDataCache/cachedData">
+        <Annotation Term="Common.Label" String="Cached Data (JSON)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.HistoricalDataCache/compression">
+        <Annotation Term="Common.Label" String="Compression Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.HistoricalDataCache/sizeBytes">
+        <Annotation Term="Common.Label" String="Size (bytes)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.HistoricalDataCache/lastUpdated">
+        <Annotation Term="Common.Label" String="Last Updated"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.HistoricalDataCache/accessCount">
+        <Annotation Term="Common.Label" String="Access Count"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.EncryptionKeyMetadata/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.EncryptionKeyMetadata/createdAt">
+        <Annotation Term="Common.Label" String="Created At"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.EncryptionKeyMetadata/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.EncryptionKeyMetadata/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.EncryptionKeyMetadata/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.EncryptionKeyMetadata/keyId">
+        <Annotation Term="Common.Label" String="Key ID"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.EncryptionKeyMetadata/keyType">
+        <Annotation Term="Common.Label" String="Key Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.EncryptionKeyMetadata/algorithm">
+        <Annotation Term="Common.Label" String="Algorithm"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.EncryptionKeyMetadata/keyLength">
+        <Annotation Term="Common.Label" String="Key Length (bits)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.EncryptionKeyMetadata/purpose">
+        <Annotation Term="Common.Label" String="Purpose"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.EncryptionKeyMetadata/status">
+        <Annotation Term="Common.Label" String="Status"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="ACTIVE"/>
+              <PropertyValue Property="Value" String="ACTIVE"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="ROTATED"/>
+              <PropertyValue Property="Value" String="ROTATED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="EXPIRED"/>
+              <PropertyValue Property="Value" String="EXPIRED"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="REVOKED"/>
+              <PropertyValue Property="Value" String="REVOKED"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.EncryptionKeyMetadata/rotatedAt">
+        <Annotation Term="Common.Label" String="Rotated At"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.EncryptionKeyMetadata/expiresAt">
+        <Annotation Term="Common.Label" String="Expires At"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.EncryptionKeyMetadata/lastUsed">
+        <Annotation Term="Common.Label" String="Last Used"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.EncryptionKeyMetadata/usageCount">
+        <Annotation Term="Common.Label" String="Usage Count"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.EntityContainer/SystemHealthDashboard">
+        <Annotation Term="Capabilities.DeleteRestrictions">
+          <Record Type="Capabilities.DeleteRestrictionsType">
+            <PropertyValue Property="Deletable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.InsertRestrictions">
+          <Record Type="Capabilities.InsertRestrictionsType">
+            <PropertyValue Property="Insertable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.UpdateRestrictions">
+          <Record Type="Capabilities.UpdateRestrictionsType">
+            <PropertyValue Property="Updatable" Bool="false"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemHealthDashboard/componentName">
+        <Annotation Term="Common.Label" String="Component Name"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemHealthDashboard/status">
+        <Annotation Term="Common.Label" String="Status"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="HEALTHY"/>
+              <PropertyValue Property="Value" String="HEALTHY"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="WARNING"/>
+              <PropertyValue Property="Value" String="WARNING"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="CRITICAL"/>
+              <PropertyValue Property="Value" String="CRITICAL"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="OFFLINE"/>
+              <PropertyValue Property="Value" String="OFFLINE"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemHealthDashboard/cpuUsage">
+        <Annotation Term="Common.Label" String="CPU Usage %"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemHealthDashboard/memoryUsage">
+        <Annotation Term="Common.Label" String="Memory Usage %"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemHealthDashboard/diskUsage">
+        <Annotation Term="Common.Label" String="Disk Usage %"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemHealthDashboard/uptime">
+        <Annotation Term="Common.Label" String="Uptime (seconds)"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.SystemHealthDashboard/lastCheck">
+        <Annotation Term="Common.Label" String="Last Check"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.EntityContainer/CriticalErrors">
+        <Annotation Term="Capabilities.DeleteRestrictions">
+          <Record Type="Capabilities.DeleteRestrictionsType">
+            <PropertyValue Property="Deletable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.InsertRestrictions">
+          <Record Type="Capabilities.InsertRestrictionsType">
+            <PropertyValue Property="Insertable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.UpdateRestrictions">
+          <Record Type="Capabilities.UpdateRestrictionsType">
+            <PropertyValue Property="Updatable" Bool="false"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CriticalErrors/ID">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CriticalErrors/createdAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CriticalErrors/createdBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>CreatedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CriticalErrors/modifiedAt">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedAt}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CriticalErrors/modifiedBy">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="{i18n>UserID.Description}"/>
+        <Annotation Term="Common.Label" String="{i18n>ChangedBy}"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CriticalErrors/errorCode">
+        <Annotation Term="Common.Label" String="Error Code"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CriticalErrors/errorType">
+        <Annotation Term="Common.Label" String="Error Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CriticalErrors/message">
+        <Annotation Term="Common.Label" String="Error Message"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CriticalErrors/stackTrace">
+        <Annotation Term="Common.Label" String="Stack Trace"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CriticalErrors/source">
+        <Annotation Term="Common.Label" String="Source"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CriticalErrors/userId">
+        <Annotation Term="Common.Label" String="User ID"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CriticalErrors/sessionId">
+        <Annotation Term="Common.Label" String="Session ID"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CriticalErrors/requestId">
+        <Annotation Term="Common.Label" String="Request ID"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CriticalErrors/timestamp">
+        <Annotation Term="Common.Label" String="Timestamp"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CriticalErrors/severity">
+        <Annotation Term="Common.Label" String="Severity"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CriticalErrors/resolved">
+        <Annotation Term="Common.Label" String="Resolved"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CriticalErrors/resolution">
+        <Annotation Term="Common.Label" String="Resolution"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.EntityContainer/CacheEfficiency">
+        <Annotation Term="Capabilities.DeleteRestrictions">
+          <Record Type="Capabilities.DeleteRestrictionsType">
+            <PropertyValue Property="Deletable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.InsertRestrictions">
+          <Record Type="Capabilities.InsertRestrictionsType">
+            <PropertyValue Property="Insertable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.UpdateRestrictions">
+          <Record Type="Capabilities.UpdateRestrictionsType">
+            <PropertyValue Property="Updatable" Bool="false"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CacheEfficiency/cacheType">
+        <Annotation Term="Common.Label" String="Cache Type"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CacheEfficiency/totalEntries">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CacheEfficiency/totalHits">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.CacheEfficiency/avgSize">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.getSystemMetrics(Edm.String,Edm.String)/metricType">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.getSystemMetrics(Edm.String,Edm.String)/period">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="com.rex.cryptotrading.monitoring.service.MonitoringService.getErrorAnalytics(Edm.String)/period">
+        <Annotation Term="Core.OptionalParameter">
+          <Record Type="Core.OptionalParameterType"/>
+        </Annotation>
+      </Annotations>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

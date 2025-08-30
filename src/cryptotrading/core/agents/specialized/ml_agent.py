@@ -426,7 +426,7 @@ class MLAgent(StrandsAgent):
                         return perf_data
                 
                 # Fallback: Use historical prediction accuracy if available
-                from ...data.database.unified_database import UnifiedDatabase
+                from ....infrastructure.database.unified_database import UnifiedDatabase
                 db = UnifiedDatabase()
                 
                 # Query recent prediction accuracy for this symbol

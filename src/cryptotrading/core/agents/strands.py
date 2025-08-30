@@ -19,6 +19,21 @@ from .memory import MemoryAgent
 from ..config.production_config import get_config, StrandsConfig
 from ...infrastructure.database import UnifiedDatabase
 
+# Import S3 logging capabilities
+try:
+    from .s3_logging_mixin import S3LoggingMixin, log_agent_method
+    S3_LOGGING_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"S3 logging mixin not available: {e}")
+    S3_LOGGING_AVAILABLE = False
+    # Create dummy classes for compatibility
+    class S3LoggingMixin:
+        pass
+    def log_agent_method(*args, **kwargs):
+        def decorator(func):
+            return func
+        return decorator
+
 logger = logging.getLogger(__name__)
 
 # Context variables for distributed tracing
@@ -401,7 +416,7 @@ class WorkflowEngine:
         if not self._event_queue.full():
             await self._event_queue.put((event_type, data))
 
-class StrandsAgent(MemoryAgent):
+class StrandsAgent(S3LoggingMixin, MemoryAgent):
     """
     Production-ready Strands framework agent with enterprise features:
     - Distributed workflow orchestration
@@ -439,6 +454,10 @@ class StrandsAgent(MemoryAgent):
             "avg_tool_time_ms": 0.0
         }
         
+        # Initialize S3 logging if available
+        if S3_LOGGING_AVAILABLE:
+            asyncio.create_task(self._init_s3_logging_async())
+        
     def _setup_strands(self):
         """Setup Strands framework integration"""
         # Register default tools
@@ -448,6 +467,23 @@ class StrandsAgent(MemoryAgent):
         asyncio.create_task(self._start_background_tasks())
         
         logger.info(f"Strands agent {self.agent_id} initialized")
+    
+    async def _init_s3_logging_async(self):
+        """Initialize S3 logging asynchronously"""
+        try:
+            # Log agent startup
+            await self.log_agent_startup({
+                "agent_type": getattr(self, 'agent_type', 'strands_agent'),
+                "capabilities": self.capabilities,
+                "model_provider": self.model_provider,
+                "config": {
+                    "enable_telemetry": getattr(self.config, 'enable_telemetry', False),
+                    "max_workflow_time": getattr(self.config, 'max_workflow_time', 300),
+                    "max_retries": getattr(self.config, 'max_retries', 3)
+                }
+            })
+        except Exception as e:
+            logger.warning(f"S3 logging initialization failed: {e}")
         
     def _register_default_tools(self):
         """Register default tools"""
@@ -484,6 +520,7 @@ class StrandsAgent(MemoryAgent):
         # Start cleanup task
         asyncio.create_task(self._cleanup_old_contexts())
         
+    @log_agent_method(activity_type="tool_execution", log_params=True, log_result=True)
     async def execute_tool(self, tool_name: str, parameters: Dict[str, Any]) -> ToolExecutionResult:
         """Execute a tool using Strands framework with full observability"""
         start_time = asyncio.get_event_loop().time()
@@ -545,6 +582,7 @@ class StrandsAgent(MemoryAgent):
                 execution_time_ms=(asyncio.get_event_loop().time() - start_time) * 1000
             )
             
+    @log_agent_method(activity_type="workflow_processing", log_params=True, log_result=True)
     async def process_workflow(self, workflow_id: str, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """Process a workflow using Strands orchestration"""
         # Create workflow context

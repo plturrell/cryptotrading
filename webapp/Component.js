@@ -5,7 +5,7 @@ sap.ui.define([
     "com/rex/cryptotrading/model/EventBusManager",
     "com/rex/cryptotrading/model/MarketDataManager",
     "com/rex/cryptotrading/model/WalletDataManager",
-    "com/rex/cryptotrading/model/MLDataManager",
+    "com/rex/cryptotrading/model/MLDataManager"
 ], function (UIComponent, Device, JSONModel, EventBusManager, MarketDataManager, 
              WalletDataManager, MLDataManager) {
     "use strict";
@@ -17,27 +17,69 @@ sap.ui.define([
         },
 
         init: function () {
+            // Disable flexibility services completely BEFORE component initialization
+            if (this.getManifestObject) {
+                var oManifest = this.getManifestObject();
+                if (oManifest && oManifest.getRawJson && oManifest.getRawJson()["sap.ui5"]) {
+                    oManifest.getRawJson()["sap.ui5"].flexEnabled = false;
+                    oManifest.getRawJson()["sap.ui5"]["flexibilityServices"] = [];
+                }
+            }
+            
+            // Block any flex service requests completely
+            if (typeof sap !== "undefined" && sap.ui && sap.ui.fl) {
+                // Block LrepConnector methods
+                if (sap.ui.fl.LrepConnector) {
+                    sap.ui.fl.LrepConnector.prototype.loadFlexData = function() {
+                        return Promise.resolve([]);
+                    };
+                    sap.ui.fl.LrepConnector.prototype.loadFeatures = function() {
+                        return Promise.resolve([]);
+                    };
+                }
+                
+                // Block Storage methods
+                if (sap.ui.fl.apply && sap.ui.fl.apply._internal && sap.ui.fl.apply._internal.Storage) {
+                    var Storage = sap.ui.fl.apply._internal.Storage;
+                    Storage.loadFlexData = function() {
+                        return Promise.resolve([]);
+                    };
+                }
+                
+                // Disable flexibility completely
+                if (sap.ui.fl.Utils) {
+                    sap.ui.fl.Utils.isApplicationVariant = function() { return false; };
+                    sap.ui.fl.Utils.isVariantByStartupParameter = function() { return false; };
+                }
+            }
+            
             // Call the base component's init function
             UIComponent.prototype.init.apply(this, arguments);
 
-            // Enable routing
+            // Initialize models first before routing
+            this._initializeModelsAndData();
+
+            // Enable routing after models are set up
             this.getRouter().initialize();
 
+        },
+        
+        _initializeModelsAndData: function() {
             // Set device model
             var oDeviceModel = new JSONModel(Device);
             oDeviceModel.setDefaultBindingMode("OneWay");
             this.setModel(oDeviceModel, "device");
             
-            // Initialize SAP-standard data managers
+            // Initialize SAP-standard data managers first
             this._initializeDataManagers();
 
             // Real Data Model - No fake data, all loaded from APIs
             var oAppModel = new JSONModel({
                 // User Profile - loaded after wallet connection
                 user: {
-                    name: null,
-                    role: null,
-                    greeting: null
+                    name: "Trading User",
+                    role: "Trader",
+                    greeting: "Good morning"
                 },
                 
                 // Wallet Integration - real MetaMask data only
@@ -384,6 +426,12 @@ sap.ui.define([
             var that = this;
             var oModel = that.getModel("app");
             
+            // Check if model exists and is initialized
+            if (!oModel) {
+                console.log("App model not yet available for AI analysis");
+                return;
+            }
+            
             // Get current market data for AI analysis
             var marketData = oModel.getProperty("/marketData");
             if (!marketData || !marketData.btcPrice) {
@@ -517,11 +565,19 @@ sap.ui.define([
                 url: "/api/ml/performance/BTC?horizon=24h",
                 type: "GET",
                 success: function(data) {
-                    if (data && data.metrics) {
+                    if (data && data.metrics && oModel) {
                         var accuracy = data.metrics.r2 ? (data.metrics.r2 * 100).toFixed(1) : null;
                         oModel.setProperty("/mlPredictions/btc/model_accuracy", accuracy);
-                        oModel.setProperty("/mlPredictions/models_trained", 
-                            (oModel.getProperty("/mlPredictions/models_trained") || 0) + 1);
+                        
+                        // Safe getProperty call with fallback
+                        var currentCount = 0;
+                        try {
+                            currentCount = oModel.getProperty("/mlPredictions/models_trained") || 0;
+                        } catch(e) {
+                            console.warn("Could not get models_trained count:", e);
+                        }
+                        
+                        oModel.setProperty("/mlPredictions/models_trained", currentCount + 1);
                         oModel.setProperty("/mlPredictions/last_training", data.last_trained);
                     }
                 },

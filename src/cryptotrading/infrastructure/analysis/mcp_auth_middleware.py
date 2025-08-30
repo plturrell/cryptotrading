@@ -215,7 +215,7 @@ class MCPAuthenticationMiddleware:
         # REAL implementation - integrate with actual user/agent database
         try:
             # Validate agent exists in database
-            from ...data.database.unified_database import UnifiedDatabase
+            from ..database.unified_database import UnifiedDatabase
             db = UnifiedDatabase()
             
             # Check if agent is registered and active

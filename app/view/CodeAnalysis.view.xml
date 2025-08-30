@@ -1,0 +1,498 @@
+<mvc:View
+    controllerName="com.rex.cryptotrading.controller.CodeAnalysis"
+    displayBlock="true"
+    xmlns="sap.m"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:core="sap.ui.core"
+    xmlns:f="sap.f"
+    xmlns:tnt="sap.tnt"
+    xmlns:suite="sap.suite.ui.commons"
+    xmlns:layout="sap.ui.layout"
+    xmlns:viz="sap.viz.ui5.controls"
+    xmlns:comp="sap.ui.comp"
+    xmlns:smartfilterbar="sap.ui.comp.smartfilterbar"
+    xmlns:variants="sap.ui.comp.variants">
+    
+    <Shell id="shell" appWidthLimited="false">
+        <App id="app">
+            <pages>
+                <Page id="codeAnalysisPage" 
+                      title="Multi-Language Code Indexer"
+                      showNavButton="true"
+                      navButtonPress="onNavBack"
+                      enableScrolling="true"
+                      backgroundDesign="Solid">
+                    
+                    <!-- Professional SAP Header with Actions and Variant Management -->
+                    <customHeader>
+                        <tnt:ToolHeader>
+                            <Button icon="sap-icon://nav-back" 
+                                    type="Transparent" 
+                                    press="onNavBack"
+                                    tooltip="Navigate back to launchpad"
+                                    ariaLabelledBy="navBackLabel">
+                                <layoutData>
+                                    <OverflowToolbarLayoutData priority="NeverOverflow"/>
+                                </layoutData>
+                            </Button>
+                            <core:InvisibleText id="navBackLabel" text="Navigate back to launchpad"/>
+                            
+                            <Title text="Code Analysis Dashboard" level="H2"/>
+                            
+                            <!-- Variant Management for Personalization -->
+                            <variants:VariantManagement 
+                                id="variantManagement"
+                                showExecuteOnSelection="true"
+                                showShare="true"
+                                showSetAsDefault="true"
+                                class="sapUiMediumMarginBegin"/>
+                            
+                            <ToolbarSpacer/>
+                            
+                            <Button text="New Analysis" 
+                                    type="Emphasized" 
+                                    icon="sap-icon://add"
+                                    press="onNewAnalysis"
+                                    tooltip="Create new code analysis project"
+                                    ariaLabelledBy="newAnalysisLabel"/>
+                            <core:InvisibleText id="newAnalysisLabel" text="Create new code analysis project"/>
+                            
+                            <Button text="Export Results" 
+                                    icon="sap-icon://download"
+                                    press="onExportResults"
+                                    tooltip="Export analysis results to CSV"
+                                    ariaLabelledBy="exportLabel"/>
+                            <core:InvisibleText id="exportLabel" text="Export analysis results to CSV"/>
+                            
+                            <Button icon="sap-icon://refresh" 
+                                    type="Transparent" 
+                                    press="onRefresh"
+                                    tooltip="Refresh dashboard data"
+                                    ariaLabelledBy="refreshLabel"/>
+                            <core:InvisibleText id="refreshLabel" text="Refresh dashboard data"/>
+                        </tnt:ToolHeader>
+                    </customHeader>
+                    
+                    <content>
+                        <!-- KPI Overview Section -->
+                        <VBox class="sapUiMediumMargin">
+                            <Title text="Indexing Overview" level="H3" class="sapUiMediumMarginBottom"/>
+                            
+                            <!-- Responsive Grid Layout for KPI Tiles -->
+                            <layout:Grid 
+                                defaultSpan="XL3 L3 M6 S12" 
+                                class="sapUiMediumMarginBottom"
+                                containerQuery="true">
+                                <suite:NumericTile
+                                    header="Total Projects"
+                                    subheader="Active indexing projects"
+                                    value="{analytics>/totalProjects}"
+                                    valueColor="Good"
+                                    indicator="Up"
+                                    size="M"
+                                    press="onProjectsPress"
+                                    tooltip="View all active indexing projects"
+                                    ariaLabelledBy="projectsTileLabel">
+                                    <layoutData>
+                                        <layout:GridData span="XL3 L3 M6 S12"/>
+                                    </layoutData>
+                                </suite:NumericTile>
+                                <core:InvisibleText id="projectsTileLabel" text="Total Projects: Active indexing projects"/>
+                                
+                                <suite:NumericTile
+                                    header="Files Indexed"
+                                    subheader="Across all languages"
+                                    value="{analytics>/totalFiles}"
+                                    scale="K"
+                                    valueColor="Neutral"
+                                    size="M"
+                                    tooltip="Total files processed by indexer"
+                                    ariaLabelledBy="filesTileLabel">
+                                    <layoutData>
+                                        <layout:GridData span="XL3 L3 M6 S12"/>
+                                    </layoutData>
+                                </suite:NumericTile>
+                                <core:InvisibleText id="filesTileLabel" text="Files Indexed: Across all languages"/>
+                                
+                                <suite:NumericTile
+                                    header="Facts Generated"
+                                    subheader="SCIP facts for Glean"
+                                    value="{analytics>/totalFacts}"
+                                    scale="K"
+                                    valueColor="Good"
+                                    indicator="Up"
+                                    size="M"
+                                    tooltip="Total SCIP facts generated for Glean integration"
+                                    ariaLabelledBy="factsTileLabel">
+                                    <layoutData>
+                                        <layout:GridData span="XL3 L3 M6 S12"/>
+                                    </layoutData>
+                                </suite:NumericTile>
+                                <core:InvisibleText id="factsTileLabel" text="Facts Generated: SCIP facts for Glean"/>
+                                
+                                <suite:NumericTile
+                                    header="Coverage"
+                                    subheader="Code coverage percentage"
+                                    value="{analytics>/coveragePercent}"
+                                    scale="%"
+                                    valueColor="{path: 'analytics>/coveragePercent', formatter: '.formatCoverageColor'}"
+                                    size="M"
+                                    tooltip="Overall code coverage percentage"
+                                    ariaLabelledBy="coverageTileLabel">
+                                    <layoutData>
+                                        <layout:GridData span="XL3 L3 M6 S12"/>
+                                    </layoutData>
+                                </suite:NumericTile>
+                                <core:InvisibleText id="coverageTileLabel" text="Coverage: Code coverage percentage"/>
+                            </layout:Grid>
+                            
+                            <!-- Advanced Language Distribution with Charts -->
+                            <Panel headerText="Language Distribution Analytics" 
+                                   class="sapUiResponsiveMargin"
+                                   expandable="true"
+                                   expanded="true">
+                                <headerToolbar>
+                                    <Toolbar>
+                                        <Title text="Language Distribution Analytics" level="H4"/>
+                                        <ToolbarSpacer/>
+                                        <Button icon="sap-icon://full-screen" 
+                                                type="Transparent" 
+                                                press="onExpandChart"
+                                                tooltip="Expand chart view"/>
+                                    </Toolbar>
+                                </headerToolbar>
+                                <content>
+                                    <layout:Grid defaultSpan="XL6 L6 M12 S12" containerQuery="true">
+                                        <!-- Language Success Rates Chart -->
+                                        <viz:VizFrame 
+                                            id="languageChart"
+                                            vizType="donut"
+                                            width="100%"
+                                            height="300px"
+                                            class="sapUiMediumMargin">
+                                            <viz:dataset>
+                                                <viz:FlattenedDataset data="{analytics>/languages}">
+                                                    <viz:dimensions>
+                                                        <viz:DimensionDefinition name="Language" value="{language}"/>
+                                                    </viz:dimensions>
+                                                    <viz:measures>
+                                                        <viz:MeasureDefinition name="Files" value="{files}"/>
+                                                        <viz:MeasureDefinition name="Success Rate" value="{successRate}"/>
+                                                    </viz:measures>
+                                                </viz:FlattenedDataset>
+                                            </viz:dataset>
+                                            <viz:feeds>
+                                                <viz:FeedItem uid="size" type="Measure" values="Files"/>
+                                                <viz:FeedItem uid="color" type="Dimension" values="Language"/>
+                                            </viz:feeds>
+                                            <layoutData>
+                                                <layout:GridData span="XL6 L6 M12 S12"/>
+                                            </layoutData>
+                                        </viz:VizFrame>
+                                        
+                                        <!-- Language Performance Metrics -->
+                                        <VBox class="sapUiMediumMargin">
+                                            <layout:Grid defaultSpan="XL12 L12 M6 S12" containerQuery="true">
+                                                <VBox class="sapUiSmallMargin">
+                                                    <Label text="Python Files" class="sapUiTinyMarginBottom"/>
+                                                    <ObjectNumber 
+                                                        number="{analytics>/languages/python/files}"
+                                                        state="{path: 'analytics>/languages/python/successRate', formatter: '.formatSuccessState'}"
+                                                        tooltip="Python files processed"/>
+                                                    <ProgressIndicator 
+                                                        percentValue="{analytics>/languages/python/successRate}"
+                                                        state="{path: 'analytics>/languages/python/successRate', formatter: '.formatSuccessState'}"
+                                                        displayValue="{analytics>/languages/python/successRate}%"
+                                                        width="100%"/>
+                                                    <layoutData>
+                                                        <layout:GridData span="XL12 L12 M6 S12"/>
+                                                    </layoutData>
+                                                </VBox>
+                                                
+                                                <VBox class="sapUiSmallMargin">
+                                                    <Label text="JavaScript/UI5" class="sapUiTinyMarginBottom"/>
+                                                    <ObjectNumber 
+                                                        number="{analytics>/languages/javascript/files}"
+                                                        state="{path: 'analytics>/languages/javascript/successRate', formatter: '.formatSuccessState'}"
+                                                        tooltip="JavaScript and UI5 files processed"/>
+                                                    <ProgressIndicator 
+                                                        percentValue="{analytics>/languages/javascript/successRate}"
+                                                        state="{path: 'analytics>/languages/javascript/successRate', formatter: '.formatSuccessState'}"
+                                                        displayValue="{analytics>/languages/javascript/successRate}%"
+                                                        width="100%"/>
+                                                    <layoutData>
+                                                        <layout:GridData span="XL12 L12 M6 S12"/>
+                                                    </layoutData>
+                                                </VBox>
+                                                
+                                                <VBox class="sapUiSmallMargin">
+                                                    <Label text="TypeScript" class="sapUiTinyMarginBottom"/>
+                                                    <ObjectNumber 
+                                                        number="{analytics>/languages/typescript/files}"
+                                                        state="{path: 'analytics>/languages/typescript/successRate', formatter: '.formatSuccessState'}"
+                                                        tooltip="TypeScript files processed"/>
+                                                    <ProgressIndicator 
+                                                        percentValue="{analytics>/languages/typescript/successRate}"
+                                                        state="{path: 'analytics>/languages/typescript/successRate', formatter: '.formatSuccessState'}"
+                                                        displayValue="{analytics>/languages/typescript/successRate}%"
+                                                        width="100%"/>
+                                                    <layoutData>
+                                                        <layout:GridData span="XL12 L12 M6 S12"/>
+                                                    </layoutData>
+                                                </VBox>
+                                                
+                                                <VBox class="sapUiSmallMargin">
+                                                    <Label text="SAP CAP" class="sapUiTinyMarginBottom"/>
+                                                    <ObjectNumber 
+                                                        number="{analytics>/languages/cap/files}"
+                                                        state="{path: 'analytics>/languages/cap/successRate', formatter: '.formatSuccessState'}"
+                                                        tooltip="SAP CAP CDS files processed"/>
+                                                    <ProgressIndicator 
+                                                        percentValue="{analytics>/languages/cap/successRate}"
+                                                        state="{path: 'analytics>/languages/cap/successRate', formatter: '.formatSuccessState'}"
+                                                        displayValue="{analytics>/languages/cap/successRate}%"
+                                                        width="100%"/>
+                                                    <layoutData>
+                                                        <layout:GridData span="XL12 L12 M6 S12"/>
+                                                    </layoutData>
+                                                </VBox>
+                                                
+                                                <VBox class="sapUiSmallMargin">
+                                                    <Label text="Config Files" class="sapUiTinyMarginBottom"/>
+                                                    <ObjectNumber 
+                                                        number="{analytics>/languages/config/files}"
+                                                        state="{path: 'analytics>/languages/config/successRate', formatter: '.formatSuccessState'}"
+                                                        tooltip="Configuration files processed"/>
+                                                    <ProgressIndicator 
+                                                        percentValue="{analytics>/languages/config/successRate}"
+                                                        state="{path: 'analytics>/languages/config/successRate', formatter: '.formatSuccessState'}"
+                                                        displayValue="{analytics>/languages/config/successRate}%"
+                                                        width="100%"/>
+                                                    <layoutData>
+                                                        <layout:GridData span="XL12 L12 M6 S12"/>
+                                                    </layoutData>
+                                                </VBox>
+                                            </layout:Grid>
+                                            <layoutData>
+                                                <layout:GridData span="XL6 L6 M12 S12"/>
+                                            </layoutData>
+                                        </VBox>
+                                    </layout:Grid>
+                                </content>
+                            </Panel>
+                        </VBox>
+                        
+                        <!-- Active Indexing Sessions -->
+                        <VBox class="sapUiMediumMargin">
+                            <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiMediumMarginBottom">
+                                <Title text="Active Indexing Sessions" level="H3"/>
+                                <Button text="Start New Session" 
+                                        type="Emphasized" 
+                                        icon="sap-icon://play"
+                                        press="onStartIndexing"/>
+                            </HBox>
+                            
+                            <!-- Smart Filter Bar for Advanced Filtering -->
+                            <smartfilterbar:SmartFilterBar 
+                                id="smartFilterBar"
+                                entitySet="IndexingSessions"
+                                persistencyKey="CodeAnalysisFilter"
+                                useToolbar="false"
+                                showFilterConfiguration="true"
+                                showRestoreButton="true"
+                                showClearButton="true"
+                                class="sapUiMediumMarginBottom"/>
+                            
+                            <Table id="indexingSessionsTable"
+                                   items="{sessions>/}"
+                                   mode="SingleSelect"
+                                   class="sapUiResponsiveMargin"
+                                   growing="true"
+                                   growingThreshold="50"
+                                   sticky="ColumnHeaders,HeaderToolbar">
+                                <headerToolbar>
+                                    <Toolbar>
+                                        <Title text="Indexing Sessions ({sessions>/length})" level="H4"/>
+                                        <ToolbarSpacer/>
+                                        <Button icon="sap-icon://excel-attachment" 
+                                                type="Transparent" 
+                                                press="onExportSessions"
+                                                tooltip="Export to Excel"/>
+                                        <Button icon="sap-icon://table-view" 
+                                                type="Transparent" 
+                                                press="onToggleTableView"
+                                                tooltip="Toggle table view"/>
+                                    </Toolbar>
+                                </headerToolbar>
+                                <columns>
+                                    <Column width="15rem" sortProperty="sessionName" filterProperty="sessionName">
+                                        <Text text="Session Name"/>
+                                    </Column>
+                                    <Column width="12rem" sortProperty="project.name" filterProperty="project.name">
+                                        <Text text="Project"/>
+                                    </Column>
+                                    <Column width="8rem" sortProperty="status" filterProperty="status">
+                                        <Text text="Status"/>
+                                    </Column>
+                                    <Column width="12rem" sortProperty="processedFiles">
+                                        <Text text="Progress"/>
+                                    </Column>
+                                    <Column width="10rem" sortProperty="processedFiles">
+                                        <Text text="Files Processed"/>
+                                    </Column>
+                                    <Column width="10rem" sortProperty="totalFacts">
+                                        <Text text="Facts Generated"/>
+                                    </Column>
+                                    <Column width="8rem" sortProperty="startTime">
+                                        <Text text="Duration"/>
+                                    </Column>
+                                    <Column width="8rem">
+                                        <Text text="Actions"/>
+                                    </Column>
+                                </columns>
+                                
+                                <items>
+                                    <ColumnListItem press="onSessionPress">
+                                        <cells>
+                                            <Text text="{sessionName}"/>
+                                            <Text text="{project/name}"/>
+                                            <ObjectStatus 
+                                                text="{status}"
+                                                state="{path: 'status', formatter: '.formatSessionStatus'}"/>
+                                            <ProgressIndicator 
+                                                percentValue="{path: 'processedFiles', formatter: '.calculateProgress'}"
+                                                displayValue="{path: 'processedFiles', formatter: '.formatProgress'}"
+                                                state="{path: 'status', formatter: '.formatProgressState'}"/>
+                                            <ObjectNumber 
+                                                number="{processedFiles}"
+                                                unit="/ {totalFiles}"/>
+                                            <ObjectNumber 
+                                                number="{totalFacts}"
+                                                emphasized="true"/>
+                                            <Text text="{path: 'startTime', formatter: '.formatDuration'}"/>
+                                            <HBox>
+                                                <Button icon="sap-icon://detail-view" 
+                                                        type="Transparent"
+                                                        press="onViewSession"
+                                                        tooltip="View Details"/>
+                                                <Button icon="sap-icon://stop" 
+                                                        type="Transparent"
+                                                        press="onStopSession"
+                                                        tooltip="Stop Session"
+                                                        visible="{path: 'status', formatter: '.isRunning'}"/>
+                                            </HBox>
+                                        </cells>
+                                    </ColumnListItem>
+                                </items>
+                            </Table>
+                        </VBox>
+                        
+                        <!-- Blind Spots and Issues -->
+                        <VBox class="sapUiMediumMargin">
+                            <Title text="Blind Spots &amp; Issues" level="H3" class="sapUiMediumMarginBottom"/>
+                            
+                            <Table id="blindSpotsTable"
+                                   items="{blindSpots>/}"
+                                   mode="MultiSelect"
+                                   class="sapUiResponsiveMargin">
+                                <columns>
+                                    <Column>
+                                        <Text text="File Pattern"/>
+                                    </Column>
+                                    <Column>
+                                        <Text text="Language"/>
+                                    </Column>
+                                    <Column>
+                                        <Text text="Severity"/>
+                                    </Column>
+                                    <Column>
+                                        <Text text="Affected Files"/>
+                                    </Column>
+                                    <Column>
+                                        <Text text="Description"/>
+                                    </Column>
+                                    <Column>
+                                        <Text text="Status"/>
+                                    </Column>
+                                </columns>
+                                
+                                <items>
+                                    <ColumnListItem>
+                                        <cells>
+                                            <Text text="{filePattern}"/>
+                                            <Text text="{language}"/>
+                                            <ObjectStatus 
+                                                text="{severity}"
+                                                state="{path: 'severity', formatter: '.formatSeverityState'}"/>
+                                            <ObjectNumber number="{fileCount}"/>
+                                            <Text text="{description}" maxLines="2"/>
+                                            <ObjectStatus 
+                                                text="{path: 'resolved', formatter: '.formatResolvedStatus'}"
+                                                state="{path: 'resolved', formatter: '.formatResolvedState'}"/>
+                                        </cells>
+                                    </ColumnListItem>
+                                </items>
+                            </Table>
+                        </VBox>
+                        
+                        <!-- Recent Analysis Results -->
+                        <VBox class="sapUiMediumMargin">
+                            <HBox justifyContent="SpaceBetween" alignItems="Center" class="sapUiMediumMarginBottom">
+                                <Title text="Recent Analysis Results" level="H3"/>
+                                <Button text="View All Results" 
+                                        icon="sap-icon://table-view"
+                                        press="onViewAllResults"/>
+                            </HBox>
+                            
+                            <Table id="resultsTable"
+                                   items="{results>/}"
+                                   growing="true"
+                                   growingThreshold="20"
+                                   class="sapUiResponsiveMargin">
+                                <columns>
+                                    <Column>
+                                        <Text text="Symbol"/>
+                                    </Column>
+                                    <Column>
+                                        <Text text="Type"/>
+                                    </Column>
+                                    <Column>
+                                        <Text text="File"/>
+                                    </Column>
+                                    <Column>
+                                        <Text text="Line"/>
+                                    </Column>
+                                    <Column>
+                                        <Text text="Confidence"/>
+                                    </Column>
+                                    <Column>
+                                        <Text text="Validated"/>
+                                    </Column>
+                                </columns>
+                                
+                                <items>
+                                    <ColumnListItem press="onResultPress">
+                                        <cells>
+                                            <Text text="{symbolName}"/>
+                                            <Text text="{symbolType}"/>
+                                            <Link text="{fileName}" press="onFilePress"/>
+                                            <Text text="{lineNumber}"/>
+                                            <ProgressIndicator 
+                                                percentValue="{path: 'confidence', formatter: '.formatConfidencePercent'}"
+                                                displayValue="{confidence}"
+                                                state="{path: 'confidence', formatter: '.formatConfidenceState'}"
+                                                width="80px"/>
+                                            <core:Icon 
+                                                src="{path: 'validated', formatter: '.formatValidatedIcon'}"
+                                                color="{path: 'validated', formatter: '.formatValidatedColor'}"/>
+                                        </cells>
+                                    </ColumnListItem>
+                                </items>
+                            </Table>
+                        </VBox>
+                    </content>
+                </Page>
+            </pages>
+        </App>
+    </Shell>
+</mvc:View>

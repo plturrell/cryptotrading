@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>rex.com - SAP Fiori Diagnostic Test Pad</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #0066cc;
+            border-bottom: 2px solid #0066cc;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #fafafa;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        #console-output {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #0066cc;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0052a3;
+        }
+        .tile-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .tile {
+            background: #0066cc;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .tile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>rex.com - SAP Fiori Diagnostic Test Pad</h1>
+        
+        <div class="test-section">
+            <h2>1. Environment Detection</h2>
+            <div id="env-test" class="test-result info">Testing environment...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>2. CDN Accessibility Test</h2>
+            <div id="cdn-test" class="test-result info">Testing OpenUI5 CDN...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>3. UI5 Core Loading Test</h2>
+            <div id="ui5-test" class="test-result info">Loading UI5 Core...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>4. Component Loading Test</h2>
+            <div id="component-test" class="test-result info">Testing component loading...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>5. API Connectivity Test</h2>
+            <div id="api-test" class="test-result info">Testing API endpoints...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>6. Fiori Launchpad Shell Test</h2>
+            <div id="shell-test" class="test-result info">Testing UShell initialization...</div>
+            <button onclick="testFullFiori()">Launch Full Fiori Test</button>
+            <button onclick="testMinimalFiori()">Launch Minimal Fiori</button>
+        </div>
+
+        <div class="test-section">
+            <h2>7. Sample Tiles</h2>
+            <div class="tile-container" id="tiles">
+                <!-- Tiles will be inserted here -->
+            </div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Console Output</h2>
+            <pre id="console-output"></pre>
+        </div>
+
+        <button onclick="runAllTests()">Run All Tests</button>
+        <button onclick="clearConsole()">Clear Console</button>
+        <button onclick="downloadReport()">Download Report</button>
+    </div>
+
+    <script>
+        let testResults = {};
+        let consoleBuffer = [];
+        let totalTests = 6;
+        let completedTests = 0;
+
+        // Override console methods to capture output
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            logToConsole('LOG', args.join(' '));
+        };
+
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            logToConsole('ERROR', args.join(' '));
+        };
+
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            logToConsole('WARN', args.join(' '));
+        };
+
+        function logToConsole(type, message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = `[${timestamp}] ${type}: ${message}`;
+            consoleBuffer.push(entry);
+            updateConsoleDisplay();
+        }
+
+        function updateConsoleDisplay() {
+            const consoleEl = document.getElementById('console-output');
+            consoleEl.textContent = consoleBuffer.join('\n');
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        function updateProgress() {
+            completedTests++;
+            const percentage = (completedTests / totalTests) * 100;
+            document.getElementById('progress').style.width = percentage + '%';
+        }
+
+        function updateTestResult(testId, status, message) {
+            const element = document.getElementById(testId);
+            element.className = 'test-result ' + status;
+            element.textContent = message;
+            testResults[testId] = { status, message };
+            updateProgress();
+        }
+
+        // Test 1: Environment Detection
+        async function testEnvironment() {
+            console.log('Starting environment detection...');
+            try {
+                const env = {
+                    userAgent: navigator.userAgent,
+                    platform: navigator.platform,
+                    language: navigator.language,
+                    onLine: navigator.onLine,
+                    cookieEnabled: navigator.cookieEnabled,
+                    location: window.location.href,
+                    isVercel: window.location.hostname.includes('vercel.app'),
+                    protocol: window.location.protocol
+                };
+                
+                console.log('Environment:', JSON.stringify(env, null, 2));
+                updateTestResult('env-test', 'success', 
+                    `Environment: ${env.isVercel ? 'Vercel' : 'Local'} | ${env.platform} | ${env.protocol}`);
+            } catch (e) {
+                updateTestResult('env-test', 'error', 'Environment detection failed: ' + e.message);
+            }
+        }
+
+        // Test 2: CDN Accessibility
+        async function testCDN() {
+            console.log('Testing OpenUI5 CDN accessibility...');
+            try {
+                const cdnUrl = '/resources/sap-ui-version.json';
+                const response = await fetch(cdnUrl);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('CDN version info:', data);
+                    updateTestResult('cdn-test', 'success', 
+                        `OpenUI5 CDN accessible - Version: ${data.version || '1.108.0'}`);
+                } else {
+                    throw new Error(`CDN returned ${response.status}`);
+                }
+            } catch (e) {
+                console.error('CDN test failed:', e);
+                updateTestResult('cdn-test', 'error', 'CDN not accessible: ' + e.message);
+            }
+        }
+
+        // Test 3: UI5 Core Loading
+        async function testUI5Core() {
+            console.log('Testing UI5 Core loading...');
+            
+            return new Promise((resolve) => {
+                // Create script element for UI5
+                const script = document.createElement('script');
+                script.id = 'sap-ui-bootstrap';
+                script.src = '/resources/sap-ui-core.js';
+                script.setAttribute('data-sap-ui-theme', 'sap_horizon_dark');
+                script.setAttribute('data-sap-ui-libs', 'sap.m');
+                script.setAttribute('data-sap-ui-async', 'true');
+                
+                script.onload = () => {
+                    console.log('UI5 script loaded');
+                    
+                    // Wait for UI5 to initialize
+                    if (window.sap && window.sap.ui) {
+                        sap.ui.getCore().attachInit(() => {
+                            console.log('UI5 Core initialized');
+                            updateTestResult('ui5-test', 'success', 'UI5 Core loaded successfully');
+                            resolve();
+                        });
+                    } else {
+                        updateTestResult('ui5-test', 'warning', 'UI5 loaded but not initialized');
+                        resolve();
+                    }
+                };
+                
+                script.onerror = () => {
+                    console.error('Failed to load UI5 script');
+                    updateTestResult('ui5-test', 'error', 'Failed to load UI5 Core');
+                    resolve();
+                };
+                
+                document.head.appendChild(script);
+            });
+        }
+
+        // Test 4: Component Loading
+        async function testComponent() {
+            console.log('Testing component loading...');
+            
+            if (!window.sap || !window.sap.ui) {
+                updateTestResult('component-test', 'error', 'UI5 not available');
+                return;
+            }
+            
+            try {
+                // Try to create a simple component
+                sap.ui.define(['sap/ui/core/UIComponent'], function(UIComponent) {
+                    const TestComponent = UIComponent.extend('test.Component', {
+                        metadata: {
+                            manifest: {
+                                'sap.app': {
+                                    id: 'test',
+                                    type: 'application'
+                                }
+                            }
+                        }
+                    });
+                    
+                    console.log('Test component defined');
+                    updateTestResult('component-test', 'success', 'Component loading works');
+                });
+            } catch (e) {
+                console.error('Component test failed:', e);
+                updateTestResult('component-test', 'error', 'Component loading failed: ' + e.message);
+            }
+        }
+
+        // Test 5: API Connectivity
+        async function testAPI() {
+            console.log('Testing API connectivity...');
+            const endpoints = [
+                '/health',
+                '/api/market/overview?symbols=bitcoin',
+                '/api/trading/status'
+            ];
+            
+            let successCount = 0;
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(endpoint);
+                    if (response.ok) {
+                        successCount++;
+                        console.log(`✓ ${endpoint} - ${response.status}`);
+                    } else {
+                        console.warn(`✗ ${endpoint} - ${response.status}`);
+                    }
+                } catch (e) {
+                    console.error(`✗ ${endpoint} - ${e.message}`);
+                }
+            }
+            
+            if (successCount === endpoints.length) {
+                updateTestResult('api-test', 'success', `All ${endpoints.length} API endpoints accessible`);
+            } else if (successCount > 0) {
+                updateTestResult('api-test', 'warning', `${successCount}/${endpoints.length} API endpoints accessible`);
+            } else {
+                updateTestResult('api-test', 'error', 'No API endpoints accessible');
+            }
+        }
+
+        // Test 6: UShell Test
+        async function testUShell() {
+            console.log('Testing UShell initialization...');
+            
+            if (!window.sap || !window.sap.ui) {
+                updateTestResult('shell-test', 'error', 'UI5 not available for UShell');
+                return;
+            }
+            
+            try {
+                sap.ui.require(['sap/ushell/Container'], function(Container) {
+                    console.log('UShell Container module loaded');
+                    updateTestResult('shell-test', 'success', 'UShell modules available');
+                }, function(err) {
+                    console.error('UShell loading error:', err);
+                    updateTestResult('shell-test', 'warning', 'UShell not available - using fallback');
+                });
+            } catch (e) {
+                updateTestResult('shell-test', 'error', 'UShell test failed: ' + e.message);
+            }
+        }
+
+        // Create sample tiles
+        function createTiles() {
+            const tiles = [
+                { id: 'market', title: 'Market Data', icon: '📈' },
+                { id: 'trading', title: 'Trading', icon: '💱' },
+                { id: 'portfolio', title: 'Portfolio', icon: '💼' },
+                { id: 'ai', title: 'AI Analysis', icon: '🤖' }
+            ];
+            
+            const container = document.getElementById('tiles');
+            container.innerHTML = tiles.map(tile => `
+                <div class="tile" onclick="tileClick('${tile.id}')">
+                    <div style="font-size: 48px; margin-bottom: 10px;">${tile.icon}</div>
+                    <div>${tile.title}</div>
+                </div>
+            `).join('');
+        }
+
+        function tileClick(tileId) {
+            console.log(`Tile clicked: ${tileId}`);
+            alert(`${tileId} tile clicked - Feature coming soon!`);
+        }
+
+        // Test launchers
+        function testFullFiori() {
+            console.log('Launching full Fiori test...');
+            window.open('/webapp/index.html', '_blank');
+        }
+
+        function testMinimalFiori() {
+            console.log('Launching minimal Fiori...');
+            window.open('/webapp/index-simple.html', '_blank');
+        }
+
+        // Utility functions
+        async function runAllTests() {
+            console.log('Starting diagnostic tests...');
+            completedTests = 0;
+            
+            await testEnvironment();
+            await testCDN();
+            await testUI5Core();
+            
+            // Wait a bit for UI5 to fully initialize
+            setTimeout(async () => {
+                await testComponent();
+                await testAPI();
+                await testUShell();
+                
+                console.log('All tests completed');
+                console.log('Test results:', testResults);
+            }, 2000);
+        }
+
+        function clearConsole() {
+            consoleBuffer = [];
+            updateConsoleDisplay();
+        }
+
+        function downloadReport() {
+            const report = {
+                timestamp: new Date().toISOString(),
+                url: window.location.href,
+                testResults: testResults,
+                console: consoleBuffer
+            };
+            
+            const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `reks-diagnostic-${Date.now()}.json`;
+            a.click();
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            console.log('rex.com Diagnostic Test Pad loaded');
+            createTiles();
+            
+            // Auto-run basic environment test
+            testEnvironment();
+        });
+    </script>
+</body>
+</html>

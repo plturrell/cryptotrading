@@ -1,0 +1,236 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:f="sap.f">
+
+    <!-- Market Overview Tile - Official SAP Standard 12x14 rem -->
+    <GenericTile 
+        header="Market Overview"
+        subheader="Real-time cryptocurrency prices"
+        press="onTilePress"
+        state="Loaded"
+        size="M">
+        <layoutData>
+            <f:GridContainerItemLayoutData columns="12" rows="14"/>
+        </layoutData>
+        <tileContent>
+            <TileContent>
+                <content>
+                    <NumericContent
+                        value="{app>/marketData/btcPrice}"
+                        scale="USD"
+                        indicator="{app>/marketData/btcIndicator}"
+                        valueColor="{= ${app>/marketData/btcChange} > 0 ? 'Good' : 'Error' }"
+                        withMargin="false"/>
+                </content>
+            </TileContent>
+        </tileContent>
+    </GenericTile>
+    
+    <!-- ML Predictions Tile -->
+    <GenericTile 
+        header="ML Predictions" 
+        subheader="Real-time price forecasting"
+        press="onTilePress"
+        state="{= ${app>/mlPredictions/loading} ? 'Loading' : 'Loaded' }"
+        size="M">
+        <layoutData>
+            <f:GridContainerItemLayoutData columns="12" rows="14"/>
+        </layoutData>
+        <tileContent>
+            <TileContent>
+                <content>
+                    <NumericContent
+                        value="{app>/mlPredictions/btc/confidence}"
+                        scale="% Confidence"
+                        indicator="{= ${app>/mlPredictions/btc/price_change_percent} > 0 ? 'Up' : 'Down' }"
+                        valueColor="{= ${app>/mlPredictions/btc/confidence} > 80 ? 'Good' : 'Neutral' }"
+                        withMargin="false"/>
+                </content>
+            </TileContent>
+        </tileContent>
+    </GenericTile>
+    
+    <!-- Model Training Tile -->
+    <GenericTile 
+        header="Model Training"
+        subheader="Train and deploy ML models"
+        press="onTilePress"
+        state="{= ${app>/mlPredictions/loading} ? 'Loading' : 'Loaded' }"
+        size="M">
+        <layoutData>
+            <f:GridContainerItemLayoutData columns="12" rows="14"/>
+        </layoutData>
+        <tileContent>
+            <TileContent>
+                <content>
+                    <NumericContent
+                        value="{app>/mlPredictions/models_trained}"
+                        scale="Models"
+                        valueColor="Neutral"
+                        withMargin="false"/>
+                </content>
+            </TileContent>
+        </tileContent>
+    </GenericTile>
+    
+    <!-- AI Market Intelligence Tile - Large 2x1 format -->
+    <GenericTile 
+        header="AI Market Intelligence"
+        subheader="ML-powered price predictions"
+        press="onTilePress"
+        state="{= ${app>/mlPredictions/loading} ? 'Loading' : 'Loaded' }"
+        frameType="TwoByOne">
+        <layoutData>
+            <f:GridContainerItemLayoutData columns="25" rows="14"/>
+        </layoutData>
+        <tileContent>
+            <TileContent>
+                <content>
+                    <NewsContent
+                        contentText="{= 'BTC: $' + ${app>/mlPredictions/btc/current_price} + ' → $' + ${app>/mlPredictions/btc/predicted_price} + ' (' + (${app>/mlPredictions/btc/price_change_percent} > 0 ? '+' : '') + ${app>/mlPredictions/btc/price_change_percent} + '%). ETH: $' + ${app>/mlPredictions/eth/current_price} + ' → $' + ${app>/mlPredictions/eth/predicted_price} + '. Model accuracy: ' + ${app>/mlPredictions/btc/model_accuracy} + '%' }"
+                        subheader="{= 'ML Prediction: ' + (${app>/mlPredictions/btc/price_change_percent} > 0 ? 'BULLISH' : 'BEARISH') + ' (' + ${app>/mlPredictions/btc/confidence} + '% confidence)' }"/>
+                </content>
+            </TileContent>
+        </tileContent>
+    </GenericTile>
+    
+    <!-- ML Feature Store Tile -->
+    <GenericTile 
+        header="Feature Store"
+        subheader="ML feature engineering"
+        press="onTilePress"
+        state="{= ${app>/featureStore/loading} ? 'Loading' : 'Loaded' }"
+        size="M">
+        <layoutData>
+            <f:GridContainerItemLayoutData columns="12" rows="14"/>
+        </layoutData>
+        <tileContent>
+            <TileContent>
+                <content>
+                    <NumericContent
+                        value="{app>/featureStore/total_features}"
+                        scale="Features"
+                        valueColor="Neutral"
+                        withMargin="false"/>
+                </content>
+            </TileContent>
+        </tileContent>
+    </GenericTile>
+    
+    <!-- Risk Management Tile -->
+    <GenericTile 
+        header="Risk Management"
+        subheader="Portfolio risk metrics"
+        press="onTilePress"
+        state="Loaded"
+        size="M">
+        <layoutData>
+            <f:GridContainerItemLayoutData columns="12" rows="14"/>
+        </layoutData>
+        <tileContent>
+            <TileContent>
+                <content>
+                    <NumericContent
+                        value="12.3"
+                        scale="% VaR"
+                        indicator="Up"
+                        valueColor="Critical"
+                        withMargin="false"/>
+                </content>
+            </TileContent>
+        </tileContent>
+    </GenericTile>
+    
+    <!-- Historical Data Tile -->
+    <GenericTile 
+        header="Historical Data"
+        subheader="Download market datasets"
+        press="onTilePress"
+        state="Loaded"
+        size="M">
+        <layoutData>
+            <f:GridContainerItemLayoutData columns="12" rows="14"/>
+        </layoutData>
+        <tileContent>
+            <TileContent>
+                <content>
+                    <NumericContent
+                        value="2.3"
+                        scale="TB"
+                        valueColor="Neutral"
+                        withMargin="false"/>
+                </content>
+            </TileContent>
+        </tileContent>
+    </GenericTile>
+    
+    <!-- Technical Analysis Tile -->
+    <GenericTile 
+        header="Technical Analysis"
+        subheader="Advanced crypto TA dashboard"
+        press="onTechnicalAnalysisPress"
+        state="Loaded"
+        size="M">
+        <layoutData>
+            <f:GridContainerItemLayoutData columns="12" rows="14"/>
+        </layoutData>
+        <tileContent>
+            <TileContent>
+                <content>
+                    <NumericContent
+                        value="{app>/technicalAnalysis/rsi}"
+                        scale="RSI"
+                        indicator="{app>/technicalAnalysis/rsiIndicator}"
+                        valueColor="{app>/technicalAnalysis/rsiColor}"
+                        withMargin="false"/>
+                </content>
+            </TileContent>
+        </tileContent>
+    </GenericTile>
+    
+    <!-- Code Analysis Tile -->
+    <GenericTile 
+        header="Code Analysis"
+        subheader="Multi-language indexer dashboard"
+        press="onCodeAnalysisPress"
+        state="Loaded"
+        size="M">
+        <layoutData>
+            <f:GridContainerItemLayoutData columns="12" rows="14"/>
+        </layoutData>
+        <tileContent>
+            <TileContent>
+                <content>
+                    <NumericContent
+                        value="106.5"
+                        scale="K Facts"
+                        indicator="Up"
+                        valueColor="Good"
+                        withMargin="false"/>
+                </content>
+            </TileContent>
+        </tileContent>
+    </GenericTile>
+    
+    <!-- System Settings Tile -->
+    <GenericTile 
+        header="System Settings"
+        subheader="Configure platform parameters"
+        press="onTilePress"
+        state="Loaded"
+        size="M">
+        <layoutData>
+            <f:GridContainerItemLayoutData columns="12" rows="14"/>
+        </layoutData>
+        <tileContent>
+            <TileContent>
+                <content>
+                    <ImageContent 
+                        src="sap-icon://action-settings"/>
+                </content>
+            </TileContent>
+        </tileContent>
+    </GenericTile>
+
+</core:FragmentDefinition>
